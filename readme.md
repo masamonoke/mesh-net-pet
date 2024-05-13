@@ -5,7 +5,7 @@ An implementation of mesh network. Note that project is actively developing and 
 
 First to get all necessary files with all dependencies:
 ```console
-git clone https://github.com/masamonoke/mesh-topology-net --recursive
+git clone https://github.com/masamonoke/mesh-net-pet --recursive
 ```
 
 </br>
