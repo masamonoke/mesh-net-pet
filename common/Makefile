@@ -2,11 +2,7 @@
 
 # ROOT_DIR, BUILD_DIR, CFLAGS, DEFINES are exported from root Makefile
 
-ifeq ($(origin CC),default)
-  CC = gcc
-endif
-
-SRC = src/append_string.c src/codes.c src/io.c src/control_utils.c src/custom_logger.c src/connection.c src/format.c
+SRC = src/append_string.c src/codes.c src/io.c src/control_utils.c src/custom_logger.c src/connection.c src/format.c src/serving.c
 
 BUILD_TYPE = debug
 

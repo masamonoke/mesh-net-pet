@@ -9,13 +9,17 @@
 #include "connection.h"
 #include "format.h"
 
+#ifndef SERVER_PORT
+#define SERVER_PORT 999
+#endif
+
 static void parse_args(int32_t argc, char** argv, enum request_type* cmd);
 
 int32_t main(int32_t argc, char** argv) {
 	int32_t server_fd;
 	enum request_type req;
 
-	server_fd = connection_socket_to_send();
+	server_fd = connection_socket_to_send(SERVER_PORT);
 
 	if (server_fd < 0) {
 		die("Failed to get socket");

@@ -2,10 +2,6 @@
 
 # ROOT_DIR, BUILD_DIR, CFLAGS, DEFINES are exported from root Makefile
 
-ifeq ($(origin CC),default)
-  CC = gcc
-endif
-
 SRC = src/node.c
 
 EXEC_BUILD_DIR = $(BUILD_DIR)/$(BUILD_TYPE)/node

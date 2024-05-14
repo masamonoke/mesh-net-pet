@@ -1,3 +1,7 @@
+ifeq ($(origin CC),default)
+  CC = gcc
+endif
+
 BUILD_TYPE = debug
 
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
@@ -10,7 +14,11 @@ TARGETS = $(BUILD_DIR)/node $(BUILD_DIR)/server $(BUILD_DIR)/client
 CFLAGS = -Waddress -Wall -Warray-bounds -Wbool-operation -Wchar-subscripts -Wcomment \
 		-Wmisleading-indentation -Wparentheses -Wextra -pedantic -Wstrict-prototypes \
 		-Wshadow -Wconversion -Wvla -Wdouble-promotion -Wmissing-noreturn            \
-		-Wmissing-format-attribute -Wmissing-prototypes -Wc99-extensions -Wunused-result
+		-Wmissing-format-attribute -Wmissing-prototypes -Wunused-result
+
+ifeq ($(CC), clang)
+	CFLAGS += -Wc99-extensions
+endif
 
 ifeq ($(BUILD_TYPE), debug)
 	CFLAGS += -g -fsanitize=address,undefined,null,bounds -DDEBUG
@@ -30,6 +38,7 @@ $(TARGETS): build
 
 build: build_node build_server build_client
 	@echo Build done
+	@echo Used $(CC) compiler
 
 server: build_server build_node
 	cd $(BUILD_DIR)/$(BUILD_TYPE)/server && ./server

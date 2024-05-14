@@ -2,16 +2,11 @@
 
 # ROOT_DIR, BUILD_DIR, CFLAGS, DEFINES are exported from root Makefile
 
-ifeq ($(origin CC),default)
-  CC = gcc
-endif
-
 SRC = src/server.c
 
 EXEC_BUILD_DIR = $(BUILD_DIR)/$(BUILD_TYPE)/server
 OBJS_BUILD = $(patsubst %.c, $(EXEC_BUILD_DIR)/%.o, $(SRC))
 DEPENDS = $(patsubst %.c, %.d, $(SRC))
-
 
 IDEPS = -I../deps/log.c/src
 INCLUDE = -Iinclude -I../common/include $(IDEPS)

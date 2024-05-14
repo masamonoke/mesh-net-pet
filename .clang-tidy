@@ -1,4 +1,4 @@
-Checks: '-*,bugprone-*,cert-env33-c,cert-err34-c,cert-flp30-c,google-global-names-in-headers,google-readability-casting,google-runtime-int,google-runtime-operator,misc-*,performance-*, misc-include-cleaner-*,readability-non-const-parameter, bugprone-unused-return-value'
+Checks: '-*,bugprone-*,cert-env33-c,cert-err34-c,cert-flp30-c,google-global-names-in-headers,google-readability-casting,google-runtime-int,google-runtime-operator,misc-*,performance-*, misc-include-cleaner-*,readability-non-const-parameter, bugprone-unused-return-value, readability-inconsistent-declaration-parameter-name'
 WarningsAsErrors: ''
 HeaderFilterRegex: '.*\.[h|inl]$'
 FormatStyle: 'file'

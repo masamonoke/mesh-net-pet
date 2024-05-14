@@ -7,21 +7,21 @@
 #include "custom_logger.h"
 #include "control_utils.h"
 
-static void parse_message(enum request_type* request, void** payload, const uint8_t* buf, size_t buf_len);
+static int32_t parse_message(enum request_type* request, void** payload, const uint8_t* buf, size_t buf_len);
 
-static void create_message(enum request_type request, void* payload, uint8_t* message, uint32_t* msg_len);
+static int32_t create_message(enum request_type request, void* payload, uint8_t* message, uint32_t* msg_len);
 
-void format_parse_message(enum request_type* req, void** payload, const void* buf, size_t len) {
-	parse_message(req, payload, (uint8_t*) buf, len);
+int32_t format_parse_message(enum request_type* req, void** payload, const void* buf, size_t len) {
+	return parse_message(req, payload, (uint8_t*) buf, len);
 }
 
-void format_create_message(enum request_type req, void* payload, uint8_t* buf, uint32_t* len) {
-	create_message(req, payload, buf, len);
+int32_t format_create_message(enum request_type req, void* payload, uint8_t* buf, uint32_t* len) {
+	return create_message(req, payload, buf, len);
 }
 
 static int32_t handle_node_update(const uint8_t* buf, void* ret_payload);
 
-static void parse_message(enum request_type* request, void** payload, const uint8_t* buf, size_t buf_len) {
+static int32_t parse_message(enum request_type* request, void** payload, const uint8_t* buf, size_t buf_len) {
 	uint32_t message_len;
 	const uint8_t* p;
 
@@ -33,7 +33,7 @@ static void parse_message(enum request_type* request, void** payload, const uint
 		p += sizeof(message_len);
 	} else {
 		custom_log_error("Incorrect message format: message length < %d", sizeof(message_len));
-		return;
+		return -1;
 	}
 
 	if (buf_len == message_len) {
@@ -67,7 +67,7 @@ static void parse_message(enum request_type* request, void** payload, const uint
 		}
 	} else {
 		custom_log_error("Incorrect message format: message length < declared message length %d", message_len);
-		return;
+		return - 1;
 	}
 
 	switch (*request) {
@@ -82,6 +82,8 @@ static void parse_message(enum request_type* request, void** payload, const uint
 		case REQUEST_TYPE_UNDEFINED:
 			custom_log_error("Unknown request type");
 	}
+
+	return 0;
 }
 
 static int32_t handle_node_update(const uint8_t* buf, void* ret_payload) {
@@ -109,6 +111,7 @@ static int32_t handle_node_update(const uint8_t* buf, void* ret_payload) {
 	p += sizeof(len);
 	memcpy(str, p, len);
 	p += len;
+	str[len] = 0;
 	strcpy(payload->alias, str);
 	memcpy(&payload->label, p, sizeof(payload->label));
 	p += sizeof(payload->label);
@@ -117,7 +120,7 @@ static int32_t handle_node_update(const uint8_t* buf, void* ret_payload) {
 	return 0;
 }
 
-static void create_message(enum request_type request, void* payload, uint8_t* message, uint32_t* msg_len) {
+static int32_t create_message(enum request_type request, void* payload, uint8_t* message, uint32_t* msg_len) {
 	uint32_t alias_len;
 	uint32_t payload_len;
 	int32_t pid;
@@ -176,4 +179,6 @@ static void create_message(enum request_type request, void* payload, uint8_t* me
 			not_implemented();
 			break;
 	}
+
+	return 0;
 }

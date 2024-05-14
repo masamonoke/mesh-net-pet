@@ -1,34 +1,52 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <stdint.h>
+#include <sys/file.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "custom_logger.h"
+#include "control_utils.h"
 
 #ifdef LOG_FILE
 
 static const char* log_filename = "logs.log";
 
-// TODO: probably race conditions can happen
 void log_file_(const char* format, ...) {
 	FILE* fp;
 	va_list args;
-	int32_t fd;
 
-	fd = open(log_filename, O_APPEND);
-	if (fd >= 0) {
-		fp = fopen(log_filename, "a");
+	fp = fopen(log_filename, "a");
+	if (fp) {
+		if (flock(fileno(fp), LOCK_EX)) {
+			fprintf(stderr, "Failed to open lock file %s\n", log_filename);
+			exit(1);
+		}
+
+		va_start(args, format);
+		if (vfprintf(fp, format, args) < 0) {
+			fprintf(stderr, "Failed to write log\n");
+			exit(1);
+		}
+		if (fprintf(fp, "\n") < 0) {
+			fprintf(stderr, "Failed to write log\n");
+			exit(1);
+		}
+		va_end(args);
+
+		if (flock(fileno(fp), LOCK_UN)) {
+			fprintf(stderr, "Failed to unlock file %s\n", log_filename);
+			exit(1);
+		}
+
 	} else {
-		fp = fopen(log_filename, "w");
+		fprintf(stderr, "Failed to open log file %s\n", log_filename);
+		exit(1);
 	}
-	flock(fileno(fp), LOCK_EX);
 
-	va_start(args, format);
-	vfprintf(fp, format, args);
-	fprintf(fp, "\n");
-	va_end(args);
+
 	fclose(fp);
-
-	flock(fileno(fp), LOCK_UN);
 }
 
 #endif
