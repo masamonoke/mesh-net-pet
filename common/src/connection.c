@@ -6,10 +6,7 @@
 #include "connection.h"
 #include "control_utils.h"
 #include "custom_logger.h"
-
-#ifndef SERVER_PORT
-#define SERVER_PORT 999
-#endif
+#include "settings.h"
 
 int32_t connection_socket_to_send(uint16_t port) {
 	int32_t server_fd;
@@ -57,13 +54,13 @@ int32_t connection_socket_to_listen(uint16_t port) {
 	addr.sin_addr.s_addr = ntohl(0); // 0.0.0.0
 	rv = bind(fd, (const struct sockaddr*) &addr, sizeof(addr));
 	if (rv < 0) {
-		custom_log_error("Failed to bind(): %d", errno);
+		custom_log_error("Failed to bind() on port %d: %d", port, errno);
 		return -1;
 	}
 
 	rv = listen(fd, SOMAXCONN);
 	if (rv < 0) {
-		custom_log_error("Failed to listen(): %d", errno);
+		custom_log_error("Failed to listen() on port %d: %d", port, errno);
 		return -1;
 	}
 

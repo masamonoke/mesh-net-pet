@@ -2,7 +2,8 @@
 
 # ROOT_DIR, BUILD_DIR, CFLAGS, DEFINES are exported from root Makefile
 
-SRC = src/append_string.c src/codes.c src/io.c src/control_utils.c src/custom_logger.c src/connection.c src/format.c src/serving.c
+SRC = src/append_string.c src/io.c src/control_utils.c src/custom_logger.c src/connection.c src/format_client_server.c \
+	  src/format_server_node.c src/serving.c src/format.c
 
 BUILD_TYPE = debug
 

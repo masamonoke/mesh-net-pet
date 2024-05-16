@@ -36,7 +36,7 @@ void serving_poll(struct serving_data* serving, void* data) {
 				} else {
 					add_to_pfds(&serving->pfds, newfd, &serving->pfd_count, &serving->pfd_capacity);
 
-					custom_log_info("New connection from %s on socket %d",
+					custom_log_debug("New connection from %s on socket %d",
 						inet_ntop(serving->remoteaddr.ss_family, get_in_addr((struct sockaddr*) &serving->remoteaddr), remote_ip, INET6_ADDRSTRLEN), newfd);
 				}
 			} else {
@@ -44,16 +44,37 @@ void serving_poll(struct serving_data* serving, void* data) {
 
 				sender_fd = serving->pfds[i].fd;
 				if (serving->handle_request(sender_fd, data)) {
-					custom_log_error("Failed to read request from connection %d", sender_fd);
 					close(sender_fd);
 
 					del_from_pfds(serving->pfds, i, &serving->pfd_count);
 
-					custom_log_info("Socket %d hung up", sender_fd);
+					custom_log_debug("Socket %d hung up", sender_fd);
 				}
 			}
 		}
 	}
+}
+
+void serving_init(struct serving_data* serving, int32_t server_fd, int32_t (*handle_request)(int32_t sender_fd, void* data)) {
+	serving->server_fd = server_fd;
+	serving->handle_request = handle_request;
+
+	serving->pfd_count = 0;
+	serving->pfd_capacity = 5;
+	serving->pfds = malloc(sizeof(struct pollfd) * serving->pfd_capacity);
+
+	serving->pfds[0].fd = serving->server_fd;
+    serving->pfds[0].events = POLLIN;
+	serving->pfd_count++;
+}
+
+void serving_free(struct serving_data* serving) {
+	size_t i;
+
+	for (i = 0; i < serving->pfd_count; i++) {
+		close(serving->pfds[i].fd);
+	}
+	free(serving->pfds);
 }
 
 static void add_to_pfds(struct pollfd* pfds[], int newfd, uint32_t* fd_count, size_t* fd_size) {

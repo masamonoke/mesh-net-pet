@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <signal.h>
 
 void die_(const char* func_name, int32_t line, const char* file, const char* msg, ...) { // NOLINT
 	int32_t err;
@@ -16,5 +17,6 @@ void die_(const char* func_name, int32_t line, const char* file, const char* msg
 	custom_log_error("DIED [%s]: (error code: %d), line %d, file %s", func_name, err, line, file);
 	vfprintf(stderr, msg, args);
 	fprintf(stderr, "\n");
-	exit(1);
+
+	raise(SIGTERM);
 }
