@@ -50,6 +50,8 @@ and then rebuild project.
 
 # Run
 
+## Server
+
 ```console
 make server BUILD_TYPE=release
 ```
@@ -58,4 +60,16 @@ or
 
 ```console
 cd build/server && ./server
+```
+
+## Client
+
+```console
+./client ping <node_label>
+```
+
+or
+
+```console
+make client TARGET_ARGS="ping <node_label>"
 ```
