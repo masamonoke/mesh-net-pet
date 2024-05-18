@@ -97,46 +97,50 @@ static int32_t create_message(enum request_type_server_node request, const void*
 	switch (request) {
 		case REQUEST_TYPE_SERVER_NODE_UPDATE:
 			{
-				struct node_update_ret_payload* update_payload;
-				cmd = "update_node";
+				if (payload) {
+					struct node_update_ret_payload* update_payload;
+					cmd = "update_node";
 
-				update_payload = (struct node_update_ret_payload*) payload;
-				alias_len = (uint32_t) strlen(update_payload->alias);
-				pid = getpid();
-				payload_len = sizeof(update_payload->port) + sizeof(alias_len) + alias_len + sizeof(update_payload->label) + sizeof(pid);
-				sender = "server";
+					update_payload = (struct node_update_ret_payload*) payload;
+					alias_len = (uint32_t) strlen(update_payload->alias);
+					pid = getpid();
+					payload_len = sizeof(update_payload->port) + sizeof(alias_len) + alias_len + sizeof(update_payload->label) + sizeof(pid);
+					sender = "server";
 
-				cmd_len = (uint32_t) strlen(cmd) + 1;
-				sender_len = (uint32_t) strlen(sender) + 1;
-				*msg_len = payload_len + cmd_len + sender_len + sizeof(cmd_len) + sizeof(*msg_len) + sizeof(sender_len);
+					cmd_len = (uint32_t) strlen(cmd) + 1;
+					sender_len = (uint32_t) strlen(sender) + 1;
+					*msg_len = payload_len + cmd_len + sender_len + sizeof(cmd_len) + sizeof(*msg_len) + sizeof(sender_len);
 
-				p = message;
+					p = message;
 
-				memcpy(p, msg_len, sizeof(*msg_len));
-				p += sizeof(*msg_len);
+					memcpy(p, msg_len, sizeof(*msg_len));
+					p += sizeof(*msg_len);
 
-				memcpy(p, &cmd_len, sizeof(cmd_len));
-				p += sizeof(cmd_len);
-				memcpy(p, cmd, cmd_len);
-				p += cmd_len;
-				memcpy(p, &sender_len, sizeof(sender_len));
-				p += sizeof(sender_len);
-				memcpy(p, sender, sender_len);
-				p += sender_len;
+					memcpy(p, &cmd_len, sizeof(cmd_len));
+					p += sizeof(cmd_len);
+					memcpy(p, cmd, cmd_len);
+					p += cmd_len;
+					memcpy(p, &sender_len, sizeof(sender_len));
+					p += sizeof(sender_len);
+					memcpy(p, sender, sender_len);
+					p += sender_len;
 
-				// payload
-				memcpy(p, &update_payload->port, sizeof(update_payload->port));
-				p += sizeof(update_payload->port);
-				memcpy(p, &alias_len, sizeof(alias_len));
-				p += sizeof(alias_len);
-				memcpy(p, update_payload->alias, alias_len);
-				p += alias_len;
-				memcpy(p, &update_payload->label, sizeof(update_payload->label));
-				p += sizeof(update_payload->label);
-				memcpy(p, &pid, sizeof(pid));
-				p += sizeof(pid);
+					// payload
+					memcpy(p, &update_payload->port, sizeof(update_payload->port));
+					p += sizeof(update_payload->port);
+					memcpy(p, &alias_len, sizeof(alias_len));
+					p += sizeof(alias_len);
+					memcpy(p, update_payload->alias, alias_len);
+					p += alias_len;
+					memcpy(p, &update_payload->label, sizeof(update_payload->label));
+					p += sizeof(update_payload->label);
+					memcpy(p, &pid, sizeof(pid));
+					p += sizeof(pid);
 
-				p += payload_len;
+					p += payload_len;
+				} else {
+					custom_log_error("Null payload passed");
+				}
 				break;
 			}
 		case REQUEST_TYPE_SERVER_NODE_PING:

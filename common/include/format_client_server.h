@@ -19,6 +19,8 @@ struct node_ping_ret_payload {
 	int32_t label;
 };
 
+__attribute__((nonnull(2, 3, 4)))
 int32_t format_server_client_create_message(enum request_type_server_client req, const void* payload, uint8_t* buf, uint32_t* len);
 
+__attribute__((nonnull(1, 2, 3)))
 int32_t format_server_client_parse_message(enum request_type_server_client* req, void** payload, const void* buf, size_t len);

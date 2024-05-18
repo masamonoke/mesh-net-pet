@@ -22,6 +22,7 @@ struct node {
 };
 
 typedef struct server {
+	int32_t client_fd;
 	struct serving_data serving;
 	struct node children[NODE_COUNT];
 } server_t;
@@ -67,6 +68,7 @@ int32_t main(void) {
 			server_data.children[i].alias = NULL;
 		}
 	}
+	server_data.client_fd = -1;
 
 	custom_log_info("Started server on port %d (process %d)", SERVER_PORT, getpid());
 
@@ -92,7 +94,7 @@ static void run_node(uint32_t node_label) {
 		die("Failed to convert node_label to str");
 	}
 
-	execl("../node/mesh_node", "mesh_node", "-nodelabel", node_label_str, (char*) NULL);
+	execl("../node/mesh_node", "mesh_node", node_label_str, (char*) NULL);
 }
 
 static void int_handler(int32_t dummy) {
@@ -142,17 +144,20 @@ static int32_t handle_request(int32_t conn_fd, void* data) {
 	return -1;
 }
 
-static void ping(int32_t client_fd, void** payload);
+static void ping(void** payload);
 
 static bool handle_client_request(int32_t client_fd, enum request_type_server_client* cmd_type, void** payload, uint8_t* buf, size_t received_bytes, void* data) {
 	(void) data;
+
 	format_server_client_parse_message(cmd_type, payload, buf, received_bytes);
+
 	switch (*cmd_type) {
 		case REQUEST_TYPE_SERVER_CLIENT_SEND_AS_NODE:
 			not_implemented();
 			break;
 		case REQUEST_TYPE_SERVER_CLIENT_PING_NODE:
-			ping(client_fd, payload);
+			server_data.client_fd = client_fd;
+			ping(payload);
 			break;
 		case REQUEST_TYPE_SERVER_CLIENT_UNDEFINED:
 			return false;
@@ -162,13 +167,11 @@ static bool handle_client_request(int32_t client_fd, enum request_type_server_cl
 	return true;
 }
 
-static void ping(int32_t client_fd, void** payload) {
+static void ping(void** payload) {
 	size_t i;
 	struct node_ping_ret_payload* p;
-	bool found;
 	struct timeval tv;
 
-	found = false;
 	p = (struct node_ping_ret_payload*) *payload;
 	for (i = 0; i < NODE_COUNT; i++) {
 		if (server_data.children[i].label == p->label) {
@@ -191,26 +194,23 @@ static void ping(int32_t client_fd, void** payload) {
 			setsockopt(server_data.children[i].write_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 
 			if (received > 0) {
-				if (io_write_all(client_fd, (char*) b, (size_t) received)) {
+				if (io_write_all(server_data.client_fd, (char*) b, (size_t) received)) {
 					custom_log_error("Failed to send ping result to client");
 				}
 			} else {
+				enum request_result res;
+
 				custom_log_error("Failed to get response from node %d", p->label);
+				res = REQUEST_ERR;
+				if (io_write_all(server_data.client_fd, (char*) &res, sizeof(res))) {
+					custom_log_error("Failed to send ping result to client");
+				}
 			}
 
-			found = true;
 			break;
 		}
 	}
 
-	if (!found) {
-		enum request_result res;
-
-		res = REQUEST_ERR;
-		if (io_write_all(client_fd, (char*) &res, sizeof(res))) {
-			custom_log_error("Failed to send ping result to client");
-		}
-	}
 	free(p);
 }
 

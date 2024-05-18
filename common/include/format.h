@@ -8,4 +8,5 @@ enum request_result {
 	REQUEST_UNKNOWN
 };
 
+__attribute__((nonnull(2)))
 void format_sprint_result(enum request_result res, char buf[], size_t len);

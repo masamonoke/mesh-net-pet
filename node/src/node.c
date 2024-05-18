@@ -13,6 +13,7 @@
 #include "serving.h"
 #include "format.h"
 #include "settings.h"
+#include "routing.h"
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -34,20 +35,15 @@
 
 #endif
 
-/* struct node { */
-/* 	int32_t fd; */
-/* 	int32_t label; */
-/* 	int32_t port; */
-/* }; */
-
 typedef struct server {
 	struct serving_data serving;
-	/* struct node connections[NODE_COUNT]; */
+	struct routing_table_t* table;
 } server_t;
 
 static const char* node_name;
 static int32_t label;
 static uint16_t port;
+static routing_table_t routing;
 
 static volatile bool keeprunning = true;
 
@@ -71,6 +67,9 @@ int32_t main(int32_t argc, char** argv) {
 	if (parse_args(argv, (size_t) argc)) {
 		die("Failed to parse args");
 	}
+
+	routing_table_new(&routing, label);
+	routing_table_print(&routing, label);
 
 	server_fd = connection_socket_to_listen(port);
 
@@ -100,28 +99,21 @@ static void term_handler(int32_t dummy) {
 }
 
 static int32_t parse_args(char** args, size_t argc) {
-	size_t i;
+	char* endptr;
 
-	if (argc < 2) {
+	if (argc != 2) {
 		return -1;
 	}
 
-	for (i = 0; i < argc - 1; i++) {
-		if (0 == strcmp("-nodelabel", args[i])) {
-			char* endptr;
-
-			endptr = NULL;
-			label = (int32_t) strtol(args[i + 1], &endptr, 10);
-			if (args[i + 1]  == endptr) {
-				return -1;
-			}
-			port = (uint16_t) (SERVER_PORT + label + 1);
-			node_name = nodes_aliases[label];
-			return 0;
-		}
+	endptr = NULL;
+	label = (int32_t) strtol(args[1], &endptr, 10);
+	if (args[1]  == endptr) {
+		return -1;
 	}
+	port = node_port(label);
+	node_name = NODES_ALIASES[label];
 
-	return -1;
+	return 0;
 }
 
 static void update_node_state(void) {
