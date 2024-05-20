@@ -1,8 +1,10 @@
-#include <string.h>
-
 #include "routing.h"
-#include "custom_logger.h"
-#include "path.h"
+
+#include <stdio.h>          // for snprintf
+#include <string.h>         // for strcat, strcpy
+
+#include "custom_logger.h"  // for custom_log_debug, custom_log_error
+#include "path.h"           // for V, path_find
 
 int32_t routing_table_new(routing_table_t* table, int32_t label) {
 	size_t i;

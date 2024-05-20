@@ -1,31 +1,18 @@
-#include <unistd.h>
-#include <stdlib.h>
-#include <signal.h>
+#include <signal.h>         // for kill
+#include <stdbool.h>        // for bool, false, true
+#include <stdint.h>         // for int32_t, uint32_t, uint8_t
+#include <stdio.h>          // for size_t, NULL, snprintf
+#include <sys/signal.h>     // for signal, SIGINT, SIGTERM
+#include <sys/socket.h>     // for recv
+#include <sys/types.h>      // for ssize_t
+#include <unistd.h>         // for execl, fork, getpid
 
-#include "control_utils.h"
-#include "custom_logger.h"
-#include "format_client_server.h"
-#include "format_server_node.h"
-#include "connection.h"
-#include "serving.h"
-#include "io.h"
-#include "format.h"
-#include "settings.h"
-
-struct node {
-	pid_t pid;
-	int32_t write_fd;
-	char* alias;
-	int32_t label;
-	int32_t port;
-	bool initialized;
-};
-
-typedef struct server {
-	int32_t client_fd;
-	struct serving_data serving;
-	struct node children[NODE_COUNT];
-} server_t;
+#include "connection.h"     // for connection_socket_to_listen
+#include "control_utils.h"  // for die
+#include "custom_logger.h"  // for custom_log_error, custom_log_debug, custo...
+#include "request.h"        // for request_handle, server_t
+#include "serving.h"        // for node, serving_free, serving_init, serving...
+#include "settings.h"       // for NODE_COUNT, SERVER_PORT
 
 static volatile bool keeprunning = true;
 
@@ -42,6 +29,7 @@ static int32_t handle_request(int32_t conn_fd, void* data);
 int32_t main(void) {
 	size_t i;
 	int32_t server_fd;
+	struct serving_data serving;
 
 	signal(SIGINT, int_handler);
 	signal(SIGTERM, term_handler);
@@ -56,7 +44,6 @@ int32_t main(void) {
 		server_data.children[i].pid = fork();
 		if (server_data.children[i].pid < 0) {
 			custom_log_error("Failed to create child process");
-			goto L_FREE;
 		} else if (server_data.children[i].pid == 0) {
 			run_node((uint32_t) i);
 		} else {
@@ -72,15 +59,13 @@ int32_t main(void) {
 
 	custom_log_info("Started server on port %d (process %d)", SERVER_PORT, getpid());
 
-	serving_init(&server_data.serving, server_fd, handle_request);
+	serving_init(&serving, server_fd, handle_request);
 
 	while (keeprunning) {
-		serving_poll(&server_data.serving, server_data.children);
+		serving_poll(&serving, server_data.children);
 	}
 
-L_FREE:
-
-	serving_free(&server_data.serving);
+	serving_free(&serving);
 
 	return 0;
 }
@@ -110,17 +95,8 @@ static void term_handler(int32_t dummy) {
 	int_handler(dummy);
 }
 
-static void update_child(void* payload, void* data);
-
-static bool handle_client_request(int32_t client_fd, enum request_type_server_client* cmd_type, void** payload, uint8_t* buf, size_t received_bytes, void* data);
-
-static bool handle_node_request(enum request_type_server_node* cmd_type, void** payload, uint8_t* buf, size_t received_bytes, void* data);
-
 static int32_t handle_request(int32_t conn_fd, void* data) {
 	ssize_t received_bytes;
-	enum request_type_server_client client_server_cmd_type;
-	enum request_type_server_node server_node_cmd_type;
-	void* payload;
 	char buf[256];
 
 	received_bytes = recv(conn_fd, buf, sizeof(buf), 0);
@@ -130,8 +106,7 @@ static int32_t handle_request(int32_t conn_fd, void* data) {
 	if (received_bytes > 0) {
 		bool processed;
 
-		processed = handle_client_request(conn_fd, &client_server_cmd_type, &payload, (uint8_t*) buf, (size_t) received_bytes, data) ||
-			handle_node_request(&server_node_cmd_type, &payload, (uint8_t*) buf, (size_t) received_bytes, data);
+		processed = request_handle(&server_data, (uint8_t*) buf, received_bytes, conn_fd, data);
 
 		if (processed) {
 			return 0;
@@ -142,120 +117,4 @@ static int32_t handle_request(int32_t conn_fd, void* data) {
 	}
 
 	return -1;
-}
-
-static void ping(void** payload);
-
-static bool handle_client_request(int32_t client_fd, enum request_type_server_client* cmd_type, void** payload, uint8_t* buf, size_t received_bytes, void* data) {
-	(void) data;
-
-	format_server_client_parse_message(cmd_type, payload, buf, received_bytes);
-
-	switch (*cmd_type) {
-		case REQUEST_TYPE_SERVER_CLIENT_SEND_AS_NODE:
-			not_implemented();
-			break;
-		case REQUEST_TYPE_SERVER_CLIENT_PING_NODE:
-			server_data.client_fd = client_fd;
-			ping(payload);
-			break;
-		case REQUEST_TYPE_SERVER_CLIENT_UNDEFINED:
-			return false;
-			break;
-	}
-
-	return true;
-}
-
-static void ping(void** payload) {
-	size_t i;
-	struct node_ping_ret_payload* p;
-	struct timeval tv;
-
-	p = (struct node_ping_ret_payload*) *payload;
-	for (i = 0; i < NODE_COUNT; i++) {
-		if (server_data.children[i].label == p->label) {
-			uint8_t b[256];
-			uint32_t buf_len;
-			ssize_t received;
-
-			format_server_node_create_message(REQUEST_TYPE_SERVER_NODE_PING, NULL, b, &buf_len);
-			if (io_write_all(server_data.children[i].write_fd, (char*) b, buf_len)) {
-				custom_log_error("Failed to send request to node");
-			}
-			tv.tv_sec = 2;
-			tv.tv_usec = 0;
-			setsockopt(server_data.children[i].write_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
-
-			received = recv(server_data.children[i].write_fd, b, sizeof(b), 0);
-
-			tv.tv_sec = 0;
-			tv.tv_usec = 0;
-			setsockopt(server_data.children[i].write_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
-
-			if (received > 0) {
-				if (io_write_all(server_data.client_fd, (char*) b, (size_t) received)) {
-					custom_log_error("Failed to send ping result to client");
-				}
-			} else {
-				enum request_result res;
-
-				custom_log_error("Failed to get response from node %d", p->label);
-				res = REQUEST_ERR;
-				if (io_write_all(server_data.client_fd, (char*) &res, sizeof(res))) {
-					custom_log_error("Failed to send ping result to client");
-				}
-			}
-
-			break;
-		}
-	}
-
-	free(p);
-}
-
-static bool handle_node_request(enum request_type_server_node* cmd_type, void** payload, uint8_t* buf, size_t received_bytes, void* data) {
-
-	format_server_node_parse_message(cmd_type, payload, buf, received_bytes);
-	switch (*cmd_type) {
-		case REQUEST_TYPE_SERVER_NODE_UPDATE:
-			update_child(*payload, data);
-			break;
-		case REQUEST_TYPE_SERVER_NODE_PING:
-			not_implemented();
-			break;
-		case REQUEST_TYPE_SERVER_NODE_UNDEFINED:
-			return false;
-			break;
-	}
-
-	return true;
-}
-
-static void update_child(void* payload, void* data) { // NOLINT
-	struct node_update_ret_payload* ret;
-	size_t i;
-	struct node* children;
-
-	children = (struct node*) data;
-
-	ret = (struct node_update_ret_payload*) payload;
-
-	for (i = 0; i < NODE_COUNT; i++) {
-		if (children[i].pid == ret->pid) {
-			children[i].port = ret->port;
-			children[i].label = ret->label;
-			children[i].alias = ret->alias;
-			children[i].initialized = true;
-
-			children[i].write_fd = connection_socket_to_send((uint16_t) children[i].port);
-			if (children[i].write_fd < 0) {
-				custom_log_error("Failed to establish connection with node port=%d, alias=%s", children[i].port, children[i].alias);
-			} else {
-				custom_log_info("Established connection with node: label=%d, alias=%s", children[i].label, children[i].alias);
-			}
-			break;
-		}
-	}
-	free(payload);
 }

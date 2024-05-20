@@ -7,11 +7,11 @@ SRC = src/append_string.c src/io.c src/control_utils.c src/custom_logger.c src/c
 
 BUILD_TYPE = debug
 
-DEPS_OBJ = $(ROOT_DIR)/bin/$(BUILD_TYPE)/log.c/log.c.o
+DEPS_OBJ = 
 OBJS_BUILD = $(patsubst %.c, $(BUILD_DIR)/$(BUILD_TYPE)/common/%.o, $(SRC)) $(DEPS_OBJ)
 DEPENDS = $(patsubst %.c, %.d, $(SRC))
 
-IDEPS = -I$(ROOT_DIR)/deps/log.c/src
+IDEPS = 
 INCLUDE = -Iinclude $(IDEPS)
 
 $(BUILD_DIR)/$(BUILD_TYPE)/node: $(OBJS_BUILD)

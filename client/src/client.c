@@ -1,23 +1,24 @@
-#include <stdint.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
+#include <stdint.h>                // for int32_t, uint32_t, uint8_t
+#include <stdlib.h>                // for strtol, NULL, malloc, free
+#include <string.h>                // for strcmp, memcpy
+#include <sys/socket.h>            // for recv, setsockopt, SOL_SOCKET, SO_R...
+#include <sys/time.h>              // for timeval
+#include <sys/types.h>             // for ssize_t
+#include <unistd.h>                // for close
 
-#include "custom_logger.h"
-#include "control_utils.h"
-#include "connection.h"
-#include "format_client_server.h"
-#include "io.h"
-#include "format.h"
-#include "settings.h"
+#include "connection.h"            // for connection_socket_to_send
+#include "control_utils.h"         // for die
+#include "custom_logger.h"         // for custom_log_error, custom_log_info
+#include "format.h"                // for request, format_sprint_result, req...
+#include "format_client_server.h"  // for send_to_node_ret_payload, format_s...
+#include "io.h"                    // for io_write_all
+#include "settings.h"              // for SERVER_PORT
 
-static int32_t parse_args(int32_t argc, char** argv, enum request_type_server_client* cmd, void** payload);
+static int32_t parse_args(int32_t argc, char** argv, enum request* cmd, void** payload);
 
 int32_t main(int32_t argc, char** argv) {
 	int32_t server_fd;
-	enum request_type_server_client req;
+	enum request req;
 	uint8_t buf[256];
 	uint32_t buf_len;
 	void* payload;
@@ -25,6 +26,7 @@ int32_t main(int32_t argc, char** argv) {
 	enum request_result status;
 	struct timeval tv;
 
+	payload = NULL;
 	if (parse_args(argc, argv, &req, &payload)) {
 		custom_log_error("Failed to parse client args");
 		return 1;
@@ -36,7 +38,11 @@ int32_t main(int32_t argc, char** argv) {
 		die("Failed to get socket");
 	}
 
-	format_server_client_create_message(req, payload, buf, &buf_len);
+	if (format_server_client_create_message(req, payload, buf, &buf_len)) {
+		custom_log_error("Failed to create format message");
+		goto L_FREE;
+	}
+
 	if (io_write_all(server_fd, (const char*) buf, buf_len)) {
 		custom_log_error("Failed to send client command");
 	}
@@ -52,21 +58,55 @@ int32_t main(int32_t argc, char** argv) {
 	}
 
 	format_sprint_result(status, (char*) buf, sizeof(buf));
-	custom_log_info("Ping result %s", buf);
+	custom_log_info("Request result %s", buf);
 
+L_FREE:
 	close(server_fd);
 	free(payload);
 
 	return 0;
 }
 
-static int32_t parse_args(int32_t argc, char** argv, enum request_type_server_client* cmd, void** payload) {
+static int32_t parse_args(int32_t argc, char** argv, enum request* cmd, void** payload) {
 	int32_t i;
 
 	if (argc > 2) {
 		for (i = 0; i < argc; i++) {
-			if (0 == strcmp(argv[i], "send")) {
-				*cmd = REQUEST_TYPE_SERVER_CLIENT_SEND_AS_NODE;
+			if (0 == strcmp(argv[i], "send") && argc >= 6) {
+				int32_t label_to;
+				int32_t label_from;
+				char* endptr;
+
+
+				*cmd = REQUEST_SEND;
+				label_to = -1;
+				label_from = -1;
+				for (i = 0; i < argc; i++) {
+					if (0 == strcmp(argv[i], "-s") || 0 == strcmp(argv[i], "--sender")) {
+						endptr = NULL;
+						label_from = (int32_t) strtol(argv[i + 1], &endptr, 10);
+						if (argv[i + 1] == endptr) {
+							return -1;
+						}
+					}
+					if (0 == strcmp(argv[i], "-r") || 0 == strcmp(argv[i], "--receiver")) {
+						endptr = NULL;
+						label_to = (int32_t) strtol(argv[i + 1], &endptr, 10);
+						if (argv[i + 1] == endptr) {
+							return -1;
+						}
+					}
+				}
+
+				if (label_to < 0 || label_from < 0) {
+					custom_log_error("Failed to parse send command");
+					return -1;
+				}
+
+				*payload = malloc(sizeof(struct send_to_node_ret_payload));
+				((struct send_to_node_ret_payload*) *payload)->label_from = label_from;
+				((struct send_to_node_ret_payload*) *payload)->label_to = label_to;
+
 				return 0;
 			}
 			if (0 == strcmp(argv[i], "ping")) {
@@ -79,7 +119,7 @@ static int32_t parse_args(int32_t argc, char** argv, enum request_type_server_cl
 					return -1;
 				}
 
-				*cmd = REQUEST_TYPE_SERVER_CLIENT_PING_NODE;
+				*cmd = REQUEST_PING;
 				*payload = malloc(sizeof(struct node_ping_ret_payload));
 				((struct node_ping_ret_payload*) *payload)->label = label;
 

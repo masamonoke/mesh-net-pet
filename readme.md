@@ -62,6 +62,8 @@ or
 cd build/server && ./server
 ```
 
+Note that Makefile makes debug build by default.
+
 ## Client
 
 ```console
@@ -72,4 +74,9 @@ or
 
 ```console
 make client TARGET_ARGS="ping <node_label>"
+```
+
+Also
+```console
+make client TARGET_ARGS="send -s <sender node> -r <receiver node>"
 ```

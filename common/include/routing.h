@@ -22,10 +22,10 @@ typedef struct routing_table {
 	size_t len;
 } routing_table_t;
 
-__attribute__((nonnull(1)))
+__attribute__((nonnull(1), warn_unused_result))
 int32_t routing_table_new(routing_table_t* table, int32_t label);
 
-__attribute__((nonnull(1)))
+__attribute__((nonnull(1), warn_unused_result))
 ssize_t routing_table_get_dest_idx(const routing_table_t* table, int32_t label);
 
 __attribute__((nonnull(1)))

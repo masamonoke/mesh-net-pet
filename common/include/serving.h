@@ -1,9 +1,19 @@
 #pragma once
 
-#include <stdint.h>
-#include <stddef.h>
-#include <sys/socket.h>
-#include <poll.h>
+#include <stdbool.h>     // for bool
+#include <stddef.h>      // for size_t
+#include <stdint.h>      // for int32_t, uint32_t
+#include <sys/socket.h>  // for sockaddr_storage, socklen_t
+#include <sys/types.h>   // for pid_t
+
+struct node {
+	pid_t pid;
+	int32_t write_fd;
+	char* alias;
+	int32_t label;
+	int32_t port;
+	bool initialized;
+};
 
 struct serving_data {
 	int32_t server_fd;

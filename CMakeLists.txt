@@ -8,7 +8,6 @@ project(${NAME})
 set(CMAKE_C_STANDARD 17)
 
 # external libraries
-include_directories(deps/log.c/src)
 
 # common sources and headers library
 add_subdirectory(common)
@@ -20,7 +19,6 @@ add_subdirectory(server)
 add_subdirectory(client)
 
 # linkage
-target_link_libraries(common logc)
 target_link_libraries(mesh_node common)
 target_link_libraries(server common)
 target_link_libraries(client common)
