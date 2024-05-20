@@ -141,8 +141,6 @@ static void handle_ping(const struct node* children, int32_t client_fd, const vo
 			break;
 		}
 	}
-
-	free(p);
 }
 
 static void handle_update_child(const void* payload, struct node* children);
