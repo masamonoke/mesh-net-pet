@@ -67,6 +67,8 @@ static bool handle_client_request(server_t* server_data, void** payload, const u
 			break;
 	}
 
+	free(*payload);
+
 	return true;
 }
 

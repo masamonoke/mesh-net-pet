@@ -2,7 +2,6 @@
 
 #include <stdio.h>                 // for fopen, fclose, FILE, fread, fseek
 #include <stdlib.h>                // for free, malloc
-#include <sys/_types/_seek_set.h>  // for SEEK_END
 #include <sys/types.h>             // for ssize_t
 #include <unistd.h>                // for read, write
 
