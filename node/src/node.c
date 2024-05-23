@@ -1,22 +1,22 @@
-#include <stdbool.h>             // for bool, false, true
-#include <stdint.h>              // for int32_t, uint8_t, uint16_t, uint32_t
-#include <stdlib.h>              // for size_t, strtol, NULL
-#include <string.h>              // for strcpy
-#include <sys/signal.h>          // for signal, SIGINT, SIGTERM
-#include <sys/socket.h>          // for recv
-#include <sys/types.h>           // for ssize_t
-#include <unistd.h>              // for getpid, close
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/signal.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#include "connection.h"          // for connection_socket_to_listen, connect...
-#include "control_utils.h"       // for die
-#include "custom_logger.h"       // for custom_log_error
-#include "format.h"              // for request
-#include "format_server_node.h"  // for node_update_ret_payload, format_serv...
-#include "io.h"                  // for io_write_all
-#include "node_server.h"         // for node_log_info, node_server_handle_re...
-#include "routing.h"             // for routing_table_new, routing_table_print
-#include "serving.h"             // for serving_free, serving_init, serving_...
-#include "settings.h"            // for NODES_ALIASES, NODE_COUNT, SERVER_PORT
+#include "connection.h"
+#include "control_utils.h"
+#include "custom_logger.h"
+#include "format.h"
+#include "format_server_node.h"
+#include "io.h"
+#include "node_server.h"
+#include "routing.h"
+#include "serving.h"
+#include "settings.h"
 
 static node_server_t server;
 static struct node children[NODE_COUNT];

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h> // for int32_t
-#include <stddef.h> // for size_t
+#include <stdint.h>
+#include <stddef.h>
 
 typedef struct append_buf {
 	char* b;

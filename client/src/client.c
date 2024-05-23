@@ -1,18 +1,18 @@
-#include <stdint.h>                // for int32_t, uint32_t, uint8_t
-#include <stdlib.h>                // for strtol, NULL, malloc, free
-#include <string.h>                // for strcmp, memcpy
-#include <sys/socket.h>            // for recv, setsockopt, SOL_SOCKET, SO_R...
-#include <sys/time.h>              // for timeval
-#include <sys/types.h>             // for ssize_t
-#include <unistd.h>                // for close
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#include "connection.h"            // for connection_socket_to_send
-#include "control_utils.h"         // for die
-#include "custom_logger.h"         // for custom_log_error, custom_log_info
-#include "format.h"                // for request, format_sprint_result, req...
-#include "format_client_server.h"  // for send_to_node_ret_payload, format_s...
-#include "io.h"                    // for io_write_all
-#include "settings.h"              // for SERVER_PORT
+#include "connection.h"
+#include "control_utils.h"
+#include "custom_logger.h"
+#include "format.h"
+#include "format_client_server.h"
+#include "io.h"
+#include "settings.h"
 
 static int32_t parse_args(int32_t argc, char** argv, enum request* cmd, void** payload);
 

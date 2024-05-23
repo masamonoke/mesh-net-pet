@@ -1,13 +1,13 @@
 #include "custom_logger.h"
 
-#include <stdbool.h>          // for bool, false, true
-#include <stdint.h>           // for int32_t
-#include <stdio.h>            // for fprintf, stderr, FILE, fileno, fclose
-#include <stdlib.h>           // for exit
-#include <sys/fcntl.h>        // for flock, LOCK_EX, LOCK_UN
-#include <stdarg.h>           // for va_start, va_end
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/fcntl.h>
+#include <stdarg.h>
 
-#include "control_utils.h"    // for die
+#include "control_utils.h"
 
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"

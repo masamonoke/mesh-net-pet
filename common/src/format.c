@@ -1,7 +1,7 @@
 #include "format.h"
 
-#include <stdio.h>   // for snprintf
-#include <string.h>  // for memcpy
+#include <stdio.h>
+#include <string.h>
 
 void format_sprint_result(enum request_result res, char buf[], size_t len) {
 	switch (res) {

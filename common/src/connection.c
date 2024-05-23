@@ -1,11 +1,11 @@
 #include "connection.h"
 
-#include <arpa/inet.h>      // for inet_ntop, ntohl, ntohs
-#include <netinet/in.h>     // for sockaddr_in, in_addr, INET_ADDRSTRLEN
-#include <sys/errno.h>      // for errno
-#include <sys/socket.h>     // for AF_INET, socket, SOCK_STREAM, bind, connect
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/errno.h>
+#include <sys/socket.h>
 
-#include "custom_logger.h"  // for custom_log_error
+#include "custom_logger.h"
 
 int32_t connection_socket_to_send(uint16_t port) {
 	int32_t server_fd;

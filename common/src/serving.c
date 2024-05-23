@@ -1,13 +1,13 @@
 #include "serving.h"
 
-#include <arpa/inet.h>      // for inet_ntop
-#include <netinet/in.h>     // for INET6_ADDRSTRLEN, sockaddr_in, sockaddr_in6
-#include <poll.h>           // for pollfd, POLLIN, poll
-#include <stdio.h>          // for perror
-#include <stdlib.h>         // for exit, free, malloc, realloc
-#include <unistd.h>         // for close
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <poll.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-#include "custom_logger.h"  // for custom_log_debug
+#include "custom_logger.h"
 
 static void add_to_pfds(struct pollfd* pfds[], int newfd, uint32_t* fd_count, size_t* fd_size);
 

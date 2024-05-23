@@ -1,7 +1,7 @@
 #include "path.h"
 
-#include <limits.h>  // for INT_MAX
-#include <string.h>  // for memcpy
+#include <limits.h>
+#include <string.h>
 
 static void dijkstra(const int32_t graph[V][V], int32_t src, int32_t dists[], int32_t next_nodes[][V]);
 

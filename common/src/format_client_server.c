@@ -1,12 +1,12 @@
 #include "format_client_server.h"
 
-#include <stddef.h>         // for size_t
-#include <stdlib.h>         // for malloc
-#include <string.h>         // for memcpy
+#include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "control_utils.h"  // for not_implemented
-#include "custom_logger.h"  // for custom_log_error
-#include "format.h"         // for request, format_create_base, format_skip_...
+#include "control_utils.h"
+#include "custom_logger.h"
+#include "format.h"
 
 static int32_t parse_message(enum request* request, void** payload, const uint8_t* buf, size_t buf_len);
 

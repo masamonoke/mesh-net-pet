@@ -1,12 +1,12 @@
 #include "io.h"
 
-#include <stdio.h>                 // for fopen, fclose, FILE, fread, fseek
-#include <stdlib.h>                // for free, malloc
-#include <sys/types.h>             // for ssize_t
-#include <unistd.h>                // for read, write
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#include "append_string.h"         // for append_string_append, append_strin...
-#include "custom_logger.h"         // for custom_log_error, custom_log_debug
+#include "append_string.h"
+#include "custom_logger.h"
 
 int32_t io_read_all(int32_t fd, char* buf_mut, size_t n, size_t* bytes_received) {
 	ssize_t rv;

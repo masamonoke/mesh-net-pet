@@ -1,18 +1,18 @@
-#include <signal.h>         // for kill
-#include <stdbool.h>        // for bool, false, true
-#include <stdint.h>         // for int32_t, uint32_t, uint8_t
-#include <stdio.h>          // for size_t, NULL, snprintf
-#include <sys/signal.h>     // for signal, SIGINT, SIGTERM
-#include <sys/socket.h>     // for recv
-#include <sys/types.h>      // for ssize_t
-#include <unistd.h>         // for execl, fork, getpid
+#include <signal.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <sys/signal.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#include "connection.h"     // for connection_socket_to_listen
-#include "control_utils.h"  // for die
-#include "custom_logger.h"  // for custom_log_error, custom_log_debug, custo...
-#include "request.h"        // for request_handle, server_t
-#include "serving.h"        // for node, serving_free, serving_init, serving...
-#include "settings.h"       // for NODE_COUNT, SERVER_PORT
+#include "connection.h"
+#include "control_utils.h"
+#include "custom_logger.h"
+#include "request.h"
+#include "serving.h"
+#include "settings.h"
 
 static volatile bool keeprunning = true;
 

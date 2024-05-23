@@ -1,17 +1,17 @@
 #include "node_server.h"
 
-#include <stdbool.h>               // for false
-#include <stdlib.h>                // for size_t, free, NULL
-#include <unistd.h>                // for close
+#include <stdbool.h>
+#include <stdlib.h>
+#include <unistd.h>
 
-#include "connection.h"            // for connection_socket_to_send
-#include "custom_logger.h"         // for custom_log_error
-#include "format.h"                // for request, request_sender, format_de...
-#include "format_client_server.h"  // for send_to_node_ret_payload
-#include "format_node_node.h"      // for node_send_payload, format_node_nod...
-#include "format_server_node.h"    // for format_server_node_create_message
-#include "io.h"                    // for io_write_all
-#include "settings.h"              // for node_port, SERVER_PORT
+#include "connection.h"
+#include "custom_logger.h"
+#include "format.h"
+#include "format_client_server.h"
+#include "format_node_node.h"
+#include "format_server_node.h"
+#include "io.h"
+#include "settings.h"
 
 static int32_t handle_server_request(node_server_t* server, int32_t conn_fd, enum request* cmd_type, void** payload, uint8_t* buf, size_t received_bytes, void* data);
 

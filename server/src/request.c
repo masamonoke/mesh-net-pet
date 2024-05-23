@@ -1,16 +1,16 @@
 #include "request.h"
 
-#include <stddef.h>                // for size_t, NULL
-#include <stdlib.h>                // for free
-#include <sys/socket.h>            // for setsockopt, SOL_SOCKET, SO_RCVTIMEO
-#include <sys/time.h>              // for timeval
+#include <stddef.h>
+#include <stdlib.h>
+#include <sys/socket.h>
+#include <sys/time.h>
 
-#include "connection.h"            // for connection_socket_to_send
-#include "custom_logger.h"         // for custom_log_error, custom_log_debug
-#include "format.h"                // for request, request_result, request_s...
-#include "format_client_server.h"  // for format_server_client_parse_message
-#include "format_server_node.h"    // for format_server_node_create_message
-#include "io.h"                    // for io_write_all
+#include "connection.h"
+#include "custom_logger.h"
+#include "format.h"
+#include "format_client_server.h"
+#include "format_server_node.h"
+#include "io.h"
 
 static bool handle_client_request(server_t* server_data, void** payload, const uint8_t* buf, size_t received_bytes, void* data);
 

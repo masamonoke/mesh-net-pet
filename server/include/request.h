@@ -1,11 +1,11 @@
 #pragma once
 
-#include <stdbool.h>    // for bool
-#include <stdint.h>     // for int32_t, uint8_t
-#include <sys/types.h>  // for ssize_t
+#include <stdbool.h>
+#include <stdint.h>
+#include <sys/types.h>
 
-#include "serving.h"    // for node
-#include "settings.h"   // for NODE_COUNT
+#include "serving.h"
+#include "settings.h"
 
 typedef struct server {
 	int32_t client_fd;

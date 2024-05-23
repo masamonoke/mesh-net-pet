@@ -1,13 +1,13 @@
 #include "format_server_node.h"
 
-#include <stdlib.h>                // for malloc
-#include <string.h>                // for memcpy, strlen, strcpy
-#include <unistd.h>                // for getpid
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
-#include "control_utils.h"         // for not_implemented
-#include "custom_logger.h"         // for custom_log_error
-#include "format.h"                // for request, format_create_base, forma...
-#include "format_client_server.h"  // for send_to_node_ret_payload
+#include "control_utils.h"
+#include "custom_logger.h"
+#include "format.h"
+#include "format_client_server.h"
 
 static int32_t parse_message(enum request* request, void** payload, const uint8_t* buf, size_t buf_len);
 

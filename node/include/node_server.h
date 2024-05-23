@@ -1,10 +1,10 @@
 #pragma once
 
-#include <stdint.h>         // for int32_t, uint8_t
-#include <sys/types.h>      // for ssize_t
+#include <stdint.h>
+#include <sys/types.h>
 
-#include "custom_logger.h"  // for custom_log_error, custom_log_debug, custo...
-#include "routing.h"        // for routing_table_t
+#include "custom_logger.h"
+#include "routing.h"
 
 #ifdef __clang__
 #pragma clang diagnostic push

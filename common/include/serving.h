@@ -1,10 +1,10 @@
 #pragma once
 
-#include <stdbool.h>     // for bool
-#include <stddef.h>      // for size_t
-#include <stdint.h>      // for int32_t, uint32_t
-#include <sys/socket.h>  // for sockaddr_storage, socklen_t
-#include <sys/types.h>   // for pid_t
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 
 struct node {
 	pid_t pid;

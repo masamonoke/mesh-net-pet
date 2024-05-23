@@ -1,11 +1,11 @@
 #include "control_utils.h"
 
-#include <signal.h>           // for raise
-#include <stdint.h>           // for int32_t
-#include <stdio.h>            // for fprintf, stderr, vfprintf, va_list
-#include <sys/errno.h>        // for errno
-#include <sys/signal.h>       // for SIGTERM
-#include <stdarg.h>           // for va_start, va_end
+#include <signal.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <sys/errno.h>
+#include <sys/signal.h>
+#include <stdarg.h>
 
 void die_(const char* func_name, int32_t line, const char* file, const char* msg, ...) { // NOLINT
 	int32_t err;
