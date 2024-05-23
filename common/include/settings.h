@@ -9,7 +9,3 @@
 #endif
 
 #define node_port(label) (uint16_t) (SERVER_PORT + (label) + 1)
-
-static const int ADJACENCY_MATRIX[][NODE_COUNT] = {
-	#include "matrix.txt"
-};

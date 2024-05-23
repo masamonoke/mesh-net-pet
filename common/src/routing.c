@@ -4,11 +4,9 @@
 #include <string.h>
 
 #include "custom_logger.h"
-#include "path.h"
 
-int32_t routing_table_new(routing_table_t* table, int32_t label) {
+int32_t routing_table_fill_default(routing_table_t* table, int32_t label) {
 	size_t i;
-	int32_t paths[V][V];
 
 	if (label < 0) {
 		custom_log_error("Wrong label passed");
@@ -23,18 +21,6 @@ int32_t routing_table_new(routing_table_t* table, int32_t label) {
 	}
 
 	table->len = 0;
-
-	path_find(ADJACENCY_MATRIX, label, NULL, paths);
-
-	for (i = 0; i < V; i++) {
-		if (i != (size_t) label) {
-			table->nodes[table->len].dest_label = (int32_t) i;
-			table->nodes[table->len].label = paths[i][1];
-			table->nodes[table->len].port = node_port(i);
-			table->len++;
-		}
-	}
-
 
 	return 0;
 }

@@ -13,7 +13,7 @@ void die_(const char* func_name, int32_t line, const char* file, const char* msg
 
 	va_start(args, msg);
 	err = errno;
-	fprintf(stderr, "DIED [%s]: (error code: %d), line %d, file %s", func_name, err, line, file);
+	fprintf(stderr, "DIED [%s]: (error code: %d), line %d, file %s\n", func_name, err, line, file);
 	vfprintf(stderr, msg, args);
 	fprintf(stderr, "\n");
 	va_end(args);

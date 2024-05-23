@@ -37,7 +37,6 @@ int32_t main(int32_t argc, char** argv) {
 	int32_t node_server_fd;
 	struct serving_data serving;
 	uint16_t port;
-	/* const char* node_name; */
 
 	signal(SIGINT, int_handler);
 	signal(SIGTERM, term_handler);
@@ -46,10 +45,9 @@ int32_t main(int32_t argc, char** argv) {
 		die("Failed to parse args");
 	}
 
-	if (routing_table_new(&server.routing, server.label)) {
+	if (routing_table_fill_default(&server.routing, server.label)) {
 		die("Failed to init routing table");
 	}
-	routing_table_print(&server.routing, server.label);
 
 	node_server_fd = connection_socket_to_listen(port);
 
