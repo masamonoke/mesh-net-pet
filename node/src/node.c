@@ -27,9 +27,9 @@ static void int_handler(int32_t dummy);
 
 static void term_handler(int32_t dummy);
 
-static int32_t parse_args(char** args, size_t argc, uint16_t* port, const char** node_name);
+static int32_t parse_args(char** args, size_t argc, uint16_t* port);
 
-static int32_t update_node_state(int32_t port, const char* node_name);
+static int32_t update_node_state(int32_t port);
 
 static int32_t handle_request(int32_t conn_fd, void* data);
 
@@ -37,12 +37,12 @@ int32_t main(int32_t argc, char** argv) {
 	int32_t node_server_fd;
 	struct serving_data serving;
 	uint16_t port;
-	const char* node_name;
+	/* const char* node_name; */
 
 	signal(SIGINT, int_handler);
 	signal(SIGTERM, term_handler);
 
-	if (parse_args(argv, (size_t) argc, &port, &node_name)) {
+	if (parse_args(argv, (size_t) argc, &port)) {
 		die("Failed to parse args");
 	}
 
@@ -57,7 +57,7 @@ int32_t main(int32_t argc, char** argv) {
 		die("Failed to start server on node %d", server.label);
 	}
 
-	if (update_node_state(port, node_name)) {
+	if (update_node_state(port)) {
 		die("Failed to init node");
 	}
 
@@ -84,7 +84,7 @@ static void term_handler(int32_t dummy) {
 	int_handler(dummy);
 }
 
-static int32_t parse_args(char** args, size_t argc, uint16_t* port, const char** node_name) {
+static int32_t parse_args(char** args, size_t argc, uint16_t* port) {
 	char* endptr;
 
 	if (argc != 2) {
@@ -97,12 +97,11 @@ static int32_t parse_args(char** args, size_t argc, uint16_t* port, const char**
 		return -1;
 	}
 	*port = node_port(server.label);
-	*node_name = NODES_ALIASES[server.label];
 
 	return 0;
 }
 
-static int32_t update_node_state(int32_t port, const char* node_name) {
+static int32_t update_node_state(int32_t port) {
 	uint8_t buf[256];
 	uint32_t buf_len;
 	int32_t server_fd;
@@ -120,7 +119,6 @@ static int32_t update_node_state(int32_t port, const char* node_name) {
 		.pid = getpid(),
 		.port = port,
 	};
-	strcpy(payload.alias, node_name);
 
 	if (format_server_node_create_message(REQUEST_UPDATE, &payload, buf, &buf_len)) {
 		custom_log_error("Failed to create message");

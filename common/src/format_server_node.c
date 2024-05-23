@@ -76,7 +76,6 @@ static int32_t parse_message(enum request* request, void** payload, const uint8_
 }
 
 static int32_t create_message(enum request request, const void* payload, uint8_t* message, uint32_t* msg_len) {
-	uint32_t alias_len;
 	uint32_t payload_len;
 	int32_t pid;
 	uint8_t* p;
@@ -88,9 +87,8 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 				if (payload) {
 					struct node_update_ret_payload* update_payload;
 					update_payload = (struct node_update_ret_payload*) payload;
-					alias_len = (uint32_t) strlen(update_payload->alias);
 					pid = getpid();
-					payload_len = sizeof(update_payload->port) + sizeof(alias_len) + alias_len + sizeof(update_payload->label) + sizeof(pid);
+					payload_len = sizeof(update_payload->port) + sizeof(update_payload->label) + sizeof(pid);
 					sender = REQUEST_SENDER_NODE;
 
 					*msg_len = payload_len + sizeof(request) + sizeof(*msg_len) + sizeof(sender);
@@ -100,10 +98,6 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 					// payload
 					memcpy(p, &update_payload->port, sizeof(update_payload->port));
 					p += sizeof(update_payload->port);
-					memcpy(p, &alias_len, sizeof(alias_len));
-					p += sizeof(alias_len);
-					memcpy(p, update_payload->alias, alias_len);
-					p += alias_len;
 					memcpy(p, &update_payload->label, sizeof(update_payload->label));
 					p += sizeof(update_payload->label);
 					memcpy(p, &pid, sizeof(pid));
@@ -161,8 +155,6 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 
 static int32_t set_node_update_payload(const uint8_t* buf, void* ret_payload) {
 	const uint8_t* p;
-	uint32_t len;
-	char str[32];
 	struct node_update_ret_payload* payload;
 
 	payload = (struct node_update_ret_payload*) ret_payload;
@@ -172,12 +164,6 @@ static int32_t set_node_update_payload(const uint8_t* buf, void* ret_payload) {
 	// parse payload
 	memcpy(&payload->port, p, sizeof(payload->port));
 	p += sizeof(payload->port);
-	memcpy(&len, p, sizeof(len));
-	p += sizeof(len);
-	memcpy(str, p, len);
-	p += len;
-	str[len] = 0;
-	strcpy(payload->alias, str);
 	memcpy(&payload->label, p, sizeof(payload->label));
 	p += sizeof(payload->label);
 	memcpy(&payload->pid, p, sizeof(payload->pid));

@@ -9,7 +9,6 @@
 struct node {
 	pid_t pid;
 	int32_t write_fd;
-	char* alias;
 	int32_t label;
 	int32_t port;
 	bool initialized;

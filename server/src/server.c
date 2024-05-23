@@ -52,7 +52,6 @@ int32_t main(void) {
 			server_data.children[i].write_fd = -1;
 			server_data.children[i].port = -1;
 			server_data.children[i].label = -1;
-			server_data.children[i].alias = NULL;
 		}
 	}
 	server_data.client_fd = -1;

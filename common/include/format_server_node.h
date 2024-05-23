@@ -8,7 +8,6 @@
 struct node_update_ret_payload {
 	int32_t pid;
 	int32_t port;
-	char alias[32];
 	int32_t label;
 };
 
