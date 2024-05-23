@@ -13,11 +13,10 @@ int32_t routing_table_fill_default(routing_table_t* table, int32_t label) {
 		return -1;
 	}
 
-	for (i = 0; i < MAX_ROUTES; i++) {
+	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		table->nodes[i].dest_label = -1;
 		table->nodes[i].label = -1;
 		table->nodes[i].fd = -1;
-		table->nodes[i].port = -1;
 	}
 
 	table->len = 0;
@@ -27,7 +26,7 @@ int32_t routing_table_fill_default(routing_table_t* table, int32_t label) {
 
 ssize_t routing_table_get_dest_idx(const routing_table_t* table, int32_t label) {
 	size_t i;
-	for (i = 0; i < MAX_ROUTES; i++) {
+	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		if (table->nodes[i].dest_label == label) {
 			return (ssize_t) i;
 		}
@@ -44,7 +43,7 @@ void routing_table_print(routing_table_t* table, int32_t label) {
 	snprintf(format, sizeof(format), "\nrouting table for label %d\n", label);
 	strcpy(buf, format);
 	strcat(buf, "dest\tthrough\n");
-	for (i = 0; i < MAX_ROUTES; i++) {
+	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		if (table->nodes[i].dest_label != -1) {
 			snprintf(format, sizeof(format), "%d\t%d\n", table->nodes[i].dest_label, table->nodes[i].label);
 			strcat(buf, format);

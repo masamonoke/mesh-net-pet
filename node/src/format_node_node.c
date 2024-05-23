@@ -4,6 +4,7 @@
 #include "format_node_node.h"
 #include "custom_logger.h"
 #include "control_utils.h"
+#include "settings.h"
 
 static int32_t parse_message(enum request* request, void** payload, const uint8_t* buf, size_t buf_len);
 
@@ -33,7 +34,7 @@ static int32_t parse_message(enum request* request, void** payload, const uint8_
 
 	p += sizeof(uint32_t); // skip msg_len
 
-	memcpy(&cmd, p, sizeof(cmd));
+	memcpy(&cmd, p, sizeof_enum(cmd));
 
 	switch (cmd) {
 		case REQUEST_SEND:
@@ -64,7 +65,7 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 				payload_len = sizeof(send_payload->label_to);
 				sender = REQUEST_SENDER_NODE;
 
-				*msg_len = payload_len + sizeof(request) + sizeof(*msg_len) + sizeof(sender);
+				*msg_len = payload_len + sizeof_enum(request) + sizeof(*msg_len) + sizeof_enum(sender);
 
 				p = format_create_base(message, *msg_len, request, sender);
 

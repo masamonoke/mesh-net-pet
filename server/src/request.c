@@ -82,7 +82,7 @@ static bool handle_send(const struct node* children, const void* payload) {
 		return false;
 	}
 
-	for (i = 0; i < NODE_COUNT; i++) {
+	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		if (children[i].label == ((struct send_to_node_ret_payload*) payload)->label_from) {
 			if (io_write_all(children[i].write_fd, b, buf_len)) {
 				custom_log_error("Failed to send request to node");
@@ -100,7 +100,7 @@ static void handle_ping(const struct node* children, int32_t client_fd, const vo
 	struct timeval tv;
 
 	p = (struct node_ping_ret_payload*) payload;
-	for (i = 0; i < NODE_COUNT; i++) {
+	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		if (children[i].label == p->label) {
 			uint8_t b[256];
 			uint32_t buf_len;
@@ -116,13 +116,13 @@ static void handle_ping(const struct node* children, int32_t client_fd, const vo
 			}
 			tv.tv_sec = 2;
 			tv.tv_usec = 0;
-			setsockopt(children[i].write_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+			setsockopt(children[i].write_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
 
 			received = recv(children[i].write_fd, b, sizeof(b), 0);
 
 			tv.tv_sec = 0;
 			tv.tv_usec = 0;
-			setsockopt(children[i].write_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+			setsockopt(children[i].write_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
 
 			if (received > 0) {
 				if (io_write_all(client_fd, (char*) b, (size_t) received)) {
@@ -133,7 +133,7 @@ static void handle_ping(const struct node* children, int32_t client_fd, const vo
 
 				custom_log_error("Failed to get response from node %d", p->label);
 				res = REQUEST_ERR;
-				if (io_write_all(client_fd, (char*) &res, sizeof(res))) {
+				if (io_write_all(client_fd, (char*) &res, sizeof_enum(res))) {
 					custom_log_error("Failed to send ping result to client");
 				}
 			}
@@ -165,7 +165,7 @@ static bool handle_node_request(const server_t* server_data, void** payload, con
 				enum request_result req_res;
 
 				req_res = REQUEST_OK;
-				if (io_write_all(server_data->client_fd, (char*) &req_res, sizeof(req_res))) {
+				if (io_write_all(server_data->client_fd, (char*) &req_res, sizeof_enum(req_res))) {
 					custom_log_error("Failed to response to ping");
 					res = false;
 				}
@@ -188,7 +188,7 @@ static void handle_update_child(const void* payload, struct node* children) {
 
 	ret = (struct node_update_ret_payload*) payload;
 
-	for (i = 0; i < NODE_COUNT; i++) {
+	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		if (children[i].pid == ret->pid) {
 			children[i].port = ret->port;
 			children[i].label = ret->label;

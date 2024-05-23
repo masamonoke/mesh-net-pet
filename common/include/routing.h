@@ -12,13 +12,10 @@ typedef struct routing_node {
 	// how to get to
 	int32_t fd;
 	int32_t label;
-	int32_t port;
 } routing_node_t;
 
-#define MAX_ROUTES (NODE_COUNT - 1)
-
 typedef struct routing_table {
-	routing_node_t nodes[MAX_ROUTES];
+	routing_node_t nodes[NODE_COUNT];
 	size_t len;
 } routing_table_t;
 

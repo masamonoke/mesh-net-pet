@@ -1,4 +1,5 @@
 #include "format.h"
+#include "settings.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -24,8 +25,8 @@ enum request_sender format_define_sender(const uint8_t* buf) {
 
 	p = buf;
 	p += sizeof(len); // skip message len
-	p += sizeof(enum request); // skip cmd
-	memcpy(&sender, p, sizeof(sender));
+	p += sizeof_enum(enum request); // skip cmd
+	memcpy(&sender, p, sizeof_enum(sender));
 
 	return sender;
 }
@@ -38,8 +39,8 @@ uint8_t* format_create_base(uint8_t* message, uint32_t msg_len, enum request cmd
 	p += sizeof(msg_len);
 	memcpy(p, &cmd, sizeof(cmd));
 	p += sizeof(cmd);
-	memcpy(p, &sender, sizeof(sender));
-	p += sizeof(sender);
+	memcpy(p, &sender, sizeof_enum(sender));
+	p += sizeof_enum(sender);
 
 	return p;
 }
@@ -50,8 +51,8 @@ uint8_t* format_skip_base(const uint8_t* message) {
 	p = (uint8_t*) message;
 
 	p += sizeof(uint32_t); // skip message len
-	p += sizeof(enum request); // skip cmd
-	p += sizeof(enum request_sender); // skip sender
+	p += sizeof_enum(enum request); // skip cmd
+	p += sizeof_enum(enum request_sender); // skip sender
 
 	return p;
 }

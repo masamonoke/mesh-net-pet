@@ -236,7 +236,7 @@ static int32_t handle_ping(int32_t conn_fd) {
 	enum request_result req_res;
 
 	req_res = REQUEST_OK;
-	if (io_write_all(conn_fd, (char*) &req_res, sizeof(req_res))) {
+	if (io_write_all(conn_fd, (char*) &req_res, sizeof_enum(req_res))) {
 		node_log_error("Failed to response to ping");
 		return -1;
 	}

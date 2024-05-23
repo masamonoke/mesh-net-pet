@@ -8,6 +8,7 @@
 #include "custom_logger.h"
 #include "format.h"
 #include "format_client_server.h"
+#include "settings.h"
 
 static int32_t parse_message(enum request* request, void** payload, const uint8_t* buf, size_t buf_len);
 
@@ -41,7 +42,7 @@ static int32_t parse_message(enum request* request, void** payload, const uint8_
 
 	p += sizeof(uint32_t); // skip msg_len
 
-	memcpy(&cmd, p, sizeof(cmd));
+	memcpy(&cmd, p, sizeof_enum(cmd));
 
 	switch (cmd) {
 		case REQUEST_UPDATE:
@@ -91,7 +92,7 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 					payload_len = sizeof(update_payload->port) + sizeof(update_payload->label) + sizeof(pid);
 					sender = REQUEST_SENDER_NODE;
 
-					*msg_len = payload_len + sizeof(request) + sizeof(*msg_len) + sizeof(sender);
+					*msg_len = payload_len + sizeof_enum(request) + sizeof(*msg_len) + sizeof_enum(sender);
 
 					p = format_create_base(message, *msg_len, request, sender);
 
@@ -111,7 +112,7 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 			}
 		case REQUEST_PING:
 			{
-				*msg_len = sizeof(sender) + sizeof(request) + sizeof(*msg_len);
+				*msg_len = sizeof_enum(sender) + sizeof_enum(request) + sizeof(*msg_len);
 				sender = REQUEST_SENDER_SERVER;
 				p = format_create_base(message, *msg_len, request, sender);
 			}
@@ -122,7 +123,7 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 
 				send_payload = (struct send_to_node_ret_payload*) payload;
 				payload_len = sizeof(send_payload->label_from) + sizeof(send_payload->label_to);
-				*msg_len = sizeof(sender) + sizeof(request) + sizeof(*msg_len) + payload_len;
+				*msg_len = sizeof_enum(sender) + sizeof_enum(request) + sizeof(*msg_len) + payload_len;
 				sender = REQUEST_SENDER_SERVER;
 				p = format_create_base(message, *msg_len, request, sender);
 
@@ -137,12 +138,12 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 				struct node_notify_payload* notify_payload;
 
 				notify_payload = (struct node_notify_payload*) payload;
-				payload_len = sizeof(enum notify_type);
-				*msg_len = sizeof(sender) + sizeof(request) + sizeof(*msg_len) + payload_len;
+				payload_len = sizeof_enum(enum notify_type);
+				*msg_len = sizeof_enum(sender) + sizeof_enum(request) + sizeof(*msg_len) + payload_len;
 				sender = REQUEST_SENDER_NODE;
 				p = format_create_base(message, *msg_len, request, sender);
 				//payload
-				memcpy(p, &notify_payload->notify_type, sizeof(notify_payload->notify_type));
+				memcpy(p, &notify_payload->notify_type, sizeof_enum(notify_payload->notify_type));
 			}
 			break;
 		default:
@@ -190,7 +191,7 @@ static int32_t set_notify_payload(const uint8_t* buf, struct node_notify_payload
 	p = format_skip_base(buf);
 
 	// parse payload
-	memcpy(&payload->notify_type, p, sizeof(payload->notify_type));
+	memcpy(&payload->notify_type, p, sizeof_enum(payload->notify_type));
 
 	return 0;
 }
