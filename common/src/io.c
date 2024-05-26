@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/socket.h>
 
 #include "append_string.h"
 #include "custom_logger.h"
@@ -16,7 +17,7 @@ int32_t io_read_all(int32_t fd, char* buf_mut, size_t n, size_t* bytes_received)
 	}
 
 	while (n > 0) {
-		rv = read(fd, buf_mut, n);
+		rv = recv(fd, buf_mut, n, 0);
 		if (rv <= 0) {
 			return (int32_t) rv; // unexpected eof
 		}
@@ -35,14 +36,13 @@ int32_t io_write_all(int32_t fd, const char* buf, size_t n) {
 	ssize_t rv;
 
 	while (n > 0) {
-		rv = write(fd, buf, n);
+		rv = send(fd, buf, n, 0);
 		if (rv <= 0) {
 			return -1;
 		}
 		n -= (size_t) rv;
 		buf += rv;
 	}
-
 	return 0;
 }
 

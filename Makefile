@@ -6,7 +6,7 @@ BUILD_TYPE = debug
 
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 BUILD_DIR = $(ROOT_DIR)/bin
-DEFINES = -DLOG_FILE
+# DEFINES = -DLOG_FILE
 
 TARGETS = $(BUILD_DIR)/node $(BUILD_DIR)/server $(BUILD_DIR)/client
 

@@ -1,4 +1,0 @@
-"loving_kare",
-"mad_fermat",
-"boring_almeida",
-"romantic_euclid"

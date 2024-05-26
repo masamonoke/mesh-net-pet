@@ -47,7 +47,7 @@ int32_t main(int32_t argc, char** argv) {
 		custom_log_error("Failed to send client command");
 	}
 
-	tv.tv_sec = 2;
+	tv.tv_sec = 10;
 	tv.tv_usec = 0;
 	setsockopt(server_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 	status = REQUEST_UNKNOWN;

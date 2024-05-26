@@ -6,13 +6,16 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "connection.h"
 #include "control_utils.h"
 #include "custom_logger.h"
-#include "request.h"
+#include "server_server.h"
 #include "serving.h"
 #include "settings.h"
+#include "io.h"
+#include "format.h"
 
 static volatile bool keeprunning = true;
 
@@ -40,7 +43,9 @@ int32_t main(void) {
 		die("Failed to create server");
 	}
 
-	for (i = 0; i < NODE_COUNT; i++) {
+	fcntl(server_fd, F_SETFD, fcntl(server_fd, F_GETFD) | FD_CLOEXEC);
+
+	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		server_data.children[i].pid = fork();
 		if (server_data.children[i].pid < 0) {
 			custom_log_error("Failed to create child process");
@@ -55,6 +60,7 @@ int32_t main(void) {
 		}
 	}
 	server_data.client_fd = -1;
+
 
 	custom_log_info("Started server on port %d (process %d)", SERVER_PORT, getpid());
 
@@ -88,7 +94,7 @@ static void int_handler(int32_t dummy) {
 
 static void term_handler(int32_t dummy) {
 	size_t i;
-	for (i = 0; i < NODE_COUNT; i++) {
+	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		kill(server_data.children[i].pid, SIGINT);
 	}
 	int_handler(dummy);
@@ -96,16 +102,34 @@ static void term_handler(int32_t dummy) {
 
 static int32_t handle_request(int32_t conn_fd, void* data) {
 	ssize_t received_bytes;
-	char buf[256];
+	uint8_t buf[256];
+	uint32_t msg_len;
 
-	received_bytes = recv(conn_fd, buf, sizeof(buf), 0);
+	msg_len = 0;
 
-	custom_log_debug("Received %d bytes from client %d", received_bytes, conn_fd);
+	if (io_read_all(conn_fd, (char*) &msg_len, sizeof(msg_len), (size_t*) &received_bytes)) {
+		custom_log_error("Failed to read message length");
+		return -1;
+	}
+
+	if (received_bytes > 0) {
+		if (io_read_all(conn_fd, (char*) buf, msg_len - sizeof(uint32_t), (size_t*) &received_bytes)) {
+			custom_log_error("Failed to read message");
+			return -1;
+		}
+
+		if (!format_is_message_correct((size_t) received_bytes, msg_len - sizeof(msg_len))) {
+			custom_log_error("Incorrect message format");
+			return -1;
+		}
+	} else {
+		return -1;
+	}
 
 	if (received_bytes > 0) {
 		bool processed;
 
-		processed = request_handle(&server_data, (uint8_t*) buf, received_bytes, conn_fd, data);
+		processed = server_server_handle(&server_data, (uint8_t*) buf, received_bytes, conn_fd, data);
 
 		if (processed) {
 			return 0;
@@ -113,6 +137,8 @@ static int32_t handle_request(int32_t conn_fd, void* data) {
 			custom_log_error("Failed to parse request");
 			return -1;
 		}
+	} else {
+		custom_log_error("Failed to receive message: declared length %d", msg_len);
 	}
 
 	return -1;

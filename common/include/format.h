@@ -22,6 +22,10 @@ enum request {
 	REQUEST_UPDATE,
 	REQUEST_PING,
 	REQUEST_NOTIFY,
+	REQUEST_ROUTE_DIRECT,
+	REQUEST_ROUTE_INVERSE,
+	REQUEST_STOP_BROADCAST,
+	REQUEST_RESET_BROADCAST,
 	REQUEST_UNDEFINED
 };
 
@@ -37,5 +41,5 @@ uint8_t* format_create_base(uint8_t* message, uint32_t msg_len, enum request cmd
 __attribute__((nonnull(1), warn_unused_result))
 uint8_t* format_skip_base(const uint8_t* message);
 
-__attribute__((nonnull(1), warn_unused_result))
-bool format_is_message_correct(const uint8_t* buf, size_t buf_len);
+__attribute__((warn_unused_result))
+bool format_is_message_correct(size_t buf_len, uint32_t msg_len);

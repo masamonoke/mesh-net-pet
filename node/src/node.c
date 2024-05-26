@@ -6,6 +6,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <errno.h>
 
 #include "connection.h"
 #include "control_utils.h"
@@ -45,7 +46,7 @@ int32_t main(int32_t argc, char** argv) {
 		die("Failed to parse args");
 	}
 
-	if (routing_table_fill_default(&server.routing, server.label)) {
+	if (routing_table_fill_default(&server.routing)) {
 		die("Failed to init routing table");
 	}
 
@@ -61,13 +62,10 @@ int32_t main(int32_t argc, char** argv) {
 
 	serving_init(&serving, node_server_fd, handle_request);
 
-	node_log_info("Node started on port %d", port);
-
 	while (keeprunning) {
 		serving_poll(&serving, children);
 	}
 
-	node_log_info("Shutting down node pid = %d", getpid());
 	serving_free(&serving);
 
 	return 0;
@@ -135,17 +133,31 @@ static int32_t update_node_state(int32_t port) {
 
 static int32_t handle_request(int32_t conn_fd, void* data) {
 	ssize_t received_bytes;
-	char buf[256];
+	uint8_t buf[256];
 	int32_t res;
+	uint32_t msg_len;
 
-	received_bytes = recv(conn_fd, buf, sizeof(buf), 0);
 
-	node_log_debug("Received %d bytes from client %d.", received_bytes, conn_fd, buf);
+	if (io_read_all(conn_fd, (char*) &msg_len, sizeof(msg_len), (size_t*) &received_bytes)) {
+		node_log_error("Failed to read message length");
+	}
+
+	if (received_bytes > 0) {
+		if (io_read_all(conn_fd, (char*) buf, msg_len - sizeof(uint32_t), (size_t*) &received_bytes)) {
+			node_log_error("Failed to read message");
+		}
+		if (!format_is_message_correct((size_t) received_bytes, msg_len - sizeof(msg_len))) {
+			node_log_error("Incorrect message");
+		}
+	} else {
+		return -1;
+	}
 
 	res = 0;
 	if (received_bytes > 0) {
 		node_server_handle_request(&server, conn_fd, (uint8_t*) buf, received_bytes, data);
 	} else {
+		node_log_error("Failed to read %d bytes", msg_len);
 		res = -1;
 	}
 

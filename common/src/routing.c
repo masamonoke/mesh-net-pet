@@ -5,18 +5,12 @@
 
 #include "custom_logger.h"
 
-int32_t routing_table_fill_default(routing_table_t* table, int32_t label) {
+int32_t routing_table_fill_default(routing_table_t* table) {
 	size_t i;
 
-	if (label < 0) {
-		custom_log_error("Wrong label passed");
-		return -1;
-	}
-
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
-		table->nodes[i].dest_label = -1;
 		table->nodes[i].label = -1;
-		table->nodes[i].fd = -1;
+		table->nodes[i].metric = 0;
 	}
 
 	table->len = 0;
@@ -24,31 +18,36 @@ int32_t routing_table_fill_default(routing_table_t* table, int32_t label) {
 	return 0;
 }
 
-ssize_t routing_table_get_dest_idx(const routing_table_t* table, int32_t label) {
-	size_t i;
-	for (i = 0; i < (size_t) NODE_COUNT; i++) {
-		if (table->nodes[i].dest_label == label) {
-			return (ssize_t) i;
-		}
+int32_t routing_next_label(const routing_table_t* table, int32_t dest_label) {
+	if (dest_label < NODE_COUNT) {
+		return table->nodes[dest_label].label;
+	} else {
+		return -1;
 	}
-
-	return -1;
 }
 
-void routing_table_print(routing_table_t* table, int32_t label) {
-	size_t i;
-	char buf[1024];
-	char format[32];
-
-	snprintf(format, sizeof(format), "\nrouting table for label %d\n", label);
-	strcpy(buf, format);
-	strcat(buf, "dest\tthrough\n");
-	for (i = 0; i < (size_t) NODE_COUNT; i++) {
-		if (table->nodes[i].dest_label != -1) {
-			snprintf(format, sizeof(format), "%d\t%d\n", table->nodes[i].dest_label, table->nodes[i].label);
-			strcat(buf, format);
-		}
+routing_node_t routing_get(const routing_table_t* table, int32_t dest_label) {
+	if (dest_label < NODE_COUNT) {
+		return table->nodes[dest_label];
+	} else {
+		routing_node_t empty_node = {
+			.label = -1,
+			.metric = 0
+		};
+		return empty_node;
 	}
+}
 
-	custom_log_debug("%s", buf);
+void routing_set_label(routing_table_t* table, int32_t dest_label, int32_t next_label, int32_t metric) { // NOLINT
+	if (dest_label < NODE_COUNT) {
+		table->nodes[dest_label].label = next_label;
+		table->nodes[dest_label].metric = metric;
+	}
+}
+
+void routing_del(routing_table_t* table, int32_t dest_label) {
+	if (dest_label < NODE_COUNT) {
+		table->nodes[dest_label].label = -1;
+		table->nodes[dest_label].metric = 0;
+	}
 }
