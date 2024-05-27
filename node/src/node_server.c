@@ -75,6 +75,7 @@ static int32_t handle_server(node_server_t* server, int32_t conn_fd, enum reques
 			if (routing_table_fill_default(&server->routing)) {
 				node_log_error("Failed to reset routing table");
 			}
+			node_essentials_reset_connections();
 			break;
 		case REQUEST_UNDEFINED:
 			node_log_error("Undefined server-node request type");
