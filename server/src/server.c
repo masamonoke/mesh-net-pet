@@ -52,7 +52,6 @@ int32_t main(void) {
 			run_node((int32_t) i);
 		} else {
 			// parent
-			server_data.children[i].initialized = false;
 			server_data.children[i].write_fd = -1;
 			server_data.children[i].port = -1;
 			server_data.children[i].label = -1;
