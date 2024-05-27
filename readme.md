@@ -56,27 +56,39 @@ and then rebuild project.
 make server BUILD_TYPE=release
 ```
 
-or
-
-```console
-cd build/server && ./server
-```
-
 Note that Makefile makes debug build by default.
 
 ## Client
 
-```console
-./client ping <node_label>
-```
-
-or
+### Ping
 
 ```console
 make client TARGET_ARGS="ping <node_label>"
 ```
 
-Also
+### Send
+
 ```console
 make client TARGET_ARGS="send -s <sender node> -r <receiver node>"
 ```
+
+### Kill
+
+```console
+ make client TARGET_ARGS="kill <label>"
+```
+
+### Revive
+
+```console
+ make client TARGET_ARGS="revive <label>"
+```
+
+### Reset
+
+```console
+ make client TARGET_ARGS="reset"
+```
+
+# Bugs
+* After killing node (nodes) there can be error 141 (broken pipe) when sending message to other nodes probably because of write to already closed fd
