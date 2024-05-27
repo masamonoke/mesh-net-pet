@@ -48,6 +48,7 @@ static int32_t parse_message(enum request* request, void** payload, const uint8_
 		case REQUEST_PING:
 		case REQUEST_STOP_BROADCAST:
 		case REQUEST_RESET_BROADCAST:
+		case REQUEST_RESET:
 			// no payload needed
 			*request = cmd;
 			break;
@@ -110,6 +111,7 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 		case REQUEST_PING:
 		case REQUEST_STOP_BROADCAST:
 		case REQUEST_RESET_BROADCAST:
+		case REQUEST_RESET:
 			{
 				*msg_len = sizeof_enum(sender) + sizeof_enum(request) + sizeof(*msg_len);
 				sender = REQUEST_SENDER_SERVER;

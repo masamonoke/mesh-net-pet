@@ -24,6 +24,7 @@ static int32_t write_log(enum log_type type, int32_t line, const char* file, con
 
 // it LOG_FILE not defined log_filename used as sync file
 void log_file_(enum log_type type, int32_t line, const char* file, const char* format, ...) { // NOLINT
+#ifndef SUPRESS_LOG_OUTPUT
 	FILE* fp;
 	va_list args;
 	char buf[1024];
@@ -60,6 +61,12 @@ void log_file_(enum log_type type, int32_t line, const char* file, const char* f
 
 
 	fclose(fp);
+#else
+	(void) type;
+	(void) line;
+	(void) file;
+	(void) format;
+#endif
 }
 
 static int32_t log(const char* color, const char* log_type, int32_t line, const char* file, const char* buf, FILE* fp) {

@@ -16,6 +16,9 @@ void format_sprint_result(enum request_result res, char buf[], size_t len) {
 		case REQUEST_UNKNOWN:
 			snprintf(buf, len, "[UNKNOWN]: %d", res);
 			break;
+		default:
+			custom_log_error("Unknown result response");
+			break;
 	}
 }
 

@@ -20,7 +20,6 @@ typedef struct routing_table {
 __attribute__((nonnull(1), warn_unused_result))
 int32_t routing_table_fill_default(routing_table_t* table);
 
-
 __attribute__((nonnull(1), warn_unused_result))
 int32_t routing_next_label(const routing_table_t* table, int32_t dest_label);
 

@@ -1,5 +1,7 @@
 #include "node_essentials.h"
 
+#include <unistd.h>
+
 #include "node_server.h"
 #include "connection.h"
 #include "io.h"
@@ -12,6 +14,16 @@ struct conn {
 
 #define CONNECTIONS 5
 static struct conn connections[CONNECTIONS];
+
+void node_essentials_reset_connections(void) {
+	for (size_t i = 0; i < CONNECTIONS; i++) {
+		if (connections[i].port != SERVER_PORT) {
+			close(connections[i].fd);
+			connections[i].fd = -1;
+			connections[i].port = -1;
+		}
+	}
+}
 
 int32_t node_essentials_get_conn(int32_t port) {
 	static bool init = false;

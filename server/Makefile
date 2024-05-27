@@ -2,7 +2,7 @@
 
 # ROOT_DIR, BUILD_DIR, CFLAGS, DEFINES are exported from root Makefile
 
-SRC = src/server.c src/server_server.c
+SRC = src/server.c src/server_server.c src/server_essentials.c src/server_handler.c
 
 EXEC_BUILD_DIR = $(BUILD_DIR)/$(BUILD_TYPE)/server
 OBJS_BUILD = $(patsubst %.c, $(EXEC_BUILD_DIR)/%.o, $(SRC))

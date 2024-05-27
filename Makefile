@@ -7,6 +7,7 @@ BUILD_TYPE = debug
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 BUILD_DIR = $(ROOT_DIR)/bin
 # DEFINES = -DLOG_FILE
+# DEFINES = -DSUPRESS_LOG_OUTPUT
 
 TARGETS = $(BUILD_DIR)/node $(BUILD_DIR)/server $(BUILD_DIR)/client
 
@@ -34,15 +35,14 @@ export DEFINES
 
 $(TARGETS): build
 
-.PHONY: build clean
+.PHONY: build clean test
 
 build: build_node build_server build_client
 	@echo Build done
 	@echo Used $(CC) compiler
 
 server: build_server build_node
-	cd $(BUILD_DIR)/$(BUILD_TYPE)/server && ./server
-	rm -f $(BUILD_DIR)/$(BUILD_TYPE)/logs.log
+	cd $(BUILD_DIR)/$(BUILD_TYPE)/server && ./server $(TARGET_ARGS)
 
 node: build_node
 	cd $(BUILD_DIR)/$(BUILD_TYPE)/node && ./node

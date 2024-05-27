@@ -10,7 +10,7 @@ struct send_to_node_ret_payload {
 	int32_t label_from;
 };
 
-struct node_ping_ret_payload {
+struct node_label_payload {
 	int32_t label;
 };
 

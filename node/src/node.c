@@ -18,6 +18,7 @@
 #include "routing.h"
 #include "serving.h"
 #include "settings.h"
+#include "node_essentials.h"
 
 static node_server_t server;
 static struct node children[NODE_COUNT];
@@ -67,6 +68,10 @@ int32_t main(int32_t argc, char** argv) {
 	}
 
 	serving_free(&serving);
+	close(node_server_fd);
+	node_essentials_reset_connections();
+
+	node_log_debug("Killed node process %d", getpid());
 
 	return 0;
 }

@@ -22,7 +22,7 @@ int32_t format_server_client_create_message(enum request req, const void* payloa
 	return create_message(req, payload, buf, len);
 }
 
-static int32_t parse_ping(const uint8_t* buf, void* ret_payload);
+static int32_t parse_label_payload(const uint8_t* buf, void* ret_payload);
 
 static int32_t parse_send(const uint8_t* buf, struct send_to_node_ret_payload* ret_payload);
 
@@ -42,9 +42,14 @@ static int32_t parse_message(enum request* request, void** payload, const uint8_
 			parse_send(buf, *payload);
 			break;
 		case REQUEST_PING:
+		case REQUEST_REVIVE_NODE:
+		case REQUEST_KILL_NODE:
 			*request = cmd;
-			*payload = malloc(sizeof(struct node_ping_ret_payload));
-			parse_ping(buf, *payload);
+			*payload = malloc(sizeof(struct node_label_payload));
+			parse_label_payload(buf, *payload);
+			break;
+		case REQUEST_RESET:
+			*request = cmd;
 			break;
 		default:
 			custom_log_error("Unknown client-server request");
@@ -62,19 +67,22 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 
 	switch (request) {
 		case REQUEST_PING:
+		case REQUEST_KILL_NODE:
+		case REQUEST_REVIVE_NODE:
 			{
-				struct node_ping_ret_payload* ret_payload;
-				uint32_t label;
+				if (payload) {
+					struct node_label_payload* ret_payload;
+					uint32_t label;
 
-				ret_payload = (struct node_ping_ret_payload*) payload;
-				payload_len = sizeof(label);
+					ret_payload = (struct node_label_payload*) payload;
+					payload_len = sizeof(label);
 
-				*msg_len = payload_len + sizeof_enum(request) + sizeof(*msg_len) + sizeof_enum(sender);
-				/* *msg_len = payload_len + sizeof_enum(request) + sizeof_enum(sender); */
-				p = format_create_base(message, *msg_len, request, sender);
+					*msg_len = payload_len + sizeof_enum(request) + sizeof(*msg_len) + sizeof_enum(sender);
+					p = format_create_base(message, *msg_len, request, sender);
 
-				memcpy(p, &ret_payload->label, sizeof(ret_payload->label));
-				p += sizeof(ret_payload->label);
+					memcpy(p, &ret_payload->label, sizeof(ret_payload->label));
+					p += sizeof(ret_payload->label);
+				}
 			}
 			break;
 		case REQUEST_SEND:
@@ -94,6 +102,11 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 				return -1;
 			}
 			break;
+		case REQUEST_RESET:
+			*msg_len = sizeof_enum(sender) + sizeof_enum(request) + sizeof(*msg_len);
+			sender = REQUEST_SENDER_CLIENT;
+			p = format_create_base(message, *msg_len, request, sender);
+			break;
 		default:
 			not_implemented();
 			break;
@@ -103,11 +116,11 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 	return 0;
 }
 
-static int32_t parse_ping(const uint8_t* buf, void* ret_payload) {
+static int32_t parse_label_payload(const uint8_t* buf, void* ret_payload) {
 	const uint8_t* p;
-	struct node_ping_ret_payload* payload;
+	struct node_label_payload* payload;
 
-	payload = (struct node_ping_ret_payload*) ret_payload;
+	payload = (struct node_label_payload*) ret_payload;
 
 	p = format_skip_base(buf);
 

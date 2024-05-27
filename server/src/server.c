@@ -16,10 +16,9 @@
 #include "settings.h"
 #include "io.h"
 #include "format.h"
+#include "server_essentials.h"
 
 static volatile bool keeprunning = true;
-
-static void run_node(uint32_t node_label);
 
 static server_t server_data;
 
@@ -50,7 +49,7 @@ int32_t main(void) {
 		if (server_data.children[i].pid < 0) {
 			custom_log_error("Failed to create child process");
 		} else if (server_data.children[i].pid == 0) {
-			run_node((uint32_t) i);
+			run_node((int32_t) i);
 		} else {
 			// parent
 			server_data.children[i].initialized = false;
@@ -73,18 +72,6 @@ int32_t main(void) {
 	serving_free(&serving);
 
 	return 0;
-}
-
-static void run_node(uint32_t node_label) {
-	char node_label_str[16];
-	int32_t len;
-
-	len = snprintf(node_label_str, sizeof(node_label_str), "%d", node_label);
-	if (len < 0 || (size_t) len > sizeof(node_label_str)) {
-		die("Failed to convert node_label to str");
-	}
-
-	execl("../node/mesh_node", "mesh_node", node_label_str, (char*) NULL);
 }
 
 static void int_handler(int32_t dummy) {
