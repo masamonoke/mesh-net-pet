@@ -6,12 +6,12 @@
 #include "format.h"
 
 struct send_to_node_ret_payload {
-	int32_t label_to;
-	int32_t label_from;
+	int8_t label_to;
+	int8_t label_from;
 };
 
 struct node_label_payload {
-	int32_t label;
+	int8_t label;
 };
 
 __attribute__((nonnull(3, 4), warn_unused_result))

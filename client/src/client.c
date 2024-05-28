@@ -70,10 +70,10 @@ L_FREE:
 
 static int32_t create_label_payload(const char* arg, void** payload) {
 	char* endptr;
-	int32_t label;
+	int8_t label;
 
 	endptr = NULL;
-	label = (int32_t) strtol(arg, &endptr, 10);
+	label = (int8_t) strtol(arg, &endptr, 10);
 	if (arg == endptr) {
 		return -1;
 	}
@@ -90,8 +90,8 @@ static int32_t parse_args(int32_t argc, char** argv, enum request* cmd, void** p
 	if (argc > 2) {
 		for (i = 0; i < argc; i++) {
 			if (0 == strcmp(argv[i], "send") && argc >= 6) {
-				int32_t label_to;
-				int32_t label_from;
+				int8_t label_to;
+				int8_t label_from;
 				char* endptr;
 
 
@@ -101,14 +101,14 @@ static int32_t parse_args(int32_t argc, char** argv, enum request* cmd, void** p
 				for (i = 0; i < argc; i++) {
 					if (0 == strcmp(argv[i], "-s") || 0 == strcmp(argv[i], "--sender")) {
 						endptr = NULL;
-						label_from = (int32_t) strtol(argv[i + 1], &endptr, 10);
+						label_from = (int8_t) strtol(argv[i + 1], &endptr, 10);
 						if (argv[i + 1] == endptr) {
 							return -1;
 						}
 					}
 					if (0 == strcmp(argv[i], "-r") || 0 == strcmp(argv[i], "--receiver")) {
 						endptr = NULL;
-						label_to = (int32_t) strtol(argv[i + 1], &endptr, 10);
+						label_to = (int8_t) strtol(argv[i + 1], &endptr, 10);
 						if (argv[i + 1] == endptr) {
 							return -1;
 						}

@@ -23,12 +23,12 @@ int32_t handle_ping(int32_t conn_fd) {
 	return 0;
 }
 
-int32_t handle_server_send(enum request cmd_type, int32_t label, const void* payload, const routing_table_t* routing) { // NOLINT
+int32_t handle_server_send(enum request cmd_type, int8_t label, const void* payload, const routing_table_t* routing) { // NOLINT
 	struct send_to_node_ret_payload* ret_payload;
 	uint8_t b[256];
 	uint32_t buf_len;
 	int32_t node_conn;
-	int32_t next_label;
+	int8_t next_label;
 	int32_t res;
 
 	res = 0;
@@ -82,8 +82,8 @@ int32_t handle_server_send(enum request cmd_type, int32_t label, const void* pay
 	return 0;
 }
 
-int32_t handle_node_send(int32_t label, const void* payload, const routing_table_t* routing) {
-	int32_t label_to;
+int32_t handle_node_send(int8_t label, const void* payload, const routing_table_t* routing) {
+	int8_t label_to;
 	int32_t res;
 
 	node_log_warn("Send node %d", label);
@@ -99,7 +99,7 @@ int32_t handle_node_send(int32_t label, const void* payload, const routing_table
 	} else {
 		struct node_send_payload* ret_payload;
 		int32_t node_conn;
-		int32_t next_label;
+		int8_t next_label;
 
 		ret_payload = (struct node_send_payload*) payload;
 
@@ -138,9 +138,9 @@ int32_t handle_node_send(int32_t label, const void* payload, const routing_table
 	return res;
 }
 
-int32_t handle_node_route_direct(routing_table_t* routing, int32_t server_label, void* payload) {
+int32_t handle_node_route_direct(routing_table_t* routing, int8_t server_label, void* payload) {
 	struct node_route_payload* route_payload;
-	int32_t prev_label;
+	int8_t prev_label;
 
 	route_payload = (struct node_route_payload*) payload;
 
@@ -161,7 +161,7 @@ int32_t handle_node_route_direct(routing_table_t* routing, int32_t server_label,
 	if (route_payload->receiver_label == server_label) {
 		uint8_t b[256];
 		uint32_t buf_len;
-		int32_t next_label_to_back;
+		int8_t next_label_to_back;
 		int32_t conn_fd;
 
 		node_log_info("Reached the recevier label %d", route_payload->receiver_label);
@@ -220,10 +220,10 @@ int32_t handle_node_route_direct(routing_table_t* routing, int32_t server_label,
 	return 0;
 }
 
-int32_t handle_node_route_inverse(routing_table_t* routing, void* payload, int32_t server_label) {
+int32_t handle_node_route_inverse(routing_table_t* routing, void* payload, int8_t server_label) {
 	struct node_route_payload* route_payload;
 	int32_t conn_fd;
-	int32_t next_label;
+	int8_t next_label;
 	uint8_t b[256];
 	uint32_t buf_len;
 

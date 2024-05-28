@@ -7,7 +7,7 @@
 
 typedef struct node_server {
 	routing_table_t routing;
-	int32_t label;
+	int8_t label;
 } node_server_t;
 
 int32_t node_server_handle_request(node_server_t* server, int32_t conn_fd, uint8_t* buf, ssize_t received_bytes, void* data);

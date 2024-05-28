@@ -7,16 +7,16 @@
 #include "settings.h"
 
 struct node_send_payload {
-	int32_t label_to;
+	int8_t label_to;
 };
 
 struct node_route_payload {
-	int32_t sender_label;
-	int32_t receiver_label;
-	int32_t local_sender_label;
-	int32_t metric;
-	int32_t time_to_live;
-	uint32_t id;
+	int8_t sender_label;
+	int8_t receiver_label;
+	int8_t local_sender_label;
+	int8_t metric;
+	int8_t time_to_live;
+	uint16_t id;
 };
 
 __attribute__((nonnull(3, 4), warn_unused_result))

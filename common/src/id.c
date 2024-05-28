@@ -1,15 +1,14 @@
 #include "id.h"
 
-static uint32_t message_id = 1;
+static uint16_t message_id = 1;
 
-uint32_t id_generate(void) {
-	uint32_t id;
+uint16_t id_generate(void) {
 
-	id = message_id++;
+	message_id++;
 
 	if (message_id == 0) {
 		message_id++;
 	}
 
-	return id;
+	return message_id;
 }

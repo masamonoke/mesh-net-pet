@@ -93,7 +93,7 @@ static int32_t parse_args(char** args, size_t argc, uint16_t* port) {
 	}
 
 	endptr = NULL;
-	server.label = (int32_t) strtol(args[1], &endptr, 10);
+	server.label = (int8_t) strtol(args[1], &endptr, 10);
 	if (args[1]  == endptr) {
 		return -1;
 	}
