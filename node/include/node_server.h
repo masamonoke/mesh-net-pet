@@ -8,7 +8,7 @@
 
 typedef struct node_server {
 	routing_table_t routing;
-	uint8_t label;
+	uint8_t addr;
 	app_t apps[APPS_COUNT];
 } node_server_t;
 

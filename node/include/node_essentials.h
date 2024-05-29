@@ -24,6 +24,6 @@ int32_t node_essentials_get_conn(int32_t port);
 
 int32_t node_essentials_notify_server(enum notify_type notify);
 
-int32_t node_essentials_broadcast(uint8_t current_label, uint8_t banned_label, struct node_route_direct_payload* route_payload, bool stop_broadcast);
+int32_t node_essentials_broadcast(uint8_t current_addr, uint8_t banned_addr, struct node_route_direct_payload* route_payload, bool stop_broadcast);
 
 void node_essentials_reset_connections(void);

@@ -87,7 +87,7 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 					struct node_update_ret_payload* update_payload;
 					update_payload = (struct node_update_ret_payload*) payload;
 					pid = getpid();
-					payload_len = sizeof(update_payload->port) + sizeof(update_payload->label) + sizeof(pid);
+					payload_len = sizeof(update_payload->port) + sizeof(update_payload->addr) + sizeof(pid);
 					sender = REQUEST_SENDER_NODE;
 
 					*msg_len = payload_len + sizeof_enum(request) + sizeof_enum(sender) + sizeof(*msg_len);
@@ -97,8 +97,8 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 					// payload
 					memcpy(p, &update_payload->port, sizeof(update_payload->port));
 					p += sizeof(update_payload->port);
-					memcpy(p, &update_payload->label, sizeof(update_payload->label));
-					p += sizeof(update_payload->label);
+					memcpy(p, &update_payload->addr, sizeof(update_payload->addr));
+					p += sizeof(update_payload->addr);
 					memcpy(p, &pid, sizeof(pid));
 					p += sizeof(pid);
 
@@ -123,16 +123,16 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 				struct send_to_node_ret_payload* send_payload;
 
 				send_payload = (struct send_to_node_ret_payload*) payload;
-				payload_len = sizeof(send_payload->label_to) + sizeof(send_payload->label_from) + format_app_message_len(&send_payload->app_payload);
+				payload_len = sizeof(send_payload->addr_to) + sizeof(send_payload->addr_from) + format_app_message_len(&send_payload->app_payload);
 				*msg_len = sizeof_enum(sender) + sizeof_enum(request) + sizeof(*msg_len) + payload_len;
 				sender = REQUEST_SENDER_SERVER;
 				p = format_create_base(message, *msg_len, request, sender);
 
 				// payload
-				memcpy(p, &send_payload->label_from, sizeof(send_payload->label_from));
-				p += sizeof(send_payload->label_from);
-				memcpy(p, &send_payload->label_to, sizeof(send_payload->label_to));
-				p += sizeof(send_payload->label_to);
+				memcpy(p, &send_payload->addr_from, sizeof(send_payload->addr_from));
+				p += sizeof(send_payload->addr_from);
+				memcpy(p, &send_payload->addr_to, sizeof(send_payload->addr_to));
+				p += sizeof(send_payload->addr_to);
 
 				format_app_create_message(&send_payload->app_payload, p);
 			}
@@ -169,8 +169,8 @@ static int32_t set_node_update_payload(const uint8_t* buf, void* ret_payload) {
 	// parse payload
 	memcpy(&payload->port, p, sizeof(payload->port));
 	p += sizeof(payload->port);
-	memcpy(&payload->label, p, sizeof(payload->label));
-	p += sizeof(payload->label);
+	memcpy(&payload->addr, p, sizeof(payload->addr));
+	p += sizeof(payload->addr);
 	memcpy(&payload->pid, p, sizeof(payload->pid));
 	p += sizeof(payload->pid);
 
@@ -183,10 +183,10 @@ static int32_t set_send_payload(const uint8_t* buf, struct send_to_node_ret_payl
 	p = format_skip_base(buf);
 
 	// parse payload
-	memcpy(&payload->label_from, p, sizeof(payload->label_from));
-	p += sizeof(payload->label_from);
-	memcpy(&payload->label_to, p, sizeof(payload->label_to));
-	p += sizeof(payload->label_to);
+	memcpy(&payload->addr_from, p, sizeof(payload->addr_from));
+	p += sizeof(payload->addr_from);
+	memcpy(&payload->addr_to, p, sizeof(payload->addr_to));
+	p += sizeof(payload->addr_to);
 
 	format_app_parse_message(&payload->app_payload, p);
 

@@ -52,12 +52,12 @@ int32_t main(int32_t argc, char** argv) {
 		die("Failed to init routing table");
 	}
 
-	node_app_fill_default(server.apps, server.label);
+	node_app_fill_default(server.apps, server.addr);
 
 	node_server_fd = connection_socket_to_listen(port);
 
 	if (node_server_fd < 0) {
-		die("Failed to start server on node %d", server.label);
+		die("Failed to start server on node %d", server.addr);
 	}
 
 	if (update_node_state(port)) {
@@ -96,11 +96,11 @@ static int32_t parse_args(char** args, size_t argc, uint16_t* port) {
 	}
 
 	endptr = NULL;
-	server.label = (uint8_t) strtol(args[1], &endptr, 10);
+	server.addr = (uint8_t) strtol(args[1], &endptr, 10);
 	if (args[1]  == endptr) {
 		return -1;
 	}
-	*port = node_port(server.label);
+	*port = node_port(server.addr);
 
 	return 0;
 }
@@ -119,7 +119,7 @@ static int32_t update_node_state(int32_t port) {
 	}
 
 	struct node_update_ret_payload payload = {
-		.label = server.label,
+		.addr = server.addr,
 		.pid = getpid(),
 		.port = port,
 	};

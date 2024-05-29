@@ -88,11 +88,11 @@ int32_t node_essentials_notify_server(enum notify_type notify) {
 	return 0;
 }
 
-static void fill_neighbour_port(uint8_t label, int32_t* up_port, int32_t* down_port, int32_t* left_port, int32_t* right_port);
+static void fill_neighbour_port(uint8_t addr, int32_t* up_port, int32_t* down_port, int32_t* left_port, int32_t* right_port);
 
 static int32_t get_conn_and_send(uint16_t port, char* buf, uint32_t buf_len);
 
-int32_t node_essentials_broadcast(uint8_t current_label, uint8_t banned_label, struct node_route_direct_payload* route_payload, bool stop_broadcast) { // NOLINT
+int32_t node_essentials_broadcast(uint8_t current_addr, uint8_t banned_addr, struct node_route_direct_payload* route_payload, bool stop_broadcast) { // NOLINT
 	int32_t up_port;
 	int32_t down_port;
 	int32_t left_port;
@@ -106,10 +106,10 @@ int32_t node_essentials_broadcast(uint8_t current_label, uint8_t banned_label, s
 		route_payload->time_to_live--;
 		route_payload->metric++;
 
-		fill_neighbour_port(current_label, &up_port, &down_port, &left_port, &right_port);
+		fill_neighbour_port(current_addr, &up_port, &down_port, &left_port, &right_port);
 
-		if (banned_label > 0) {
-			banned_port = node_port(banned_label);
+		if (banned_addr > 0) {
+			banned_port = node_port(banned_addr);
 		} else {
 			banned_port = UINT8_MAX;
 		}
@@ -147,7 +147,7 @@ static inline uint8_t from_pos(const ssize_t pos[2]) {
 	return (uint8_t) (pos[0] * MATRIX_SIZE + pos[1]);
 }
 
-static void fill_neighbour_port(uint8_t label, int32_t* up_port, int32_t* down_port, int32_t* left_port, int32_t* right_port) {
+static void fill_neighbour_port(uint8_t addr, int32_t* up_port, int32_t* down_port, int32_t* left_port, int32_t* right_port) {
 	ssize_t i;
 	ssize_t j;
 	ssize_t up_pos[2];
@@ -155,9 +155,9 @@ static void fill_neighbour_port(uint8_t label, int32_t* up_port, int32_t* down_p
 	ssize_t left_pos[2];
 	ssize_t right_pos[2];
 
-	// labels placed in matrix in sequential order starting from 0
-	i = label / MATRIX_SIZE;
-	j = label % MATRIX_SIZE;
+	// addresses placed in matrix in sequential order starting from 0
+	i = addr / MATRIX_SIZE;
+	j = addr % MATRIX_SIZE;
 
 	up_pos[0] = i - 1, up_pos[1] = j;
 	down_pos[0] = i + 1, down_pos[1] = j;
@@ -194,7 +194,7 @@ static int32_t get_conn_and_send(uint16_t port, char* buf, uint32_t buf_len) {
 	}
 
 	if (io_write_all(conn_fd, buf, buf_len)) {
-		node_log_error("Failed to send route direct request: label %d", node_label(port));
+		node_log_error("Failed to send route direct request: address %d", node_addr(port));
 		return -1;
 	}
 

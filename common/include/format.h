@@ -35,8 +35,8 @@ enum request {
 };
 
 struct send_to_node_ret_payload {
-	uint8_t label_to;
-	uint8_t label_from;
+	uint8_t addr_to;
+	uint8_t addr_from;
 	struct app_payload app_payload;
 };
 

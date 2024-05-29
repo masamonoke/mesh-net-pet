@@ -21,7 +21,7 @@ bool handle_ping(const struct node* children, int32_t client_fd, const void* pay
 
 	p = (uint8_t*) payload;
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
-		if (children[i].label == *p) {
+		if (children[i].addr == *p) {
 			uint8_t b[256];
 			uint32_t buf_len;
 			ssize_t received;
@@ -67,13 +67,13 @@ bool handle_ping(const struct node* children, int32_t client_fd, const void* pay
 	return true;
 }
 
-static int32_t kill_node(struct node* children, uint8_t label);
+static int32_t kill_node(struct node* children, uint8_t addr);
 
-bool handle_kill(struct node* children, uint8_t label, int32_t client_fd) { // NOLINT
+bool handle_kill(struct node* children, uint8_t addr, int32_t client_fd) { // NOLINT
 	enum request_result req_res;
 
-	if (kill_node(children, label)) {
-		custom_log_error("Failed to kill node %d", label);
+	if (kill_node(children, addr)) {
+		custom_log_error("Failed to kill node %d", addr);
 		req_res = REQUEST_ERR;
 	} else {
 		req_res = REQUEST_OK;
@@ -134,7 +134,7 @@ bool handle_reset(struct node* children, int32_t client_fd) {
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		if (children[i].write_fd != -1) {
 			if (io_write_all(children[i].write_fd, (char*) b, buf_len)) {
-				custom_log_error("Failed to send reset request to node %d", children[i].label);
+				custom_log_error("Failed to send reset request to node %d", children[i].addr);
 				res = send_res_to_client(client_fd, REQUEST_UNKNOWN);
 			}
 		} else {
@@ -170,15 +170,15 @@ bool handle_client_send(struct node* children, const void* payload) {
 	return make_send_to_node(children, payload);
 }
 
-bool handle_revive(struct node* children, uint8_t label, int32_t client_fd) { // NOLINT
+bool handle_revive(struct node* children, uint8_t addr, int32_t client_fd) { // NOLINT
 	size_t i;
 	bool res;
 
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
-		if (children[i].label == label) {
+		if (children[i].addr == addr) {
 			if (children[i].write_fd == -1) {
 				revivie_node(&children[i]);
-				custom_log_debug("Revived node %d", children[i].label);
+				custom_log_debug("Revived node %d", children[i].addr);
 				res = send_res_to_client(client_fd, REQUEST_OK);
 			} else {
 				custom_log_error("Failed to revive node: probably it is not killed");
@@ -199,13 +199,13 @@ void handle_update_child(const void* payload, struct node* children) {
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		if (children[i].pid == ret->pid) {
 			children[i].port = ret->port;
-			children[i].label = ret->label;
+			children[i].addr = ret->addr;
 
 			children[i].write_fd = connection_socket_to_send((uint16_t) children[i].port);
 			if (children[i].write_fd < 0) {
 				custom_log_error("Failed to establish connection with node port=%d", children[i].port);
 			} else {
-				custom_log_debug("Established connection with node: label=%d", children[i].label);
+				custom_log_debug("Established connection with node: addr=%d", children[i].addr);
 			}
 			break;
 		}
@@ -221,15 +221,15 @@ static bool send_res_to_client(int32_t client_fd, enum request_result res) {
 	return true;
 }
 
-static int32_t kill_node(struct node* children, uint8_t label) {
+static int32_t kill_node(struct node* children, uint8_t addr) {
 	size_t i;
 
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
-		if (children[i].label == label) {
+		if (children[i].addr == addr) {
 			close(children[i].write_fd);
 			children[i].write_fd = -1;
 			kill(children[i].pid, SIGTERM);
-			custom_log_debug("Killed node %d, pid %d", label, children[i].pid);
+			custom_log_debug("Killed node %d, pid %d", addr, children[i].pid);
 			return 0;
 		}
 	}
@@ -248,7 +248,7 @@ static bool make_send_to_node(const struct node* children, const void* payload) 
 	}
 
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
-		if (children[i].label == ((struct send_to_node_ret_payload*) payload)->label_from) {
+		if (children[i].addr == ((struct send_to_node_ret_payload*) payload)->addr_from) {
 			if (io_write_all(children[i].write_fd, b, buf_len)) {
 				custom_log_error("Failed to send request to node");
 				return false;
@@ -264,9 +264,9 @@ static void revivie_node(struct node* node) {
 
 	pid = fork();
 	if (pid == 0) {
-		run_node(node->label);
+		run_node(node->addr);
 	} else {
 		node->pid = pid;
 	}
-	custom_log_debug("Rerun node %d", node->label);
+	custom_log_debug("Rerun node %d", node->addr);
 }

@@ -68,18 +68,18 @@ L_FREE:
 	return (int32_t) status;
 }
 
-static int32_t create_label_payload(const char* arg, void** payload) {
+static int32_t create_addr_payload(const char* arg, void** payload) {
 	char* endptr;
-	uint8_t label;
+	uint8_t addr;
 
 	endptr = NULL;
-	label = (uint8_t) strtol(arg, &endptr, 10);
+	addr = (uint8_t) strtol(arg, &endptr, 10);
 	if (arg == endptr) {
 		return -1;
 	}
 
 	*payload = malloc(sizeof(uint8_t));
-	*((uint8_t*) *payload) = label;
+	*((uint8_t*) *payload) = addr;
 
 	return 0;
 }
@@ -90,35 +90,35 @@ static int32_t parse_args(int32_t argc, char** argv, enum request* cmd, void** p
 	if (argc > 2) {
 		for (i = 0; i < argc; i++) {
 			if (0 == strcmp(argv[i], "send") && argc >= 6) {
-				uint8_t label_to;
-				uint8_t label_from;
-				uint8_t app_label_to;
-				uint8_t app_label_from;
+				uint8_t addr_to;
+				uint8_t addr_from;
+				uint8_t app_addr_to;
+				uint8_t app_addr_from;
 				char* endptr;
 				char message[150];
 				struct send_to_node_ret_payload* send_payload;
 
 				*cmd = REQUEST_SEND;
-				label_to = UINT8_MAX;
-				label_from = UINT8_MAX;
+				addr_to = UINT8_MAX;
+				addr_from = UINT8_MAX;
 				for (i = 0; i < argc; i++) {
 					if (0 == strcmp(argv[i], "-s") || 0 == strcmp(argv[i], "--sender")) {
 						endptr = NULL;
-						label_from = (uint8_t) strtol(argv[i + 1], &endptr, 10);
+						addr_from = (uint8_t) strtol(argv[i + 1], &endptr, 10);
 						if (argv[i + 1] == endptr) {
 							return -1;
 						}
 					}
 					if (0 == strcmp(argv[i], "-r") || 0 == strcmp(argv[i], "--receiver")) {
 						endptr = NULL;
-						label_to = (uint8_t) strtol(argv[i + 1], &endptr, 10);
+						addr_to = (uint8_t) strtol(argv[i + 1], &endptr, 10);
 						if (argv[i + 1] == endptr) {
 							return -1;
 						}
 					}
 				}
 
-				if (label_to == UINT8_MAX || label_from == UINT8_MAX) {
+				if (addr_to == UINT8_MAX || addr_from == UINT8_MAX) {
 					custom_log_error("Failed to parse send command");
 					return -1;
 				}
@@ -126,8 +126,8 @@ static int32_t parse_args(int32_t argc, char** argv, enum request* cmd, void** p
 				*payload = malloc(sizeof(struct send_to_node_ret_payload));
 				send_payload = (struct send_to_node_ret_payload*) *payload;
 
-				send_payload->label_from = label_from;
-				send_payload->label_to = label_to;
+				send_payload->addr_from = addr_from;
+				send_payload->addr_to = addr_to;
 
 				if (argc > 6) {
 					for (i = 0; i < argc; i++) {
@@ -136,14 +136,14 @@ static int32_t parse_args(int32_t argc, char** argv, enum request* cmd, void** p
 						}
 						if (0 == strcmp(argv[i], "-ar") || 0 == strcmp(argv[i], "--app-receiver")) {
 							endptr = NULL;
-							app_label_to = (uint8_t) strtol(argv[i + 1], &endptr, 10);
+							app_addr_to = (uint8_t) strtol(argv[i + 1], &endptr, 10);
 							if (argv[i + 1] == endptr) {
 								return -1;
 							}
 						}
 						if (0 == strcmp(argv[i], "-as") || 0 == strcmp(argv[i], "--app-sender")) {
 							endptr = NULL;
-							app_label_from = (uint8_t) strtol(argv[i + 1], &endptr, 10);
+							app_addr_from = (uint8_t) strtol(argv[i + 1], &endptr, 10);
 							if (argv[i + 1] == endptr) {
 								return -1;
 							}
@@ -151,13 +151,13 @@ static int32_t parse_args(int32_t argc, char** argv, enum request* cmd, void** p
 
 					}
 
-					send_payload->app_payload.label_from = app_label_from;
-					send_payload->app_payload.label_to = app_label_to;
+					send_payload->app_payload.addr_from = app_addr_from;
+					send_payload->app_payload.addr_to = app_addr_to;
 					send_payload->app_payload.message_len = (uint8_t) strlen(message);
 					memcpy(send_payload->app_payload.message, message, send_payload->app_payload.message_len);
 				} else {
-					send_payload->app_payload.label_from = 0;
-					send_payload->app_payload.label_to = 0;
+					send_payload->app_payload.addr_from = 0;
+					send_payload->app_payload.addr_to = 0;
 					send_payload->app_payload.message_len = 0;
 				}
 				send_payload->app_payload.req_type = APP_REQUEST_DELIVERY;
@@ -167,13 +167,13 @@ static int32_t parse_args(int32_t argc, char** argv, enum request* cmd, void** p
 
 			if (0 == strcmp(argv[i], "ping")) {
 				*cmd = REQUEST_PING;
-				return create_label_payload(argv[i + 1], payload);
+				return create_addr_payload(argv[i + 1], payload);
 			} else if (0 == strcmp(argv[i], "kill")) {
 				*cmd = REQUEST_KILL_NODE;
-				return create_label_payload(argv[i + 1], payload);
+				return create_addr_payload(argv[i + 1], payload);
 			} else if (0 == strcmp(argv[i], "revive")) {
 				*cmd = REQUEST_REVIVE_NODE;
-				return create_label_payload(argv[i + 1], payload);
+				return create_addr_payload(argv[i + 1], payload);
 			}
 		}
 	} else if (argc == 2) {

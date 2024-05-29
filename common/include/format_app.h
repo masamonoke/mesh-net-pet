@@ -12,8 +12,8 @@ enum app_request {
 
 struct app_payload {
 	enum app_request req_type;
-	uint8_t label_to;
-	uint8_t label_from;
+	uint8_t addr_to;
+	uint8_t addr_from;
 	uint8_t key;
 	uint8_t message[150];
 	uint8_t message_len;

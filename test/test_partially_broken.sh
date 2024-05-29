@@ -2,7 +2,7 @@ echo "Testing partially broken network along side diagonal"
 
 matrix_size=$((10))
 
-label() {
+addr() {
 	echo  $(($1 * $((matrix_size)) + $2))
 }
 
@@ -12,7 +12,7 @@ setup() {
 		for j in $(seq 1 10)
 		do
 			if [ $(((i) + (j))) = $((matrix_size - 1)) ]; then
-				l=$(label $i $j)
+				l=$(addr $i $j)
 				kill_node $l
 			fi
 		done

@@ -8,9 +8,9 @@
 #include "format_app.h"
 
 struct node_route_direct_payload {
-	uint8_t sender_label;
-	uint8_t receiver_label;
-	uint8_t local_sender_label;
+	uint8_t sender_addr;
+	uint8_t receiver_addr;
+	uint8_t local_sender_addr;
 	int8_t metric;
 	int8_t time_to_live;
 	uint16_t id;
@@ -18,9 +18,9 @@ struct node_route_direct_payload {
 };
 
 struct node_route_inverse_payload {
-	uint8_t sender_label;
-	uint8_t receiver_label;
-	uint8_t local_sender_label;
+	uint8_t sender_addr;
+	uint8_t receiver_addr;
+	uint8_t local_sender_addr;
 	int8_t metric;
 	int8_t time_to_live;
 	uint16_t id;

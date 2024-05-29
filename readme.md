@@ -63,7 +63,7 @@ Note that Makefile makes debug build by default.
 ### Ping
 
 ```console
-make client TARGET_ARGS="ping <node_label>"
+make client TARGET_ARGS="ping <node_addr>"
 ```
 
 ### Send
@@ -83,13 +83,13 @@ make client TARGET_ARGS="send -s <sender node> -r <receiver node> -a 'some meani
 ### Kill
 
 ```console
- make client TARGET_ARGS="kill <label>"
+ make client TARGET_ARGS="kill <addr>"
 ```
 
 ### Revive
 
 ```console
- make client TARGET_ARGS="revive <label>"
+ make client TARGET_ARGS="revive <addr>"
 ```
 
 ### Reset

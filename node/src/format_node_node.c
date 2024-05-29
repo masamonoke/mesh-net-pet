@@ -80,14 +80,14 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 
 				ret_payload = (struct send_to_node_ret_payload*) payload;
 
-				payload_len = sizeof(ret_payload->label_to) + sizeof(ret_payload->label_from) + format_app_message_len(&ret_payload->app_payload);
+				payload_len = sizeof(ret_payload->addr_to) + sizeof(ret_payload->addr_from) + format_app_message_len(&ret_payload->app_payload);
 				*msg_len = payload_len + sizeof_enum(request) + sizeof(*msg_len) + sizeof_enum(sender);
 				p = format_create_base(message, *msg_len, request, sender);
 
-				memcpy(p, &ret_payload->label_from, sizeof(ret_payload->label_from));
-				p += sizeof(ret_payload->label_from);
-				memcpy(p, &ret_payload->label_to, sizeof(ret_payload->label_to));
-				p += sizeof(ret_payload->label_to);
+				memcpy(p, &ret_payload->addr_from, sizeof(ret_payload->addr_from));
+				p += sizeof(ret_payload->addr_from);
+				memcpy(p, &ret_payload->addr_to, sizeof(ret_payload->addr_to));
+				p += sizeof(ret_payload->addr_to);
 
 				format_app_create_message(&ret_payload->app_payload, p);
 			}
@@ -98,18 +98,18 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 
 				route_payload = (struct node_route_direct_payload*) payload;
 
-				payload_len = sizeof(route_payload->local_sender_label) + sizeof(route_payload->sender_label) + sizeof(route_payload->receiver_label) +
+				payload_len = sizeof(route_payload->local_sender_addr) + sizeof(route_payload->sender_addr) + sizeof(route_payload->receiver_addr) +
 					sizeof(route_payload->metric) + sizeof(route_payload->time_to_live) + sizeof(route_payload->id) + format_app_message_len(&route_payload->app_payload);
 				*msg_len = payload_len + sizeof_enum(request) + sizeof(*msg_len) + sizeof_enum(sender);
 
 				p = format_create_base(message, *msg_len, request, sender);
 
-				memcpy(p, &route_payload->sender_label, sizeof(route_payload->sender_label));
-				p += sizeof(route_payload->sender_label);
-				memcpy(p, &route_payload->receiver_label, sizeof(route_payload->receiver_label));
-				p += sizeof(route_payload->receiver_label);
-				memcpy(p, &route_payload->local_sender_label, sizeof(route_payload->local_sender_label));
-				p += sizeof(route_payload->local_sender_label);
+				memcpy(p, &route_payload->sender_addr, sizeof(route_payload->sender_addr));
+				p += sizeof(route_payload->sender_addr);
+				memcpy(p, &route_payload->receiver_addr, sizeof(route_payload->receiver_addr));
+				p += sizeof(route_payload->receiver_addr);
+				memcpy(p, &route_payload->local_sender_addr, sizeof(route_payload->local_sender_addr));
+				p += sizeof(route_payload->local_sender_addr);
 				memcpy(p, &route_payload->metric, sizeof(route_payload->metric));
 				p += sizeof(route_payload->metric);
 				memcpy(p, &route_payload->time_to_live, sizeof(route_payload->time_to_live));
@@ -126,18 +126,18 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 
 				route_payload = (struct node_route_inverse_payload*) payload;
 
-				payload_len = sizeof(route_payload->local_sender_label) + sizeof(route_payload->sender_label) + sizeof(route_payload->receiver_label)
+				payload_len = sizeof(route_payload->local_sender_addr) + sizeof(route_payload->sender_addr) + sizeof(route_payload->receiver_addr)
 					+ sizeof(route_payload->metric) + sizeof(route_payload->time_to_live) + sizeof(route_payload->id);
 				*msg_len = payload_len + sizeof_enum(request) + sizeof(*msg_len) + sizeof_enum(sender);
 
 				p = format_create_base(message, *msg_len, request, sender);
 
-				memcpy(p, &route_payload->sender_label, sizeof(route_payload->sender_label));
-				p += sizeof(route_payload->sender_label);
-				memcpy(p, &route_payload->receiver_label, sizeof(route_payload->receiver_label));
-				p += sizeof(route_payload->receiver_label);
-				memcpy(p, &route_payload->local_sender_label, sizeof(route_payload->local_sender_label));
-				p += sizeof(route_payload->local_sender_label);
+				memcpy(p, &route_payload->sender_addr, sizeof(route_payload->sender_addr));
+				p += sizeof(route_payload->sender_addr);
+				memcpy(p, &route_payload->receiver_addr, sizeof(route_payload->receiver_addr));
+				p += sizeof(route_payload->receiver_addr);
+				memcpy(p, &route_payload->local_sender_addr, sizeof(route_payload->local_sender_addr));
+				p += sizeof(route_payload->local_sender_addr);
 				memcpy(p, &route_payload->metric, sizeof(route_payload->metric));
 				p += sizeof(route_payload->metric);
 				memcpy(p, &route_payload->time_to_live, sizeof(route_payload->time_to_live));
@@ -158,10 +158,10 @@ static int32_t set_send_payload(const uint8_t* buf, struct send_to_node_ret_payl
 
 	p = format_skip_base(buf);
 
-	memcpy(&payload->label_from, p, sizeof(payload->label_from));
-	p += sizeof(payload->label_from);
-	memcpy(&payload->label_to, p, sizeof(payload->label_to));
-	p += sizeof(payload->label_to);
+	memcpy(&payload->addr_from, p, sizeof(payload->addr_from));
+	p += sizeof(payload->addr_from);
+	memcpy(&payload->addr_to, p, sizeof(payload->addr_to));
+	p += sizeof(payload->addr_to);
 
 	format_app_parse_message(&payload->app_payload, p);
 
@@ -174,12 +174,12 @@ static int32_t set_route_inverse_payload(const uint8_t* buf, struct node_route_i
 	p = format_skip_base(buf);
 
 	// parse payload
-	memcpy(&payload->sender_label, p, sizeof(payload->sender_label));
-	p += sizeof(payload->sender_label);
-	memcpy(&payload->receiver_label, p, sizeof(payload->receiver_label));
-	p += sizeof(payload->receiver_label);
-	memcpy(&payload->local_sender_label, p, sizeof(payload->local_sender_label));
-	p += sizeof(payload->local_sender_label);
+	memcpy(&payload->sender_addr, p, sizeof(payload->sender_addr));
+	p += sizeof(payload->sender_addr);
+	memcpy(&payload->receiver_addr, p, sizeof(payload->receiver_addr));
+	p += sizeof(payload->receiver_addr);
+	memcpy(&payload->local_sender_addr, p, sizeof(payload->local_sender_addr));
+	p += sizeof(payload->local_sender_addr);
 	memcpy(&payload->metric, p, sizeof(payload->metric));
 	p += sizeof(payload->metric);
 	memcpy(&payload->time_to_live, p, sizeof(payload->time_to_live));
@@ -195,12 +195,12 @@ static int32_t set_route_direct_payload(const uint8_t* buf, struct node_route_di
 	p = format_skip_base(buf);
 
 	// parse payload
-	memcpy(&payload->sender_label, p, sizeof(payload->sender_label));
-	p += sizeof(payload->sender_label);
-	memcpy(&payload->receiver_label, p, sizeof(payload->receiver_label));
-	p += sizeof(payload->receiver_label);
-	memcpy(&payload->local_sender_label, p, sizeof(payload->local_sender_label));
-	p += sizeof(payload->local_sender_label);
+	memcpy(&payload->sender_addr, p, sizeof(payload->sender_addr));
+	p += sizeof(payload->sender_addr);
+	memcpy(&payload->receiver_addr, p, sizeof(payload->receiver_addr));
+	p += sizeof(payload->receiver_addr);
+	memcpy(&payload->local_sender_addr, p, sizeof(payload->local_sender_addr));
+	p += sizeof(payload->local_sender_addr);
 	memcpy(&payload->metric, p, sizeof(payload->metric));
 	p += sizeof(payload->metric);
 	memcpy(&payload->time_to_live, p, sizeof(payload->time_to_live));

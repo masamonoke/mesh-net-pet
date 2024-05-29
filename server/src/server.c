@@ -54,7 +54,7 @@ int32_t main(void) {
 			// parent
 			server_data.children[i].write_fd = -1;
 			server_data.children[i].port = -1;
-			server_data.children[i].label = UINT8_MAX;
+			server_data.children[i].addr = UINT8_MAX;
 		}
 	}
 	server_data.client_fd = -1;

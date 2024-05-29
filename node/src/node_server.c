@@ -58,12 +58,12 @@ static int32_t handle_server(node_server_t* server, int32_t conn_fd, enum reques
 	res = 0;
 	switch (*cmd_type) {
 		case REQUEST_PING:
-			node_log_debug("Node %d", server->label);
+			node_log_debug("Node %d", server->addr);
 			res = handle_ping(conn_fd);
 			break;
 		case REQUEST_SEND:
 			node_log_debug("Send request");
-			res = handle_server_send(*cmd_type, server->label, *payload, &server->routing, server->apps);
+			res = handle_server_send(*cmd_type, server->addr, *payload, &server->routing, server->apps);
 			break;
 		case REQUEST_STOP_BROADCAST:
 			handle_stop_broadcast();
@@ -76,7 +76,7 @@ static int32_t handle_server(node_server_t* server, int32_t conn_fd, enum reques
 				node_log_error("Failed to reset routing table");
 			}
 			node_essentials_reset_connections();
-			node_app_fill_default(server->apps, server->label);
+			node_app_fill_default(server->apps, server->addr);
 			break;
 		case REQUEST_UNDEFINED:
 			node_log_error("Undefined server-node request type");
@@ -98,20 +98,20 @@ static int32_t handle_node(node_server_t* server, enum request* cmd_type, void**
 
 	*payload = NULL;
 	if (format_node_node_parse_message(cmd_type, payload, buf, received_bytes)) {
-		node_log_error("Failed to parse message: cmd_type %d, node %d", *cmd_type, server->label);
+		node_log_error("Failed to parse message: cmd_type %d, node %d", *cmd_type, server->addr);
 		return -1;
 	}
 
 	res = 0;
 	switch (*cmd_type) {
 		case REQUEST_SEND:
-			res = handle_node_send(server->label, *payload, &server->routing, server->apps);
+			res = handle_node_send(server->addr, *payload, &server->routing, server->apps);
 			break;
 		case REQUEST_ROUTE_DIRECT:
-			res = handle_node_route_direct(&server->routing, server->label, *payload, server->apps);
+			res = handle_node_route_direct(&server->routing, server->addr, *payload, server->apps);
 			break;
 		case REQUEST_ROUTE_INVERSE:
-			res = handle_node_route_inverse(&server->routing, *payload, server->label);
+			res = handle_node_route_inverse(&server->routing, *payload, server->addr);
 			break;
 		case REQUEST_UNDEFINED:
 			node_log_error("Undefined request: received bytes %d", received_bytes);

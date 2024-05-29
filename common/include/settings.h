@@ -25,6 +25,6 @@
 
 #define sizeof_enum(_) (sizeof(uint32_t))
 
-#define node_port(label) (uint16_t) (SERVER_PORT + (label) + 1)
+#define node_port(addr) (uint16_t) (SERVER_PORT + (addr) + 1)
 
-#define node_label(port) (port - SERVER_PORT - 1)
+#define node_addr(port) (port - SERVER_PORT - 1)

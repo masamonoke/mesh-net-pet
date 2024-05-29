@@ -6,16 +6,16 @@
 
 #include "control_utils.h"
 
-void run_node(uint8_t node_label) {
-	char node_label_str[16];
+void run_node(uint8_t node_addr) {
+	char node_addr_str[16];
 	int32_t len;
 
-	len = snprintf(node_label_str, sizeof(node_label_str), "%d", node_label);
-	if (len < 0 || (size_t) len > sizeof(node_label_str)) {
-		die("Failed to convert node_label to str");
+	len = snprintf(node_addr_str, sizeof(node_addr_str), "%d", node_addr);
+	if (len < 0 || (size_t) len > sizeof(node_addr_str)) {
+		die("Failed to convert node_addr to str");
 	}
 
-	if (execl("../node/mesh_node", "mesh_node", node_label_str, (char*) NULL)) {
+	if (execl("../node/mesh_node", "mesh_node", node_addr_str, (char*) NULL)) {
 		die("Failed to run node");
 	}
 }

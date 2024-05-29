@@ -22,7 +22,7 @@ int32_t format_server_client_create_message(enum request req, const void* payloa
 	return create_message(req, payload, buf, len);
 }
 
-static int32_t parse_label_payload(const uint8_t* buf, void* ret_payload);
+static int32_t parse_addr_payload(const uint8_t* buf, void* ret_payload);
 
 static int32_t parse_send(const uint8_t* buf, struct send_to_node_ret_payload* ret_payload);
 
@@ -46,7 +46,7 @@ static int32_t parse_message(enum request* request, void** payload, const uint8_
 		case REQUEST_KILL_NODE:
 			*request = cmd;
 			*payload = malloc(sizeof(int32_t));
-			parse_label_payload(buf, *payload);
+			parse_addr_payload(buf, *payload);
 			break;
 		case REQUEST_RESET:
 			*request = cmd;
@@ -89,14 +89,14 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 
 				ret_payload = (struct send_to_node_ret_payload*) payload;
 
-				payload_len = sizeof(ret_payload->label_to) + sizeof(ret_payload->label_from) + format_app_message_len(&ret_payload->app_payload);
+				payload_len = sizeof(ret_payload->addr_to) + sizeof(ret_payload->addr_from) + format_app_message_len(&ret_payload->app_payload);
 				*msg_len = payload_len + sizeof_enum(request) + sizeof(*msg_len) + sizeof_enum(sender);
 				p = format_create_base(message, *msg_len, request, sender);
 
-				memcpy(p, &ret_payload->label_from, sizeof(ret_payload->label_from));
-				p += sizeof(ret_payload->label_from);
-				memcpy(p, &ret_payload->label_to, sizeof(ret_payload->label_to));
-				p += sizeof(ret_payload->label_to);
+				memcpy(p, &ret_payload->addr_from, sizeof(ret_payload->addr_from));
+				p += sizeof(ret_payload->addr_from);
+				memcpy(p, &ret_payload->addr_to, sizeof(ret_payload->addr_to));
+				p += sizeof(ret_payload->addr_to);
 
 				format_app_create_message(&ret_payload->app_payload, p);
 			} else {
@@ -117,7 +117,7 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 	return 0;
 }
 
-static int32_t parse_label_payload(const uint8_t* buf, void* ret_payload) {
+static int32_t parse_addr_payload(const uint8_t* buf, void* ret_payload) {
 	const uint8_t* p;
 	uint8_t* payload;
 
@@ -136,10 +136,10 @@ static int32_t parse_send(const uint8_t* buf, struct send_to_node_ret_payload* r
 
 	p = format_skip_base(buf);
 
-	memcpy(&ret_payload->label_from, p, sizeof(ret_payload->label_from));
-	p += sizeof(ret_payload->label_from);
-	memcpy(&ret_payload->label_to, p, sizeof(ret_payload->label_to));
-	p += sizeof(ret_payload->label_to);
+	memcpy(&ret_payload->addr_from, p, sizeof(ret_payload->addr_from));
+	p += sizeof(ret_payload->addr_from);
+	memcpy(&ret_payload->addr_to, p, sizeof(ret_payload->addr_to));
+	p += sizeof(ret_payload->addr_to);
 
 	format_app_parse_message(&ret_payload->app_payload, p);
 
