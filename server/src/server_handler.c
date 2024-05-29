@@ -16,18 +16,18 @@ static bool send_res_to_client(int32_t client_fd, enum request_result res);
 
 bool handle_ping(const struct node* children, int32_t client_fd, const void* payload) {
 	size_t i;
-	struct node_label_payload* p;
+	uint8_t* p;
 	struct timeval tv;
 
-	p = (struct node_label_payload*) payload;
+	p = (uint8_t*) payload;
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
-		if (children[i].label == p->label) {
+		if (children[i].label == *p) {
 			uint8_t b[256];
 			uint32_t buf_len;
 			ssize_t received;
 
 			if (children[i].write_fd == -1) {
-				custom_log_error("Node killed %d", p->label);
+				custom_log_error("Node killed %d", *p);
 				return send_res_to_client(client_fd, REQUEST_ERR);
 			}
 
@@ -56,7 +56,7 @@ bool handle_ping(const struct node* children, int32_t client_fd, const void* pay
 					return false;
 				}
 			} else {
-				custom_log_error("Failed to get response from node %d", p->label);
+				custom_log_error("Failed to get response from node %d", *p);
 				return send_res_to_client(client_fd, REQUEST_ERR);
 			}
 
@@ -67,9 +67,9 @@ bool handle_ping(const struct node* children, int32_t client_fd, const void* pay
 	return true;
 }
 
-static int32_t kill_node(struct node* children, int32_t label);
+static int32_t kill_node(struct node* children, uint8_t label);
 
-bool handle_kill(struct node* children, int32_t label, int32_t client_fd) { // NOLINT
+bool handle_kill(struct node* children, uint8_t label, int32_t client_fd) { // NOLINT
 	enum request_result req_res;
 
 	if (kill_node(children, label)) {
@@ -170,7 +170,7 @@ bool handle_client_send(struct node* children, const void* payload) {
 	return make_send_to_node(children, payload);
 }
 
-bool handle_revive(struct node* children, int32_t label, int32_t client_fd) { // NOLINT
+bool handle_revive(struct node* children, uint8_t label, int32_t client_fd) { // NOLINT
 	size_t i;
 	bool res;
 
@@ -221,7 +221,7 @@ static bool send_res_to_client(int32_t client_fd, enum request_result res) {
 	return true;
 }
 
-static int32_t kill_node(struct node* children, int32_t label) {
+static int32_t kill_node(struct node* children, uint8_t label) {
 	size_t i;
 
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {

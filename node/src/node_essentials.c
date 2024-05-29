@@ -88,11 +88,11 @@ int32_t node_essentials_notify_server(enum notify_type notify) {
 	return 0;
 }
 
-static void fill_neighbour_port(int32_t label, int32_t* up_port, int32_t* down_port, int32_t* left_port, int32_t* right_port);
+static void fill_neighbour_port(uint8_t label, int32_t* up_port, int32_t* down_port, int32_t* left_port, int32_t* right_port);
 
 static int32_t get_conn_and_send(uint16_t port, char* buf, uint32_t buf_len);
 
-int32_t node_essentials_broadcast(int32_t current_label, int32_t banned_label, struct node_route_direct_payload* route_payload, bool stop_broadcast) { // NOLINT
+int32_t node_essentials_broadcast(uint8_t current_label, uint8_t banned_label, struct node_route_direct_payload* route_payload, bool stop_broadcast) { // NOLINT
 	int32_t up_port;
 	int32_t down_port;
 	int32_t left_port;
@@ -111,7 +111,7 @@ int32_t node_essentials_broadcast(int32_t current_label, int32_t banned_label, s
 		if (banned_label > 0) {
 			banned_port = node_port(banned_label);
 		} else {
-			banned_port = -1;
+			banned_port = UINT8_MAX;
 		}
 
 		if (format_node_node_create_message(REQUEST_ROUTE_DIRECT, route_payload, b, &buf_len)) {
@@ -143,11 +143,11 @@ static inline bool is_valid_pos(const ssize_t pos[2]) {
 	return ((pos[0] >= 0 && pos[0] < MATRIX_SIZE) && (pos[1] >= 0 && pos[1] < MATRIX_SIZE));
 }
 
-static inline int32_t from_pos(const ssize_t pos[2]) {
-	return (int32_t) (pos[0] * MATRIX_SIZE + pos[1]);
+static inline uint8_t from_pos(const ssize_t pos[2]) {
+	return (uint8_t) (pos[0] * MATRIX_SIZE + pos[1]);
 }
 
-static void fill_neighbour_port(int32_t label, int32_t* up_port, int32_t* down_port, int32_t* left_port, int32_t* right_port) {
+static void fill_neighbour_port(uint8_t label, int32_t* up_port, int32_t* down_port, int32_t* left_port, int32_t* right_port) {
 	ssize_t i;
 	ssize_t j;
 	ssize_t up_pos[2];

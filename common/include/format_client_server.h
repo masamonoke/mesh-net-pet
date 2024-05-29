@@ -6,16 +6,6 @@
 #include "format.h"
 #include "format_app.h"
 
-struct send_to_node_ret_payload {
-	int8_t label_to;
-	int8_t label_from;
-	struct app_payload app_payload;
-};
-
-struct node_label_payload {
-	int8_t label;
-};
-
 __attribute__((nonnull(3, 4), warn_unused_result))
 int32_t format_server_client_create_message(enum request req, const void* payload, uint8_t* buf, uint32_t* len);
 

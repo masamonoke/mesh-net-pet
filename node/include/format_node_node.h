@@ -7,15 +7,10 @@
 #include "settings.h"
 #include "format_app.h"
 
-/* struct node_send_payload { */
-/* 	int8_t label_to; */
-/* 	struct app_payload app_payload; */
-/* }; */
-
 struct node_route_direct_payload {
-	int8_t sender_label;
-	int8_t receiver_label;
-	int8_t local_sender_label;
+	uint8_t sender_label;
+	uint8_t receiver_label;
+	uint8_t local_sender_label;
 	int8_t metric;
 	int8_t time_to_live;
 	uint16_t id;
@@ -23,9 +18,9 @@ struct node_route_direct_payload {
 };
 
 struct node_route_inverse_payload {
-	int8_t sender_label;
-	int8_t receiver_label;
-	int8_t local_sender_label;
+	uint8_t sender_label;
+	uint8_t receiver_label;
+	uint8_t local_sender_label;
 	int8_t metric;
 	int8_t time_to_live;
 	uint16_t id;

@@ -14,9 +14,9 @@
 static uint8_t msg_storage[MESSAGE_LEN];
 static uint8_t storage_msg_len;
 
-void node_app_fill_default(app_t apps[APPS_COUNT], int8_t node_addr) {
-	int8_t i;
-	int8_t j;
+void node_app_fill_default(app_t apps[APPS_COUNT], uint8_t node_addr) {
+	uint8_t i;
+	uint8_t j;
 
 	srandom((uint32_t) time(NULL));
 
@@ -29,7 +29,7 @@ void node_app_fill_default(app_t apps[APPS_COUNT], int8_t node_addr) {
 	}
 }
 
-static bool get_key(const app_t* app, int8_t app_addr, int8_t node_addr, uint8_t* key);
+static bool get_key(const app_t* app, uint8_t app_addr, uint8_t node_addr, uint8_t* key);
 
 // TODO: mock, replace with actual impl
 static void decrypt(uint8_t key, uint8_t* msg, uint8_t msg_len) {
@@ -45,7 +45,7 @@ static void encrypt(uint8_t key, uint8_t* msg, uint8_t msg_len) {
 	node_log_debug("Encrypting message with key %d", key);
 }
 
-bool node_app_handle_request(app_t* apps, struct app_payload* app_payload, int8_t node_label_from) {
+bool node_app_handle_request(app_t* apps, struct app_payload* app_payload, uint8_t node_label_from) {
 	size_t i;
 
 	switch (app_payload->req_type) {
@@ -80,7 +80,7 @@ bool node_app_handle_request(app_t* apps, struct app_payload* app_payload, int8_
 	return false;
 }
 
-static bool has_pair(app_t* app, int8_t app_addr, int8_t node_addr) {
+static bool has_pair(app_t* app, uint8_t app_addr, uint8_t node_addr) {
 	size_t i;
 
 	for (i = 0; i < MAX_PAIR; i++) {
@@ -92,7 +92,7 @@ static bool has_pair(app_t* app, int8_t app_addr, int8_t node_addr) {
 	return false;
 }
 
-static bool get_app(const app_t* apps, int8_t app_addr, app_t* app) {
+static bool get_app(const app_t* apps, uint8_t app_addr, app_t* app) {
 	size_t i;
 
 	for (i = 0; i < APPS_COUNT; i++) {
@@ -119,7 +119,7 @@ static bool set_app(app_t* apps, app_t* app) {
 	return false;
 }
 
-static bool save_pair(app_t* app, int8_t app_addr, int8_t node_addr, uint8_t key) { // NOLINT
+static bool save_pair(app_t* app, uint8_t app_addr, uint8_t node_addr, uint8_t key) { // NOLINT
 	size_t i;
 
 	for (i = 0; i < MAX_PAIR; i++) {
@@ -135,7 +135,7 @@ static bool save_pair(app_t* app, int8_t app_addr, int8_t node_addr, uint8_t key
 	return false;
 }
 
-bool node_app_save_key(app_t apps[APPS_COUNT], struct app_payload* app_payload, int8_t label_from) {
+bool node_app_save_key(app_t apps[APPS_COUNT], struct app_payload* app_payload, uint8_t label_from) {
 	app_t app;
 
 	if (!get_app(apps, app_payload->label_to, &app)) {
@@ -151,7 +151,7 @@ bool node_app_save_key(app_t apps[APPS_COUNT], struct app_payload* app_payload, 
 	return true;
 }
 
-void node_app_setup_delivery(app_t apps[APPS_COUNT], struct app_payload* app_payload, int8_t label_to) {
+void node_app_setup_delivery(app_t apps[APPS_COUNT], struct app_payload* app_payload, uint8_t label_to) {
 	app_t app;
 
 	if (!get_app(apps, app_payload->label_from, &app)) {
@@ -185,7 +185,7 @@ void node_app_setup_delivery(app_t apps[APPS_COUNT], struct app_payload* app_pay
 	}
 }
 
-static bool get_key(const app_t* app, int8_t app_addr, int8_t node_addr, uint8_t* key) {
+static bool get_key(const app_t* app, uint8_t app_addr, uint8_t node_addr, uint8_t* key) {
 	size_t i ;
 
 	for (i = 0; i < MAX_PAIR; i++) {

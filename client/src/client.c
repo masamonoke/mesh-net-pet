@@ -70,16 +70,16 @@ L_FREE:
 
 static int32_t create_label_payload(const char* arg, void** payload) {
 	char* endptr;
-	int8_t label;
+	uint8_t label;
 
 	endptr = NULL;
-	label = (int8_t) strtol(arg, &endptr, 10);
+	label = (uint8_t) strtol(arg, &endptr, 10);
 	if (arg == endptr) {
 		return -1;
 	}
 
-	*payload = malloc(sizeof(struct node_label_payload));
-	((struct node_label_payload*) *payload)->label = label;
+	*payload = malloc(sizeof(uint8_t));
+	*((uint8_t*) *payload) = label;
 
 	return 0;
 }
@@ -90,35 +90,35 @@ static int32_t parse_args(int32_t argc, char** argv, enum request* cmd, void** p
 	if (argc > 2) {
 		for (i = 0; i < argc; i++) {
 			if (0 == strcmp(argv[i], "send") && argc >= 6) {
-				int8_t label_to;
-				int8_t label_from;
-				int8_t app_label_to;
-				int8_t app_label_from;
+				uint8_t label_to;
+				uint8_t label_from;
+				uint8_t app_label_to;
+				uint8_t app_label_from;
 				char* endptr;
 				char message[150];
 				struct send_to_node_ret_payload* send_payload;
 
 				*cmd = REQUEST_SEND;
-				label_to = -1;
-				label_from = -1;
+				label_to = UINT8_MAX;
+				label_from = UINT8_MAX;
 				for (i = 0; i < argc; i++) {
 					if (0 == strcmp(argv[i], "-s") || 0 == strcmp(argv[i], "--sender")) {
 						endptr = NULL;
-						label_from = (int8_t) strtol(argv[i + 1], &endptr, 10);
+						label_from = (uint8_t) strtol(argv[i + 1], &endptr, 10);
 						if (argv[i + 1] == endptr) {
 							return -1;
 						}
 					}
 					if (0 == strcmp(argv[i], "-r") || 0 == strcmp(argv[i], "--receiver")) {
 						endptr = NULL;
-						label_to = (int8_t) strtol(argv[i + 1], &endptr, 10);
+						label_to = (uint8_t) strtol(argv[i + 1], &endptr, 10);
 						if (argv[i + 1] == endptr) {
 							return -1;
 						}
 					}
 				}
 
-				if (label_to < 0 || label_from < 0) {
+				if (label_to == UINT8_MAX || label_from == UINT8_MAX) {
 					custom_log_error("Failed to parse send command");
 					return -1;
 				}
@@ -136,14 +136,14 @@ static int32_t parse_args(int32_t argc, char** argv, enum request* cmd, void** p
 						}
 						if (0 == strcmp(argv[i], "-ar") || 0 == strcmp(argv[i], "--app-receiver")) {
 							endptr = NULL;
-							app_label_to = (int8_t) strtol(argv[i + 1], &endptr, 10);
+							app_label_to = (uint8_t) strtol(argv[i + 1], &endptr, 10);
 							if (argv[i + 1] == endptr) {
 								return -1;
 							}
 						}
 						if (0 == strcmp(argv[i], "-as") || 0 == strcmp(argv[i], "--app-sender")) {
 							endptr = NULL;
-							app_label_from = (int8_t) strtol(argv[i + 1], &endptr, 10);
+							app_label_from = (uint8_t) strtol(argv[i + 1], &endptr, 10);
 							if (argv[i + 1] == endptr) {
 								return -1;
 							}

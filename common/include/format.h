@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include <format_app.h>
+
 enum request_result {
 	REQUEST_OK,
 	REQUEST_ERR,
@@ -30,6 +32,12 @@ enum request {
 	REQUEST_REVIVE_NODE,
 	REQUEST_RESET,
 	REQUEST_UNDEFINED
+};
+
+struct send_to_node_ret_payload {
+	uint8_t label_to;
+	uint8_t label_from;
+	struct app_payload app_payload;
 };
 
 __attribute__((nonnull(2)))

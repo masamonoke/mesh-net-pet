@@ -49,12 +49,12 @@ int32_t main(void) {
 		if (server_data.children[i].pid < 0) {
 			custom_log_error("Failed to create child process");
 		} else if (server_data.children[i].pid == 0) {
-			run_node((int32_t) i);
+			run_node((uint8_t) i);
 		} else {
 			// parent
 			server_data.children[i].write_fd = -1;
 			server_data.children[i].port = -1;
-			server_data.children[i].label = -1;
+			server_data.children[i].label = UINT8_MAX;
 		}
 	}
 	server_data.client_fd = -1;

@@ -45,7 +45,7 @@ static int32_t parse_message(enum request* request, void** payload, const uint8_
 		case REQUEST_REVIVE_NODE:
 		case REQUEST_KILL_NODE:
 			*request = cmd;
-			*payload = malloc(sizeof(struct node_label_payload));
+			*payload = malloc(sizeof(int32_t));
 			parse_label_payload(buf, *payload);
 			break;
 		case REQUEST_RESET:
@@ -71,17 +71,15 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 		case REQUEST_REVIVE_NODE:
 			{
 				if (payload) {
-					struct node_label_payload* ret_payload;
-					uint32_t label;
+					uint8_t* ret_payload;
 
-					ret_payload = (struct node_label_payload*) payload;
-					payload_len = sizeof(label);
+					ret_payload = (uint8_t*) payload;
+					payload_len = sizeof(*ret_payload);
 
 					*msg_len = payload_len + sizeof_enum(request) + sizeof(*msg_len) + sizeof_enum(sender);
 					p = format_create_base(message, *msg_len, request, sender);
 
-					memcpy(p, &ret_payload->label, sizeof(ret_payload->label));
-					p += sizeof(ret_payload->label);
+					memcpy(p, ret_payload, sizeof(*ret_payload));
 				}
 			}
 			break;
@@ -121,14 +119,14 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 
 static int32_t parse_label_payload(const uint8_t* buf, void* ret_payload) {
 	const uint8_t* p;
-	struct node_label_payload* payload;
+	uint8_t* payload;
 
-	payload = (struct node_label_payload*) ret_payload;
+	payload = (uint8_t*) ret_payload;
 
 	p = format_skip_base(buf);
 
-	memcpy(&payload->label, p, sizeof(payload->label));
-	p += sizeof(payload->label);
+	memcpy(payload, p, sizeof(*payload));
+	p += sizeof(payload);
 
 	return 0;
 }

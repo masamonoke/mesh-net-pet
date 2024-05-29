@@ -9,7 +9,7 @@
 struct node {
 	pid_t pid;
 	int32_t write_fd;
-	int8_t label;
+	uint8_t label;
 	int32_t port;
 };
 

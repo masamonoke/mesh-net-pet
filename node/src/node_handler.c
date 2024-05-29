@@ -26,12 +26,12 @@ int32_t handle_ping(int32_t conn_fd) {
 	return 0;
 }
 
-int32_t handle_server_send(enum request cmd_type, int8_t label, const void* payload, const routing_table_t* routing, app_t apps[APPS_COUNT]) { // NOLINT
+int32_t handle_server_send(enum request cmd_type, uint8_t label, const void* payload, const routing_table_t* routing, app_t apps[APPS_COUNT]) { // NOLINT
 	struct send_to_node_ret_payload* ret_payload;
 	uint8_t b[256];
 	uint32_t buf_len;
 	int32_t node_conn;
-	int8_t next_label;
+	uint8_t next_label;
 	int32_t res;
 
 	res = 0;
@@ -57,7 +57,7 @@ int32_t handle_server_send(enum request cmd_type, int8_t label, const void* payl
 
 	node_log_debug("Finding route to %d", ret_payload->label_to);
 	next_label = routing_next_label(routing, ret_payload->label_to);
-	if (next_label < 0) {
+	if (next_label == UINT8_MAX) {
 		node_log_error("Failed to find route");
 
 		struct node_route_direct_payload route_payload = {
@@ -70,7 +70,7 @@ int32_t handle_server_send(enum request cmd_type, int8_t label, const void* payl
 			// id is not used yet
 		};
 
-		node_essentials_broadcast(label, -1, &route_payload, stop_broadcast);
+		node_essentials_broadcast(label, UINT8_MAX, &route_payload, stop_broadcast);
 
 		res = -1;
 		return res;
@@ -90,16 +90,16 @@ int32_t handle_server_send(enum request cmd_type, int8_t label, const void* payl
 	return 0;
 }
 
-static bool send_delivery(const routing_table_t* routing, int8_t old_from, int8_t old_to, struct app_payload* old_app_payload, app_t apps[APPS_COUNT]);
+static bool send_delivery(const routing_table_t* routing, uint8_t old_from, uint8_t old_to, struct app_payload* old_app_payload, app_t apps[APPS_COUNT]);
 
-static bool send_key_exchange(const routing_table_t* routing, struct app_payload* app_payload, int8_t receiver_label, int8_t sender_label);
+static bool send_key_exchange(const routing_table_t* routing, struct app_payload* app_payload, uint8_t receiver_label, uint8_t sender_label);
 
 static bool node_handle_app_request(const routing_table_t* routing, app_t apps[APPS_COUNT], struct send_to_node_ret_payload* send_payload);
 
 static bool send_next(const routing_table_t* routing, struct send_to_node_ret_payload* ret_payload);
 
-int32_t handle_node_send(int8_t label, const void* payload, const routing_table_t* routing, app_t apps[APPS_COUNT]) {
-	int8_t label_to;
+int32_t handle_node_send(uint8_t label, const void* payload, const routing_table_t* routing, app_t apps[APPS_COUNT]) {
+	uint8_t label_to;
 	int32_t res;
 
 	node_log_warn("Send node %d", label);
@@ -115,11 +115,11 @@ int32_t handle_node_send(int8_t label, const void* payload, const routing_table_
 	return res;
 }
 
-bool route_direct_handle_delivered(routing_table_t* routing, struct node_route_direct_payload* route_payload, int8_t server_label, app_t apps[APPS_COUNT]);
+bool route_direct_handle_delivered(routing_table_t* routing, struct node_route_direct_payload* route_payload, uint8_t server_label, app_t apps[APPS_COUNT]);
 
-int32_t handle_node_route_direct(routing_table_t* routing, int8_t server_label, void* payload, app_t apps[APPS_COUNT]) {
+int32_t handle_node_route_direct(routing_table_t* routing, uint8_t server_label, void* payload, app_t apps[APPS_COUNT]) {
 	struct node_route_direct_payload* route_payload;
-	int8_t prev_label;
+	uint8_t prev_label;
 
 	route_payload = (struct node_route_direct_payload*) payload;
 
@@ -129,7 +129,7 @@ int32_t handle_node_route_direct(routing_table_t* routing, int8_t server_label, 
 		was_message = true;
 	}
 
-	if (routing_next_label(routing, route_payload->sender_label) < 0) {
+	if (routing_next_label(routing, route_payload->sender_label) == UINT8_MAX) {
 		routing_set_label(routing, route_payload->sender_label, route_payload->local_sender_label, route_payload->metric);
 	} else {
 		if (routing_get(routing, route_payload->sender_label).metric > route_payload->metric) {
@@ -155,10 +155,10 @@ int32_t handle_node_route_direct(routing_table_t* routing, int8_t server_label, 
 	return 0;
 }
 
-int32_t handle_node_route_inverse(routing_table_t* routing, void* payload, int8_t server_label) {
+int32_t handle_node_route_inverse(routing_table_t* routing, void* payload, uint8_t server_label) {
 	struct node_route_inverse_payload* route_payload;
 	int32_t conn_fd;
-	int8_t next_label;
+	uint8_t next_label;
 	uint8_t b[256];
 	uint32_t buf_len;
 
@@ -166,7 +166,7 @@ int32_t handle_node_route_inverse(routing_table_t* routing, void* payload, int8_
 
 	node_log_warn("Inverse node %d", server_label);
 
-	if (routing_next_label(routing, route_payload->receiver_label) < 0) {
+	if (routing_next_label(routing, route_payload->receiver_label) == UINT8_MAX) {
 		routing_set_label(routing, route_payload->receiver_label, route_payload->local_sender_label, route_payload->metric);
 	}
 
@@ -176,7 +176,7 @@ int32_t handle_node_route_inverse(routing_table_t* routing, void* payload, int8_
 	}
 
 	next_label = routing_next_label(routing, route_payload->sender_label);
-	if (next_label < 0) {
+	if (next_label == UINT8_MAX) {
 		node_log_error("Failed to get next label to %d", route_payload->sender_label);
 		return -1;
 	}
@@ -218,10 +218,10 @@ void handle_reset_broadcast_status(void) {
 	was_message = false;
 }
 
-static bool send_delivery(const routing_table_t* routing, int8_t old_from, int8_t old_to, struct app_payload* old_app_payload, app_t apps[APPS_COUNT]) {
+static bool send_delivery(const routing_table_t* routing, uint8_t old_from, uint8_t old_to, struct app_payload* old_app_payload, app_t apps[APPS_COUNT]) {
 	uint8_t b[256];
 	uint32_t buf_len;
-	int8_t next_label;
+	uint8_t next_label;
 	int32_t node_conn;
 
 	struct send_to_node_ret_payload new_send = {
@@ -241,7 +241,7 @@ static bool send_delivery(const routing_table_t* routing, int8_t old_from, int8_
 	}
 
 	next_label = routing_next_label(routing, new_send.label_to);
-	if (next_label < 0) {
+	if (next_label == UINT8_MAX) {
 		node_log_error("Failed to find path in table");
 		return false;
 	}
@@ -256,11 +256,11 @@ static bool send_delivery(const routing_table_t* routing, int8_t old_from, int8_
 	return true;
 }
 
-static bool send_key_exchange(const routing_table_t* routing, struct app_payload* app_payload, int8_t receiver_label, int8_t sender_label) {
-	int8_t tmp;
+static bool send_key_exchange(const routing_table_t* routing, struct app_payload* app_payload, uint8_t receiver_label, uint8_t sender_label) {
+	uint8_t tmp;
 	uint8_t b[256];
 	uint32_t buf_len;
-	int8_t next_label;
+	uint8_t next_label;
 	int32_t node_conn;
 
 	node_log_warn("Exchanged keys between %d:%d (current) and %d:%d",
@@ -281,7 +281,7 @@ static bool send_key_exchange(const routing_table_t* routing, struct app_payload
 	}
 
 	next_label = routing_next_label(routing, send_payload.label_to);
-	if (next_label < 0) {
+	if (next_label == UINT8_MAX) {
 		node_log_error("Failed to find path to %d in table", send_payload.label_to);
 
 		struct node_route_direct_payload route_payload = {
@@ -295,7 +295,7 @@ static bool send_key_exchange(const routing_table_t* routing, struct app_payload
 		};
 
 		node_log_warn("Sending broadcast");
-		node_essentials_broadcast(receiver_label, -1, &route_payload, stop_broadcast);
+		node_essentials_broadcast(receiver_label, UINT8_MAX, &route_payload, stop_broadcast);
 
 		return true;
 	}
@@ -353,10 +353,10 @@ static bool node_handle_app_request(const routing_table_t* routing, app_t apps[A
 
 static bool send_next(const routing_table_t* routing, struct send_to_node_ret_payload* ret_payload) {
 	int32_t node_conn;
-	int8_t next_label;
+	uint8_t next_label;
 
 	next_label = routing_next_label(routing, ret_payload->label_to);
-	if (next_label < 0) {
+	if (next_label == UINT8_MAX) {
 		node_log_error("Failed to find path in table");
 		// TODO: this may happen if node died after path was found
 		// start broadcast from here
@@ -388,10 +388,10 @@ static bool send_next(const routing_table_t* routing, struct send_to_node_ret_pa
 	return true;
 }
 
-bool route_direct_handle_delivered(routing_table_t* routing, struct node_route_direct_payload* route_payload, int8_t server_label, app_t apps[APPS_COUNT]) {
+bool route_direct_handle_delivered(routing_table_t* routing, struct node_route_direct_payload* route_payload, uint8_t server_label, app_t apps[APPS_COUNT]) {
 	uint8_t b[256];
 	uint32_t buf_len;
-	int8_t next_label_to_back;
+	uint8_t next_label_to_back;
 	int32_t conn_fd;
 
 	node_log_info("Reached the recevier label %d", route_payload->receiver_label);
@@ -414,7 +414,7 @@ bool route_direct_handle_delivered(routing_table_t* routing, struct node_route_d
 	}
 
 	next_label_to_back = routing_next_label(routing, route_payload->sender_label);
-	if (next_label_to_back < 0) {
+	if (next_label_to_back == UINT8_MAX) {
 		node_log_error("Failed to get next label to %d", route_payload->sender_label);
 		return false;
 	}

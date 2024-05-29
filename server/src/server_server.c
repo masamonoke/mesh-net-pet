@@ -66,13 +66,13 @@ static bool handle_client_request(server_t* server_data, void** payload, const u
 			res = handle_ping(server_data->children, server_data->client_fd, *payload);
 			break;
 		case REQUEST_KILL_NODE:
-			res = handle_kill(server_data->children, ((struct node_label_payload*) *payload)->label, server_data->client_fd);
+			res = handle_kill(server_data->children, *((uint8_t*) *payload), server_data->client_fd);
 			break;
 		case REQUEST_RESET:
 			res = handle_reset(server_data->children, server_data->client_fd);
 			break;
 		case REQUEST_REVIVE_NODE:
-			res = handle_revive(server_data->children, ((struct node_label_payload*) *payload)->label, server_data->client_fd);
+			res = handle_revive(server_data->children, *((uint8_t*) *payload), server_data->client_fd);
 			break;
 		default:
 			res = false;

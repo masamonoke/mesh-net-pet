@@ -8,13 +8,12 @@
 struct node_update_ret_payload {
 	int32_t pid;
 	int32_t port;
-	int8_t label;
+	uint8_t label;
 };
 
 enum notify_type {
 	NOTIFY_GOT_MESSAGE,
 	NOTIFY_INVERES_COMPLETED,
-	/* NOTIFY_SEND_COMLETED */
 };
 
 struct node_notify_payload {

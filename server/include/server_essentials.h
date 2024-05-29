@@ -2,4 +2,4 @@
 
 #include <stdint.h>
 
-void run_node(int32_t node_label);
+void run_node(uint8_t node_label);
