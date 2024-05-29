@@ -32,7 +32,7 @@ static void term_handler(int32_t dummy);
 
 static int32_t parse_args(char** args, size_t argc, uint16_t* port);
 
-static int32_t update_node_state(int32_t port);
+static int32_t update_node_state(uint16_t port);
 
 static int32_t handle_request(int32_t conn_fd, void* data);
 
@@ -105,7 +105,7 @@ static int32_t parse_args(char** args, size_t argc, uint16_t* port) {
 	return 0;
 }
 
-static int32_t update_node_state(int32_t port) {
+static int32_t update_node_state(uint16_t port) {
 	uint8_t buf[256];
 	uint32_t buf_len;
 	int32_t server_fd;

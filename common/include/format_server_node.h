@@ -7,7 +7,7 @@
 
 struct node_update_ret_payload {
 	int32_t pid;
-	int32_t port;
+	uint16_t port;
 	uint8_t addr;
 };
 

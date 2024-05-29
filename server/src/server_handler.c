@@ -201,7 +201,7 @@ void handle_update_child(const void* payload, struct node* children) {
 			children[i].port = ret->port;
 			children[i].addr = ret->addr;
 
-			children[i].write_fd = connection_socket_to_send((uint16_t) children[i].port);
+			children[i].write_fd = connection_socket_to_send(children[i].port);
 			if (children[i].write_fd < 0) {
 				custom_log_error("Failed to establish connection with node port=%d", children[i].port);
 			} else {

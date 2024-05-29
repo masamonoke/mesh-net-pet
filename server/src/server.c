@@ -53,7 +53,7 @@ int32_t main(void) {
 		} else {
 			// parent
 			server_data.children[i].write_fd = -1;
-			server_data.children[i].port = -1;
+			server_data.children[i].port = UINT16_MAX;
 			server_data.children[i].addr = UINT8_MAX;
 		}
 	}

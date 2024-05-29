@@ -10,7 +10,7 @@ struct node {
 	pid_t pid;
 	int32_t write_fd;
 	uint8_t addr;
-	int32_t port;
+	uint16_t port;
 };
 
 struct serving_data {

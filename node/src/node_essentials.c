@@ -9,7 +9,7 @@
 
 struct conn {
 	int32_t fd;
-	int32_t port;
+	uint16_t port;
 };
 
 #define CONNECTIONS 5
@@ -20,19 +20,19 @@ void node_essentials_reset_connections(void) {
 		if (connections[i].port != SERVER_PORT) {
 			close(connections[i].fd);
 			connections[i].fd = -1;
-			connections[i].port = -1;
+			connections[i].port = UINT16_MAX;
 		}
 	}
 }
 
-int32_t node_essentials_get_conn(int32_t port) {
+int32_t node_essentials_get_conn(uint16_t port) {
 	static bool init = false;
 	size_t i;
 
 	if (!init) {
 		for (i = 0; i < CONNECTIONS; i++) {
 			connections[i].fd = -1;
-			connections[i].port = -1;
+			connections[i].port = UINT16_MAX;
 		}
 		init = true;
 	}
@@ -45,7 +45,7 @@ int32_t node_essentials_get_conn(int32_t port) {
 
 	for (i = 0; i < CONNECTIONS; i++) {
 		if (connections[i].fd == -1) {
-			connections[i].fd = connection_socket_to_send((uint16_t) port);
+			connections[i].fd = connection_socket_to_send(port);
 			if (connections[i].fd < 0) {
 				node_log_error("Failed to open connection with %d", port);
 				break;
@@ -88,15 +88,15 @@ int32_t node_essentials_notify_server(enum notify_type notify) {
 	return 0;
 }
 
-static void fill_neighbour_port(uint8_t addr, int32_t* up_port, int32_t* down_port, int32_t* left_port, int32_t* right_port);
+static void fill_neighbour_port(uint8_t addr, uint16_t* up_port, uint16_t* down_port, uint16_t* left_port, uint16_t* right_port);
 
 static int32_t get_conn_and_send(uint16_t port, char* buf, uint32_t buf_len);
 
 int32_t node_essentials_broadcast(uint8_t current_addr, uint8_t banned_addr, struct node_route_direct_payload* route_payload, bool stop_broadcast) { // NOLINT
-	int32_t up_port;
-	int32_t down_port;
-	int32_t left_port;
-	int32_t right_port;
+	uint16_t up_port;
+	uint16_t down_port;
+	uint16_t left_port;
+	uint16_t right_port;
 	uint8_t b[256];
 	uint32_t buf_len;
 	int32_t banned_port;
@@ -120,19 +120,19 @@ int32_t node_essentials_broadcast(uint8_t current_addr, uint8_t banned_addr, str
 		}
 
 		if (up_port > 0 && up_port != banned_port) {
-			get_conn_and_send((uint16_t) up_port, (char*) b, buf_len);
+			get_conn_and_send(up_port, (char*) b, buf_len);
 		}
 
 		if (down_port > 0 && down_port != banned_port) {
-			get_conn_and_send((uint16_t) down_port, (char*) b, buf_len);
+			get_conn_and_send(down_port, (char*) b, buf_len);
 		}
 
 		if (left_port > 0 && left_port != banned_port) {
-			get_conn_and_send((uint16_t) left_port, (char*) b, buf_len);
+			get_conn_and_send(left_port, (char*) b, buf_len);
 		}
 
 		if (right_port > 0 && right_port != banned_port) {
-			get_conn_and_send((uint16_t) right_port, (char*) b, buf_len);
+			get_conn_and_send(right_port, (char*) b, buf_len);
 		}
 	}
 
@@ -147,7 +147,7 @@ static inline uint8_t from_pos(const ssize_t pos[2]) {
 	return (uint8_t) (pos[0] * MATRIX_SIZE + pos[1]);
 }
 
-static void fill_neighbour_port(uint8_t addr, int32_t* up_port, int32_t* down_port, int32_t* left_port, int32_t* right_port) {
+static void fill_neighbour_port(uint8_t addr, uint16_t* up_port, uint16_t* down_port, uint16_t* left_port, uint16_t* right_port) {
 	ssize_t i;
 	ssize_t j;
 	ssize_t up_pos[2];
@@ -164,7 +164,7 @@ static void fill_neighbour_port(uint8_t addr, int32_t* up_port, int32_t* down_po
 	left_pos[0] = i, left_pos[1] = j - 1;
 	right_pos[0] = i, right_pos[1] = j + 1;
 
-	*up_port = -1, *down_port = -1, *left_port = -1, *right_port = -1;
+	*up_port = UINT16_MAX, *down_port = UINT16_MAX, *left_port = UINT16_MAX, *right_port = UINT16_MAX;
 
 	if (is_valid_pos(up_pos)) {
 		*up_port = node_port(from_pos(up_pos));

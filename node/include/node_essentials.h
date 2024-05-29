@@ -20,7 +20,7 @@
 #pragma clang diagnostic pop
 #endif
 
-int32_t node_essentials_get_conn(int32_t port);
+int32_t node_essentials_get_conn(uint16_t port);
 
 int32_t node_essentials_notify_server(enum notify_type notify);
 
