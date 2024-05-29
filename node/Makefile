@@ -2,7 +2,7 @@
 
 # ROOT_DIR, BUILD_DIR, CFLAGS, DEFINES are exported from root Makefile
 
-SRC = src/node.c src/format_node_node.c src/node_server.c src/node_essentials.c src/node_handler.c
+SRC = src/node.c src/format_node_node.c src/node_server.c src/node_essentials.c src/node_handler.c src/node_app.c
 
 EXEC_BUILD_DIR = $(BUILD_DIR)/$(BUILD_TYPE)/node
 OBJS_BUILD = $(patsubst %.c, $(EXEC_BUILD_DIR)/%.o, $(SRC))

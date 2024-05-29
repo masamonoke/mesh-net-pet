@@ -92,8 +92,11 @@ static int32_t parse_args(int32_t argc, char** argv, enum request* cmd, void** p
 			if (0 == strcmp(argv[i], "send") && argc >= 6) {
 				int8_t label_to;
 				int8_t label_from;
+				int8_t app_label_to;
+				int8_t app_label_from;
 				char* endptr;
-
+				char message[150];
+				struct send_to_node_ret_payload* send_payload;
 
 				*cmd = REQUEST_SEND;
 				label_to = -1;
@@ -121,8 +124,43 @@ static int32_t parse_args(int32_t argc, char** argv, enum request* cmd, void** p
 				}
 
 				*payload = malloc(sizeof(struct send_to_node_ret_payload));
-				((struct send_to_node_ret_payload*) *payload)->label_from = label_from;
-				((struct send_to_node_ret_payload*) *payload)->label_to = label_to;
+				send_payload = (struct send_to_node_ret_payload*) *payload;
+
+				send_payload->label_from = label_from;
+				send_payload->label_to = label_to;
+
+				if (argc > 6) {
+					for (i = 0; i < argc; i++) {
+						if (0 == strcmp(argv[i], "--app") || 0 == strcmp(argv[i], "-a")) {
+							strcpy(message, argv[i + 1]);
+						}
+						if (0 == strcmp(argv[i], "-ar") || 0 == strcmp(argv[i], "--app-receiver")) {
+							endptr = NULL;
+							app_label_to = (int8_t) strtol(argv[i + 1], &endptr, 10);
+							if (argv[i + 1] == endptr) {
+								return -1;
+							}
+						}
+						if (0 == strcmp(argv[i], "-as") || 0 == strcmp(argv[i], "--app-sender")) {
+							endptr = NULL;
+							app_label_from = (int8_t) strtol(argv[i + 1], &endptr, 10);
+							if (argv[i + 1] == endptr) {
+								return -1;
+							}
+						}
+
+					}
+
+					send_payload->app_payload.label_from = app_label_from;
+					send_payload->app_payload.label_to = app_label_to;
+					send_payload->app_payload.message_len = (uint8_t) strlen(message);
+					memcpy(send_payload->app_payload.message, message, send_payload->app_payload.message_len);
+				} else {
+					send_payload->app_payload.label_from = 0;
+					send_payload->app_payload.label_to = 0;
+					send_payload->app_payload.message_len = 0;
+				}
+				send_payload->app_payload.req_type = APP_REQUEST_DELIVERY;
 
 				return 0;
 			}

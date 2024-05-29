@@ -4,6 +4,7 @@
 
 #include "format_node_node.h"
 #include "custom_logger.h"
+#include "format_server_node.h"
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -21,8 +22,8 @@
 
 int32_t node_essentials_get_conn(int32_t port);
 
-int32_t node_essentials_notify_server(void);
+int32_t node_essentials_notify_server(enum notify_type notify);
 
-int32_t node_essentials_broadcast(int32_t current_label, int32_t banned_label, struct node_route_payload* route_payload, bool stop_broadcast);
+int32_t node_essentials_broadcast(int32_t current_label, int32_t banned_label, struct node_route_direct_payload* route_payload, bool stop_broadcast);
 
 void node_essentials_reset_connections(void);

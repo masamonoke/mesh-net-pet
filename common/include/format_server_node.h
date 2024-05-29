@@ -12,7 +12,9 @@ struct node_update_ret_payload {
 };
 
 enum notify_type {
-	NOTIFY_GOT_MESSAGE
+	NOTIFY_GOT_MESSAGE,
+	NOTIFY_INVERES_COMPLETED,
+	/* NOTIFY_SEND_COMLETED */
 };
 
 struct node_notify_payload {

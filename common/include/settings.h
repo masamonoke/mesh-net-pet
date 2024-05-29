@@ -14,6 +14,10 @@
 #define NODE_COUNT (MATRIX_SIZE * MATRIX_SIZE)
 #endif
 
+#ifndef APPS_COUNT
+#define APPS_COUNT 4
+#endif
+
 // depends on MATRIX_SIZE
 #ifndef TTL
 #define TTL (MATRIX_SIZE * 2)

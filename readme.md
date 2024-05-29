@@ -72,6 +72,14 @@ make client TARGET_ARGS="ping <node_label>"
 make client TARGET_ARGS="send -s <sender node> -r <receiver node>"
 ```
 
+This command is interpreted like "send empty message to receiver node app 0 from sender node app 0".
+
+To specify message:
+
+```console
+make client TARGET_ARGS="send -s <sender node> -r <receiver node> -a 'some meaningful message' -as <sender app> -ar <receiver app>"
+```
+
 ### Kill
 
 ```console
@@ -90,5 +98,13 @@ make client TARGET_ARGS="send -s <sender node> -r <receiver node>"
  make client TARGET_ARGS="reset"
 ```
 
+## Tests
+
+Run server before testing
+
+```console
+make test
+```
+
 # Bugs
-* After killing node (nodes) there can be error 141 (broken pipe) when sending message to other nodes probably because of write to already closed fd
+* <del>After killing node (nodes) there can be error 141 (broken pipe) when sending message to other nodes probably because of write to already closed fd

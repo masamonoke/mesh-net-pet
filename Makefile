@@ -67,3 +67,8 @@ build_deps:
 
 clean:
 	rm -rf bin && rm -f compile_commands.json
+
+test:
+	@cd test && \
+		sh test_healthy_mesh.sh && \
+		sh test_partially_broken.sh

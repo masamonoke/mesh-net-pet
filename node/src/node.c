@@ -19,6 +19,7 @@
 #include "serving.h"
 #include "settings.h"
 #include "node_essentials.h"
+#include "node_app.h"
 
 static node_server_t server;
 static struct node children[NODE_COUNT];
@@ -50,6 +51,8 @@ int32_t main(int32_t argc, char** argv) {
 	if (routing_table_fill_default(&server.routing)) {
 		die("Failed to init routing table");
 	}
+
+	node_app_fill_default(server.apps, server.label);
 
 	node_server_fd = connection_socket_to_listen(port);
 

@@ -123,7 +123,7 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 				struct send_to_node_ret_payload* send_payload;
 
 				send_payload = (struct send_to_node_ret_payload*) payload;
-				payload_len = sizeof(send_payload->label_from) + sizeof(send_payload->label_to);
+				payload_len = sizeof(send_payload->label_to) + sizeof(send_payload->label_from) + format_app_message_len(&send_payload->app_payload);
 				*msg_len = sizeof_enum(sender) + sizeof_enum(request) + sizeof(*msg_len) + payload_len;
 				sender = REQUEST_SENDER_SERVER;
 				p = format_create_base(message, *msg_len, request, sender);
@@ -132,6 +132,9 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 				memcpy(p, &send_payload->label_from, sizeof(send_payload->label_from));
 				p += sizeof(send_payload->label_from);
 				memcpy(p, &send_payload->label_to, sizeof(send_payload->label_to));
+				p += sizeof(send_payload->label_to);
+
+				format_app_create_message(&send_payload->app_payload, p);
 			}
 			break;
 		case REQUEST_NOTIFY:
@@ -183,6 +186,10 @@ static int32_t set_send_payload(const uint8_t* buf, struct send_to_node_ret_payl
 	memcpy(&payload->label_from, p, sizeof(payload->label_from));
 	p += sizeof(payload->label_from);
 	memcpy(&payload->label_to, p, sizeof(payload->label_to));
+	p += sizeof(payload->label_to);
+
+	format_app_parse_message(&payload->app_payload, p);
+
 	return 0;
 }
 

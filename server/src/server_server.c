@@ -100,7 +100,7 @@ static bool handle_node_request(const server_t* server_data, void** payload, con
 			handle_update_child(*payload, data);
 			break;
 		case REQUEST_NOTIFY:
-			res = handle_notify(server_data->children, server_data->client_fd);
+			res = handle_notify(server_data->children, server_data->client_fd, ((struct node_notify_payload*) *payload)->notify_type);
 			break;
 		default:
 			custom_log_error("Unsupported request");

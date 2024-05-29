@@ -4,10 +4,12 @@
 #include <stddef.h>
 
 #include "format.h"
+#include "format_app.h"
 
 struct send_to_node_ret_payload {
 	int8_t label_to;
 	int8_t label_from;
+	struct app_payload app_payload;
 };
 
 struct node_label_payload {

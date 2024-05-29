@@ -61,15 +61,13 @@ int32_t node_essentials_get_conn(int32_t port) {
 	return -1;
 }
 
-int32_t node_essentials_notify_server(void) {
+int32_t node_essentials_notify_server(enum notify_type notify) {
 	uint8_t b[256];
 	uint32_t buf_len;
 	int32_t server_fd;
 	struct node_notify_payload notify_payload = {
-		.notify_type = NOTIFY_GOT_MESSAGE
+		.notify_type = notify
 	};
-
-	node_log_info("Got message");
 
 	if (format_server_node_create_message(REQUEST_NOTIFY, (void*) &notify_payload, b, &buf_len)) {
 		node_log_error("Failed to create notify message");
@@ -94,7 +92,7 @@ static void fill_neighbour_port(int32_t label, int32_t* up_port, int32_t* down_p
 
 static int32_t get_conn_and_send(uint16_t port, char* buf, uint32_t buf_len);
 
-int32_t node_essentials_broadcast(int32_t current_label, int32_t banned_label, struct node_route_payload* route_payload, bool stop_broadcast) { // NOLINT
+int32_t node_essentials_broadcast(int32_t current_label, int32_t banned_label, struct node_route_direct_payload* route_payload, bool stop_broadcast) { // NOLINT
 	int32_t up_port;
 	int32_t down_port;
 	int32_t left_port;

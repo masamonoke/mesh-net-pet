@@ -82,7 +82,7 @@ bool handle_kill(struct node* children, int32_t label, int32_t client_fd) { // N
 	return send_res_to_client(client_fd, req_res);
 }
 
-bool handle_notify(const struct node* children, int32_t client_fd) {
+bool handle_notify(const struct node* children, int32_t client_fd, enum notify_type notify) {
 	enum request_result req_res;
 	uint8_t b[32];
 	uint32_t buf_len;
@@ -91,22 +91,28 @@ bool handle_notify(const struct node* children, int32_t client_fd) {
 	req_res = REQUEST_OK;
 	res = true;
 
-	if (io_write_all(client_fd, (char*) &req_res, sizeof_enum(req_res))) {
-		custom_log_error("Failed to response to notify");
-		res = false;
-	}
-
-	if (format_server_node_create_message(REQUEST_STOP_BROADCAST, NULL, b, &buf_len)) {
-		custom_log_error("Failed to create stop broadcast request");
-	}
-
-	for (size_t i = 0; i < (size_t) NODE_COUNT; i++) {
-		if (children[i].write_fd != -1) {
-			if (io_write_all(children[i].write_fd, (char*) b, buf_len)) {
-				custom_log_error("Failed to send stop broadcast");
+	switch(notify) {
+		case NOTIFY_GOT_MESSAGE:
+			if (io_write_all(client_fd, (char*) &req_res, sizeof_enum(req_res))) {
+				custom_log_error("Failed to response to notify");
 				res = false;
 			}
-		}
+			break;
+		case NOTIFY_INVERES_COMPLETED:
+			if (format_server_node_create_message(REQUEST_STOP_BROADCAST, NULL, b, &buf_len)) {
+				custom_log_error("Failed to create stop broadcast request");
+			}
+
+			for (size_t i = 0; i < (size_t) NODE_COUNT; i++) {
+				if (children[i].write_fd != -1) {
+					if (io_write_all(children[i].write_fd, (char*) b, buf_len)) {
+						custom_log_error("Failed to send stop broadcast");
+						res = false;
+					}
+				}
+			}
+			break;
+
 	}
 
 	return res;
@@ -199,7 +205,7 @@ void handle_update_child(const void* payload, struct node* children) {
 			if (children[i].write_fd < 0) {
 				custom_log_error("Failed to establish connection with node port=%d", children[i].port);
 			} else {
-				custom_log_info("Established connection with node: label=%d", children[i].label);
+				custom_log_debug("Established connection with node: label=%d", children[i].label);
 			}
 			break;
 		}

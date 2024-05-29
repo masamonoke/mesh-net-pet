@@ -90,7 +90,8 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 				struct send_to_node_ret_payload* ret_payload;
 
 				ret_payload = (struct send_to_node_ret_payload*) payload;
-				payload_len = sizeof(ret_payload->label_to) + sizeof(ret_payload->label_from);
+
+				payload_len = sizeof(ret_payload->label_to) + sizeof(ret_payload->label_from) + format_app_message_len(&ret_payload->app_payload);
 				*msg_len = payload_len + sizeof_enum(request) + sizeof(*msg_len) + sizeof_enum(sender);
 				p = format_create_base(message, *msg_len, request, sender);
 
@@ -98,6 +99,8 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 				p += sizeof(ret_payload->label_from);
 				memcpy(p, &ret_payload->label_to, sizeof(ret_payload->label_to));
 				p += sizeof(ret_payload->label_to);
+
+				format_app_create_message(&ret_payload->app_payload, p);
 			} else {
 				return -1;
 			}
@@ -137,7 +140,10 @@ static int32_t parse_send(const uint8_t* buf, struct send_to_node_ret_payload* r
 
 	memcpy(&ret_payload->label_from, p, sizeof(ret_payload->label_from));
 	p += sizeof(ret_payload->label_from);
-	memcpy(&ret_payload->label_to, p, sizeof(ret_payload->label_from));
+	memcpy(&ret_payload->label_to, p, sizeof(ret_payload->label_to));
+	p += sizeof(ret_payload->label_to);
+
+	format_app_parse_message(&ret_payload->app_payload, p);
 
 	return 0;
 }
