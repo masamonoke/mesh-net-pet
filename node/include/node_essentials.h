@@ -20,10 +20,13 @@
 #pragma clang diagnostic pop
 #endif
 
+__attribute__((warn_unused_result))
 int32_t node_essentials_get_conn(uint16_t port);
 
-int32_t node_essentials_notify_server(enum notify_type notify);
+__attribute__((warn_unused_result))
+bool node_essentials_notify_server(enum notify_type notify);
 
-int32_t node_essentials_broadcast(uint8_t current_addr, uint8_t banned_addr, struct node_route_direct_payload* route_payload, bool stop_broadcast);
+__attribute__((nonnull(3)))
+void node_essentials_broadcast(uint8_t current_addr, uint8_t banned_addr, struct node_route_direct_payload* route_payload, bool stop_broadcast);
 
 void node_essentials_reset_connections(void);

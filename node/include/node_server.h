@@ -12,4 +12,4 @@ typedef struct node_server {
 	app_t apps[APPS_COUNT];
 } node_server_t;
 
-int32_t node_server_handle_request(node_server_t* server, int32_t conn_fd, uint8_t* buf, ssize_t received_bytes, void* data);
+bool node_server_handle_request(node_server_t* server, int32_t conn_fd, uint8_t* buf, ssize_t received_bytes, void* data);

@@ -14,7 +14,8 @@
 #include "io.h"
 #include "settings.h"
 
-static int32_t parse_args(int32_t argc, char** argv, enum request* cmd, void** payload);
+__attribute__((warn_unused_result))
+static bool parse_args(int32_t argc, char** argv, enum request* cmd, void** payload);
 
 int32_t main(int32_t argc, char** argv) {
 	int32_t server_fd;
@@ -27,7 +28,7 @@ int32_t main(int32_t argc, char** argv) {
 	struct timeval tv;
 
 	payload = NULL;
-	if (parse_args(argc, argv, &req, &payload)) {
+	if (!parse_args(argc, argv, &req, &payload)) {
 		custom_log_error("Failed to parse client args");
 		return 1;
 	}
@@ -39,10 +40,7 @@ int32_t main(int32_t argc, char** argv) {
 	}
 
 	status = REQUEST_UNKNOWN;
-	if (format_server_client_create_message(req, payload, buf, &buf_len)) {
-		custom_log_error("Failed to create format message");
-		goto L_FREE;
-	}
+	format_server_client_create_message(req, payload, buf, &buf_len);
 
 	if (io_write_all(server_fd, (const char*) buf, buf_len)) {
 		custom_log_error("Failed to send client command");
@@ -61,30 +59,30 @@ int32_t main(int32_t argc, char** argv) {
 	format_sprint_result(status, (char*) buf, sizeof(buf));
 	custom_log_info("Request result %s", buf);
 
-L_FREE:
 	free(payload);
 	close(server_fd);
 
 	return (int32_t) status;
 }
 
-static int32_t create_addr_payload(const char* arg, void** payload) {
+__attribute__((warn_unused_result))
+static bool create_addr_payload(const char* arg, void** payload) {
 	char* endptr;
 	uint8_t addr;
 
 	endptr = NULL;
 	addr = (uint8_t) strtol(arg, &endptr, 10);
 	if (arg == endptr) {
-		return -1;
+		return false;
 	}
 
 	*payload = malloc(sizeof(uint8_t));
 	*((uint8_t*) *payload) = addr;
 
-	return 0;
+	return true;
 }
 
-static int32_t parse_args(int32_t argc, char** argv, enum request* cmd, void** payload) {
+static bool parse_args(int32_t argc, char** argv, enum request* cmd, void** payload) {
 	int32_t i;
 
 	if (argc > 2) {
@@ -106,21 +104,21 @@ static int32_t parse_args(int32_t argc, char** argv, enum request* cmd, void** p
 						endptr = NULL;
 						addr_from = (uint8_t) strtol(argv[i + 1], &endptr, 10);
 						if (argv[i + 1] == endptr) {
-							return -1;
+							return false;
 						}
 					}
 					if (0 == strcmp(argv[i], "-r") || 0 == strcmp(argv[i], "--receiver")) {
 						endptr = NULL;
 						addr_to = (uint8_t) strtol(argv[i + 1], &endptr, 10);
 						if (argv[i + 1] == endptr) {
-							return -1;
+							return false;
 						}
 					}
 				}
 
 				if (addr_to == UINT8_MAX || addr_from == UINT8_MAX) {
 					custom_log_error("Failed to parse send command");
-					return -1;
+					return false;
 				}
 
 				*payload = malloc(sizeof(struct send_to_node_ret_payload));
@@ -138,14 +136,14 @@ static int32_t parse_args(int32_t argc, char** argv, enum request* cmd, void** p
 							endptr = NULL;
 							app_addr_to = (uint8_t) strtol(argv[i + 1], &endptr, 10);
 							if (argv[i + 1] == endptr) {
-								return -1;
+								return false;
 							}
 						}
 						if (0 == strcmp(argv[i], "-as") || 0 == strcmp(argv[i], "--app-sender")) {
 							endptr = NULL;
 							app_addr_from = (uint8_t) strtol(argv[i + 1], &endptr, 10);
 							if (argv[i + 1] == endptr) {
-								return -1;
+								return false;
 							}
 						}
 
@@ -162,7 +160,7 @@ static int32_t parse_args(int32_t argc, char** argv, enum request* cmd, void** p
 				}
 				send_payload->app_payload.req_type = APP_REQUEST_DELIVERY;
 
-				return 0;
+				return true;
 			}
 
 			if (0 == strcmp(argv[i], "ping")) {
@@ -181,8 +179,8 @@ static int32_t parse_args(int32_t argc, char** argv, enum request* cmd, void** p
 			*cmd = REQUEST_RESET;
 		}
 
-		return 0;
+		return true;
 	}
 
-	return -1;
+	return false;
 }

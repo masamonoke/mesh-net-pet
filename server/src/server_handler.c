@@ -12,6 +12,7 @@
 #include "server_essentials.h"
 #include "connection.h"
 
+__attribute__((warn_unused_result))
 static bool send_res_to_client(int32_t client_fd, enum request_result res);
 
 bool handle_ping(const struct node* children, int32_t client_fd, const void* payload) {
@@ -31,10 +32,7 @@ bool handle_ping(const struct node* children, int32_t client_fd, const void* pay
 				return send_res_to_client(client_fd, REQUEST_ERR);
 			}
 
-			if (format_server_node_create_message(REQUEST_PING, NULL, b, &buf_len)) {
-				custom_log_error("Failed to create message");
-				return false;
-			}
+			format_server_node_create_message(REQUEST_PING, NULL, b, &buf_len);
 
 			if (io_write_all(children[i].write_fd, (char*) b, buf_len)) {
 				custom_log_error("Failed to send request to node");
@@ -67,12 +65,13 @@ bool handle_ping(const struct node* children, int32_t client_fd, const void* pay
 	return true;
 }
 
-static int32_t kill_node(struct node* children, uint8_t addr);
+__attribute__((warn_unused_result))
+static bool kill_node(struct node* children, uint8_t addr);
 
 bool handle_kill(struct node* children, uint8_t addr, int32_t client_fd) { // NOLINT
 	enum request_result req_res;
 
-	if (kill_node(children, addr)) {
+	if (!kill_node(children, addr)) {
 		custom_log_error("Failed to kill node %d", addr);
 		req_res = REQUEST_ERR;
 	} else {
@@ -82,7 +81,7 @@ bool handle_kill(struct node* children, uint8_t addr, int32_t client_fd) { // NO
 	return send_res_to_client(client_fd, req_res);
 }
 
-bool handle_notify(const struct node* children, int32_t client_fd, enum notify_type notify) {
+bool handle_notify(const struct node* children, int32_t client_fd, enum notify_type notify) { // NOLINT
 	enum request_result req_res;
 	uint8_t b[32];
 	uint32_t buf_len;
@@ -99,9 +98,7 @@ bool handle_notify(const struct node* children, int32_t client_fd, enum notify_t
 			}
 			break;
 		case NOTIFY_INVERES_COMPLETED:
-			if (format_server_node_create_message(REQUEST_STOP_BROADCAST, NULL, b, &buf_len)) {
-				custom_log_error("Failed to create stop broadcast request");
-			}
+			format_server_node_create_message(REQUEST_STOP_BROADCAST, NULL, b, &buf_len);
 
 			for (size_t i = 0; i < (size_t) NODE_COUNT; i++) {
 				if (children[i].write_fd != -1) {
@@ -126,10 +123,7 @@ bool handle_reset(struct node* children, int32_t client_fd) {
 	size_t i;
 	bool res;
 
-	if (format_server_node_create_message(REQUEST_RESET, NULL, b, &buf_len)) {
-		custom_log_error("Failed to create reset nodes request message");
-		res = false;
-	}
+	format_server_node_create_message(REQUEST_RESET, NULL, b, &buf_len);
 
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		if (children[i].write_fd != -1) {
@@ -148,6 +142,7 @@ bool handle_reset(struct node* children, int32_t client_fd) {
 	return res;
 }
 
+__attribute__((warn_unused_result))
 static bool make_send_to_node(const struct node* children, const void* payload);
 
 bool handle_client_send(struct node* children, const void* payload) {
@@ -156,9 +151,8 @@ bool handle_client_send(struct node* children, const void* payload) {
 
 	custom_log_debug("Send command from client");
 
-	if (format_server_node_create_message(REQUEST_RESET_BROADCAST, NULL, b, &buf_len)) {
-		custom_log_error("Failed to create stop broadcast request");
-	}
+	format_server_node_create_message(REQUEST_RESET_BROADCAST, NULL, b, &buf_len);
+
 	for (size_t i = 0; i < (size_t) NODE_COUNT; i++) {
 		if (children[i].write_fd != -1) {
 			if (io_write_all(children[i].write_fd, (char*) b, buf_len)) {
@@ -221,7 +215,7 @@ static bool send_res_to_client(int32_t client_fd, enum request_result res) {
 	return true;
 }
 
-static int32_t kill_node(struct node* children, uint8_t addr) {
+static bool kill_node(struct node* children, uint8_t addr) {
 	size_t i;
 
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
@@ -230,11 +224,11 @@ static int32_t kill_node(struct node* children, uint8_t addr) {
 			children[i].write_fd = -1;
 			kill(children[i].pid, SIGTERM);
 			custom_log_debug("Killed node %d, pid %d", addr, children[i].pid);
-			return 0;
+			return true;
 		}
 	}
 
-	return -1;
+	return false;
 }
 
 static bool make_send_to_node(const struct node* children, const void* payload) {
@@ -242,10 +236,7 @@ static bool make_send_to_node(const struct node* children, const void* payload) 
 	uint32_t buf_len;
 	size_t i;
 
-	if (format_server_node_create_message(REQUEST_SEND, payload, (uint8_t*) b, &buf_len)) {
-		custom_log_error("Failed to create message");
-		return false;
-	}
+	format_server_node_create_message(REQUEST_SEND, payload, (uint8_t*) b, &buf_len);
 
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		if (children[i].addr == ((struct send_to_node_ret_payload*) payload)->addr_from) {

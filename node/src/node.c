@@ -30,11 +30,14 @@ static void int_handler(int32_t dummy);
 
 static void term_handler(int32_t dummy);
 
-static int32_t parse_args(char** args, size_t argc, uint16_t* port);
+__attribute__((warn_unused_result))
+static bool parse_args(char** args, size_t argc, uint16_t* port);
 
-static int32_t update_node_state(uint16_t port);
+__attribute__((warn_unused_result))
+static bool update_node_state(uint16_t port);
 
-static int32_t handle_request(int32_t conn_fd, void* data);
+__attribute__((warn_unused_result))
+static bool handle_request(int32_t conn_fd, void* data);
 
 int32_t main(int32_t argc, char** argv) {
 	int32_t node_server_fd;
@@ -44,13 +47,11 @@ int32_t main(int32_t argc, char** argv) {
 	signal(SIGINT, int_handler);
 	signal(SIGTERM, term_handler);
 
-	if (parse_args(argv, (size_t) argc, &port)) {
+	if (!parse_args(argv, (size_t) argc, &port)) {
 		die("Failed to parse args");
 	}
 
-	if (routing_table_fill_default(&server.routing)) {
-		die("Failed to init routing table");
-	}
+	routing_table_fill_default(&server.routing);
 
 	node_app_fill_default(server.apps, server.addr);
 
@@ -60,7 +61,7 @@ int32_t main(int32_t argc, char** argv) {
 		die("Failed to start server on node %d", server.addr);
 	}
 
-	if (update_node_state(port)) {
+	if (!update_node_state(port)) {
 		die("Failed to init node");
 	}
 
@@ -88,30 +89,30 @@ static void term_handler(int32_t dummy) {
 	int_handler(dummy);
 }
 
-static int32_t parse_args(char** args, size_t argc, uint16_t* port) {
+static bool parse_args(char** args, size_t argc, uint16_t* port) {
 	char* endptr;
 
 	if (argc != 2) {
-		return -1;
+		return false;
 	}
 
 	endptr = NULL;
 	server.addr = (uint8_t) strtol(args[1], &endptr, 10);
 	if (args[1]  == endptr) {
-		return -1;
+		return false;
 	}
 	*port = node_port(server.addr);
 
-	return 0;
+	return true;
 }
 
-static int32_t update_node_state(uint16_t port) {
+static bool update_node_state(uint16_t port) {
 	uint8_t buf[256];
 	uint32_t buf_len;
 	int32_t server_fd;
-	int32_t status;
+	bool status;
 
-	status = 0;
+	status = true;
 	server_fd = connection_socket_to_send(SERVER_PORT);
 
 	if (server_fd < 0) {
@@ -124,14 +125,11 @@ static int32_t update_node_state(uint16_t port) {
 		.port = port,
 	};
 
-	if (format_server_node_create_message(REQUEST_UPDATE, &payload, buf, &buf_len)) {
-		custom_log_error("Failed to create message");
-		status = -1;
-	}
+	format_server_node_create_message(REQUEST_UPDATE, &payload, buf, &buf_len);
 
 	if (io_write_all(server_fd, (const char*) buf, buf_len)) {
 		node_log_error("Failed to send node init data");
-		status = -1;
+		status = false;
 	}
 
 	close(server_fd);
@@ -139,10 +137,9 @@ static int32_t update_node_state(uint16_t port) {
 	return status;
 }
 
-static int32_t handle_request(int32_t conn_fd, void* data) {
+static bool handle_request(int32_t conn_fd, void* data) {
 	ssize_t received_bytes;
 	uint8_t buf[256];
-	int32_t res;
 	uint32_t msg_len;
 
 
@@ -153,21 +150,22 @@ static int32_t handle_request(int32_t conn_fd, void* data) {
 	if (received_bytes > 0) {
 		if (io_read_all(conn_fd, (char*) buf, msg_len - sizeof(uint32_t), (size_t*) &received_bytes)) {
 			node_log_error("Failed to read message");
+			return false;
 		}
 		if (!format_is_message_correct((size_t) received_bytes, msg_len - sizeof(msg_len))) {
 			node_log_error("Incorrect message");
+			return false;
 		}
 	} else {
-		return -1;
+		return false;
 	}
 
-	res = 0;
 	if (received_bytes > 0) {
 		node_server_handle_request(&server, conn_fd, (uint8_t*) buf, received_bytes, data);
 	} else {
 		node_log_error("Failed to read %d bytes", msg_len);
-		res = -1;
+		return false;
 	}
 
-	return res;
+	return true;
 }

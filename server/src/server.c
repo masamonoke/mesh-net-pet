@@ -26,7 +26,7 @@ static void int_handler(int32_t dummy);
 
 static void term_handler(int32_t dummy);
 
-static int32_t handle_request(int32_t conn_fd, void* data);
+static bool handle_request(int32_t conn_fd, void* data);
 
 int32_t main(void) {
 	size_t i;
@@ -86,7 +86,7 @@ static void term_handler(int32_t dummy) {
 	int_handler(dummy);
 }
 
-static int32_t handle_request(int32_t conn_fd, void* data) {
+static bool handle_request(int32_t conn_fd, void* data) {
 	ssize_t received_bytes;
 	uint8_t buf[256];
 	uint32_t msg_len;
@@ -95,21 +95,21 @@ static int32_t handle_request(int32_t conn_fd, void* data) {
 
 	if (io_read_all(conn_fd, (char*) &msg_len, sizeof(msg_len), (size_t*) &received_bytes)) {
 		custom_log_error("Failed to read message length");
-		return -1;
+		return false;
 	}
 
 	if (received_bytes > 0) {
 		if (io_read_all(conn_fd, (char*) buf, msg_len - sizeof(uint32_t), (size_t*) &received_bytes)) {
 			custom_log_error("Failed to read message");
-			return -1;
+			return false;
 		}
 
 		if (!format_is_message_correct((size_t) received_bytes, msg_len - sizeof(msg_len))) {
 			custom_log_error("Incorrect message format");
-			return -1;
+			return false;
 		}
 	} else {
-		return -1;
+		return false;
 	}
 
 	if (received_bytes > 0) {
@@ -118,14 +118,14 @@ static int32_t handle_request(int32_t conn_fd, void* data) {
 		processed = server_server_handle(&server_data, (uint8_t*) buf, received_bytes, conn_fd, data);
 
 		if (processed) {
-			return 0;
+			return true;
 		} else {
 			custom_log_error("Failed to parse request");
-			return -1;
+			return false;
 		}
 	} else {
 		custom_log_error("Failed to receive message: declared length %d", msg_len);
 	}
 
-	return -1;
+	return false;
 }

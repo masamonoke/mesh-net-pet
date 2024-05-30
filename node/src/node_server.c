@@ -18,15 +18,17 @@
 #include "node_essentials.h"
 #include "node_handler.h"
 
-static int32_t handle_server(node_server_t* server, int32_t conn_fd, enum request* cmd_type, void** payload, uint8_t* buf, size_t received_bytes, void* data);
+__attribute__((warn_unused_result))
+static bool handle_server(node_server_t* server, int32_t conn_fd, enum request* cmd_type, void** payload, uint8_t* buf, size_t received_bytes, void* data);
 
-static int32_t handle_node(node_server_t* server, enum request* cmd_type, void** payload, uint8_t* buf, size_t received_bytes, void* data);
+__attribute__((warn_unused_result))
+static bool handle_node(node_server_t* server, enum request* cmd_type, void** payload, uint8_t* buf, size_t received_bytes, void* data);
 
-int32_t node_server_handle_request(node_server_t* server, int32_t conn_fd, uint8_t* buf, ssize_t received_bytes, void* data) {
+bool node_server_handle_request(node_server_t* server, int32_t conn_fd, uint8_t* buf, ssize_t received_bytes, void* data) {
 	enum request request;
 	void* payload;
 	enum request_sender sender;
-	int32_t res;
+	bool res;
 
 	sender = format_define_sender(buf);
 
@@ -38,24 +40,21 @@ int32_t node_server_handle_request(node_server_t* server, int32_t conn_fd, uint8
 			res = handle_node(server, &request, &payload,  buf, (size_t) received_bytes, data);
 			break;
 		default:
-			res = -1;
+			res = false;
 			custom_log_error("Unsupported request sender");
 	}
 
 	return res;
 }
 
-static int32_t handle_server(node_server_t* server, int32_t conn_fd, enum request* cmd_type, void** payload, uint8_t* buf, size_t received_bytes, void* data) {
+static bool handle_server(node_server_t* server, int32_t conn_fd, enum request* cmd_type, void** payload, uint8_t* buf, size_t received_bytes, void* data) {
 	(void) data;
-	int32_t res;
+	bool res;
 
 	*payload = NULL;
-	if (format_server_node_parse_message(cmd_type, payload, buf, received_bytes)) {
-		node_log_error("Failed to parse message");
-		return -1;
-	}
+	format_server_node_parse_message(cmd_type, payload, buf, received_bytes);
 
-	res = 0;
+	res = true;
 	switch (*cmd_type) {
 		case REQUEST_PING:
 			node_log_debug("Node %d", server->addr);
@@ -72,19 +71,17 @@ static int32_t handle_server(node_server_t* server, int32_t conn_fd, enum reques
 			handle_reset_broadcast_status();
 			break;
 		case REQUEST_RESET:
-			if (routing_table_fill_default(&server->routing)) {
-				node_log_error("Failed to reset routing table");
-			}
+			routing_table_fill_default(&server->routing);
 			node_essentials_reset_connections();
 			node_app_fill_default(server->apps, server->addr);
 			break;
 		case REQUEST_UNDEFINED:
 			node_log_error("Undefined server-node request type");
-			res = -1;
+			res = false;
 			break;
 		default:
 			node_log_error("Unsupported request");
-			res = -1;
+			res = false;
 	}
 
 	free(*payload);
@@ -92,17 +89,14 @@ static int32_t handle_server(node_server_t* server, int32_t conn_fd, enum reques
 	return res;
 }
 
-static int32_t handle_node(node_server_t* server, enum request* cmd_type, void** payload, uint8_t* buf, size_t received_bytes, void* data) {
+static bool handle_node(node_server_t* server, enum request* cmd_type, void** payload, uint8_t* buf, size_t received_bytes, void* data) {
 	(void) data;
-	int32_t res;
+	bool res;
 
 	*payload = NULL;
-	if (format_node_node_parse_message(cmd_type, payload, buf, received_bytes)) {
-		node_log_error("Failed to parse message: cmd_type %d, node %d", *cmd_type, server->addr);
-		return -1;
-	}
+	format_node_node_parse_message(cmd_type, payload, buf, received_bytes);
 
-	res = 0;
+	res = true;
 	switch (*cmd_type) {
 		case REQUEST_SEND:
 			res = handle_node_send(server->addr, *payload, &server->routing, server->apps);
@@ -115,10 +109,10 @@ static int32_t handle_node(node_server_t* server, enum request* cmd_type, void**
 			break;
 		case REQUEST_UNDEFINED:
 			node_log_error("Undefined request: received bytes %d", received_bytes);
-			res = -1;
+			res = false;
 			break;
 		default:
-			res = -1;
+			res = false;
 			node_log_error("Unsupported request");
 	}
 

@@ -41,7 +41,7 @@ void serving_poll(struct serving_data* serving, void* data) {
 				int32_t sender_fd;
 
 				sender_fd = serving->pfds[i].fd;
-				if (serving->handle_request(sender_fd, data)) {
+				if (!serving->handle_request(sender_fd, data)) {
 					close(sender_fd);
 					del_from_pfds(serving->pfds, i, &serving->pfd_count);
 				}
@@ -50,7 +50,7 @@ void serving_poll(struct serving_data* serving, void* data) {
 	}
 }
 
-void serving_init(struct serving_data* serving, int32_t server_fd, int32_t (*handle_request)(int32_t sender_fd, void* data)) {
+void serving_init(struct serving_data* serving, int32_t server_fd, bool (*handle_request)(int32_t sender_fd, void* data)) {
 	serving->server_fd = server_fd;
 	serving->handle_request = handle_request;
 

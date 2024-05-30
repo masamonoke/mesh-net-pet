@@ -8,26 +8,26 @@
 #include "control_utils.h"
 #include "settings.h"
 
-static int32_t parse_message(enum request* request, void** payload, const uint8_t* buf);
+static void parse_message(enum request* request, void** payload, const uint8_t* buf);
 
-static int32_t create_message(enum request request, const void* payload, uint8_t* message, uint32_t* msg_len);
+static void create_message(enum request request, const void* payload, uint8_t* message, uint32_t* msg_len);
 
-int32_t format_node_node_parse_message(enum request* req, void** payload, const void* buf, size_t len) {
+void format_node_node_parse_message(enum request* req, void** payload, const void* buf, size_t len) {
 	(void) len;
-	return parse_message(req, payload, (uint8_t*) buf);
+	parse_message(req, payload, (uint8_t*) buf);
 }
 
-int32_t format_node_node_create_message(enum request req, const void* payload, uint8_t* buf, uint32_t* len) {
-	return create_message(req, payload, buf, len);
+void format_node_node_create_message(enum request req, const void* payload, uint8_t* buf, uint32_t* len) {
+	create_message(req, payload, buf, len);
 }
 
-static int32_t set_send_payload(const uint8_t* buf, struct send_to_node_ret_payload* payload);
+static void set_send_payload(const uint8_t* buf, struct send_to_node_ret_payload* payload);
 
-static int32_t set_route_inverse_payload(const uint8_t* buf, struct node_route_inverse_payload* payload);
+static void set_route_inverse_payload(const uint8_t* buf, struct node_route_inverse_payload* payload);
 
-static int32_t set_route_direct_payload(const uint8_t* buf, struct node_route_direct_payload* payload);
+static void set_route_direct_payload(const uint8_t* buf, struct node_route_direct_payload* payload);
 
-static int32_t parse_message(enum request* request, void** payload, const uint8_t* buf) {
+static void parse_message(enum request* request, void** payload, const uint8_t* buf) {
 	const uint8_t* p;
 	enum request cmd;
 
@@ -63,11 +63,9 @@ static int32_t parse_message(enum request* request, void** payload, const uint8_
 			custom_log_error("Unknown node-node request");
 			break;
 	}
-
-	return 0;
 }
 
-static int32_t create_message(enum request request, const void* payload, uint8_t* message, uint32_t* msg_len) {
+static void create_message(enum request request, const void* payload, uint8_t* message, uint32_t* msg_len) {
 	uint32_t payload_len;
 	uint8_t* p;
 	enum request_sender sender;
@@ -149,11 +147,9 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 			custom_log_error("Not supported node-node command");
 			break;
 	}
-
-	return 0;
 }
 
-static int32_t set_send_payload(const uint8_t* buf, struct send_to_node_ret_payload* payload) {
+static void set_send_payload(const uint8_t* buf, struct send_to_node_ret_payload* payload) {
 	const uint8_t* p;
 
 	p = format_skip_base(buf);
@@ -164,11 +160,9 @@ static int32_t set_send_payload(const uint8_t* buf, struct send_to_node_ret_payl
 	p += sizeof(payload->addr_to);
 
 	format_app_parse_message(&payload->app_payload, p);
-
-	return 0;
 }
 
-static int32_t set_route_inverse_payload(const uint8_t* buf, struct node_route_inverse_payload* payload) {
+static void set_route_inverse_payload(const uint8_t* buf, struct node_route_inverse_payload* payload) {
 	const uint8_t* p;
 
 	p = format_skip_base(buf);
@@ -185,11 +179,9 @@ static int32_t set_route_inverse_payload(const uint8_t* buf, struct node_route_i
 	memcpy(&payload->time_to_live, p, sizeof(payload->time_to_live));
 	p += sizeof(payload->time_to_live);
 	memcpy(&payload->id, p, sizeof(payload->id));
-
-	return 0;
 }
 
-static int32_t set_route_direct_payload(const uint8_t* buf, struct node_route_direct_payload* payload) {
+static void set_route_direct_payload(const uint8_t* buf, struct node_route_direct_payload* payload) {
 	const uint8_t* p;
 
 	p = format_skip_base(buf);
@@ -209,6 +201,4 @@ static int32_t set_route_direct_payload(const uint8_t* buf, struct node_route_di
 	p += sizeof(payload->id);
 
 	format_app_parse_message(&payload->app_payload, p);
-
-	return 0;
 }

@@ -61,7 +61,7 @@ int32_t node_essentials_get_conn(uint16_t port) {
 	return -1;
 }
 
-int32_t node_essentials_notify_server(enum notify_type notify) {
+bool node_essentials_notify_server(enum notify_type notify) {
 	uint8_t b[256];
 	uint32_t buf_len;
 	int32_t server_fd;
@@ -69,37 +69,34 @@ int32_t node_essentials_notify_server(enum notify_type notify) {
 		.notify_type = notify
 	};
 
-	if (format_server_node_create_message(REQUEST_NOTIFY, (void*) &notify_payload, b, &buf_len)) {
-		node_log_error("Failed to create notify message");
-		return -1;
-	}
+	format_server_node_create_message(REQUEST_NOTIFY, (void*) &notify_payload, b, &buf_len);
 
 	server_fd = node_essentials_get_conn(SERVER_PORT);
 	if (server_fd < 0) {
 		node_log_error("Failed to connect to server");
-		return -1;
+		return false;
 	} else {
 		if (io_write_all(server_fd, (char*) b, buf_len)) {
 			node_log_error("Failed to send notify request to server");
-			return -1;
+			return false;
 		}
 	}
 
-	return 0;
+	return true;
 }
 
 static void fill_neighbour_port(uint8_t addr, uint16_t* up_port, uint16_t* down_port, uint16_t* left_port, uint16_t* right_port);
 
-static int32_t get_conn_and_send(uint16_t port, char* buf, uint32_t buf_len);
+static void get_conn_and_send(uint16_t port, char* buf, uint32_t buf_len);
 
-int32_t node_essentials_broadcast(uint8_t current_addr, uint8_t banned_addr, struct node_route_direct_payload* route_payload, bool stop_broadcast) { // NOLINT
+void node_essentials_broadcast(uint8_t current_addr, uint8_t banned_addr, struct node_route_direct_payload* route_payload, bool stop_broadcast) { // NOLINT
 	uint16_t up_port;
 	uint16_t down_port;
 	uint16_t left_port;
 	uint16_t right_port;
 	uint8_t b[256];
 	uint32_t buf_len;
-	int32_t banned_port;
+	uint16_t banned_port;
 
 	if (!stop_broadcast) {
 
@@ -111,32 +108,27 @@ int32_t node_essentials_broadcast(uint8_t current_addr, uint8_t banned_addr, str
 		if (banned_addr > 0) {
 			banned_port = node_port(banned_addr);
 		} else {
-			banned_port = UINT8_MAX;
+			banned_port = UINT16_MAX;
 		}
 
-		if (format_node_node_create_message(REQUEST_ROUTE_DIRECT, route_payload, b, &buf_len)) {
-			node_log_error("Failed to create route direct message");
-			return -1;
-		}
+		format_node_node_create_message(REQUEST_ROUTE_DIRECT, route_payload, b, &buf_len);
 
-		if (up_port > 0 && up_port != banned_port) {
+		if (up_port != UINT16_MAX && up_port != banned_port) {
 			get_conn_and_send(up_port, (char*) b, buf_len);
 		}
 
-		if (down_port > 0 && down_port != banned_port) {
+		if (down_port != UINT16_MAX && down_port != banned_port) {
 			get_conn_and_send(down_port, (char*) b, buf_len);
 		}
 
-		if (left_port > 0 && left_port != banned_port) {
+		if (left_port != UINT16_MAX && left_port != banned_port) {
 			get_conn_and_send(left_port, (char*) b, buf_len);
 		}
 
-		if (right_port > 0 && right_port != banned_port) {
+		if (right_port != UINT16_MAX && right_port != banned_port) {
 			get_conn_and_send(right_port, (char*) b, buf_len);
 		}
 	}
-
-	return 0;
 }
 
 static inline bool is_valid_pos(const ssize_t pos[2]) {
@@ -183,20 +175,18 @@ static void fill_neighbour_port(uint8_t addr, uint16_t* up_port, uint16_t* down_
 	}
 }
 
-static int32_t get_conn_and_send(uint16_t port, char* buf, uint32_t buf_len) {
+static void get_conn_and_send(uint16_t port, char* buf, uint32_t buf_len) {
 	int32_t conn_fd;
 
 	conn_fd = node_essentials_get_conn(port);
 
 	if (conn_fd < 0) {
 		node_log_error("Failed to open connection with neighbor port %d", port);
-		return -1;
+		return;
 	}
 
 	if (io_write_all(conn_fd, buf, buf_len)) {
 		node_log_error("Failed to send route direct request: address %d", node_addr(port));
-		return -1;
+		return;
 	}
-
-	return 0;
 }

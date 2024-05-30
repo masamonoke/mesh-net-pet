@@ -29,6 +29,7 @@ void node_app_fill_default(app_t apps[APPS_COUNT], uint8_t node_addr) {
 	}
 }
 
+__attribute__((warn_unused_result))
 static bool get_key(const app_t* app, uint8_t app_addr, uint8_t node_addr, uint8_t* key);
 
 // TODO: mock, replace with actual impl
@@ -105,6 +106,7 @@ static bool get_app(const app_t* apps, uint8_t app_addr, app_t* app) {
 	return false;
 }
 
+__attribute__((warn_unused_result))
 static bool set_app(app_t* apps, app_t* app) {
 	size_t i;
 
@@ -119,6 +121,7 @@ static bool set_app(app_t* apps, app_t* app) {
 	return false;
 }
 
+__attribute__((warn_unused_result))
 static bool save_pair(app_t* app, uint8_t app_addr, uint8_t node_addr, uint8_t key) { // NOLINT
 	size_t i;
 
@@ -144,8 +147,14 @@ bool node_app_save_key(app_t apps[APPS_COUNT], struct app_payload* app_payload, 
 	}
 
 	if (!has_pair(&app, app_payload->addr_from, addr_from)) {
-		save_pair(&app, app_payload->addr_from, addr_from, app_payload->key);
-		set_app(apps, &app);
+		if (!save_pair(&app, app_payload->addr_from, addr_from, app_payload->key)) {
+			node_log_error("Failed to save key for pair");
+			return false;
+		}
+		if (!set_app(apps, &app)) {
+			node_log_error("Failed to save key entry");
+			return false;
+		}
 	}
 
 	return true;

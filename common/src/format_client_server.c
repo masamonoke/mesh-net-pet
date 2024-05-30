@@ -9,24 +9,24 @@
 #include "format.h"
 #include "settings.h"
 
-static int32_t parse_message(enum request* request, void** payload, const uint8_t* buf);
+static void parse_message(enum request* request, void** payload, const uint8_t* buf);
 
-static int32_t create_message(enum request request, const void* payload, uint8_t* message, uint32_t* msg_len);
+static void create_message(enum request request, const void* payload, uint8_t* message, uint32_t* msg_len);
 
-int32_t format_server_client_parse_message(enum request* req, void** payload, const void* buf, size_t len) {
+void format_server_client_parse_message(enum request* req, void** payload, const void* buf, size_t len) {
 	(void) len;
-	return parse_message(req, payload, (uint8_t*) buf);
+	parse_message(req, payload, (uint8_t*) buf);
 }
 
-int32_t format_server_client_create_message(enum request req, const void* payload, uint8_t* buf, uint32_t* len) {
-	return create_message(req, payload, buf, len);
+void format_server_client_create_message(enum request req, const void* payload, uint8_t* buf, uint32_t* len) {
+	create_message(req, payload, buf, len);
 }
 
-static int32_t parse_addr_payload(const uint8_t* buf, void* ret_payload);
+static void parse_addr_payload(const uint8_t* buf, void* ret_payload);
 
-static int32_t parse_send(const uint8_t* buf, struct send_to_node_ret_payload* ret_payload);
+static void parse_send(const uint8_t* buf, struct send_to_node_ret_payload* ret_payload);
 
-static int32_t parse_message(enum request* request, void** payload, const uint8_t* buf) {
+static void parse_message(enum request* request, void** payload, const uint8_t* buf) {
 	const uint8_t* p;
 	enum request cmd;
 
@@ -54,11 +54,9 @@ static int32_t parse_message(enum request* request, void** payload, const uint8_
 		default:
 			custom_log_error("Unknown client-server request");
 	}
-
-	return 0;
 }
 
-static int32_t create_message(enum request request, const void* payload, uint8_t* message, uint32_t* msg_len) {
+static void create_message(enum request request, const void* payload, uint8_t* message, uint32_t* msg_len) {
 	uint32_t payload_len;
 	uint8_t* p;
 	enum request_sender sender;
@@ -100,7 +98,7 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 
 				format_app_create_message(&ret_payload->app_payload, p);
 			} else {
-				return -1;
+				return;
 			}
 			break;
 		case REQUEST_RESET:
@@ -112,12 +110,9 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 			not_implemented();
 			break;
 	}
-
-
-	return 0;
 }
 
-static int32_t parse_addr_payload(const uint8_t* buf, void* ret_payload) {
+static void parse_addr_payload(const uint8_t* buf, void* ret_payload) {
 	const uint8_t* p;
 	uint8_t* payload;
 
@@ -127,11 +122,9 @@ static int32_t parse_addr_payload(const uint8_t* buf, void* ret_payload) {
 
 	memcpy(payload, p, sizeof(*payload));
 	p += sizeof(payload);
-
-	return 0;
 }
 
-static int32_t parse_send(const uint8_t* buf, struct send_to_node_ret_payload* ret_payload) {
+static void parse_send(const uint8_t* buf, struct send_to_node_ret_payload* ret_payload) {
 	const uint8_t* p;
 
 	p = format_skip_base(buf);
@@ -142,6 +135,4 @@ static int32_t parse_send(const uint8_t* buf, struct send_to_node_ret_payload* r
 	p += sizeof(ret_payload->addr_to);
 
 	format_app_parse_message(&ret_payload->app_payload, p);
-
-	return 0;
 }

@@ -18,8 +18,8 @@ typedef struct routing_table {
 	size_t len;
 } routing_table_t;
 
-__attribute__((nonnull(1), warn_unused_result))
-int8_t routing_table_fill_default(routing_table_t* table);
+__attribute__((nonnull(1)))
+void routing_table_fill_default(routing_table_t* table);
 
 __attribute__((nonnull(1), warn_unused_result))
 uint8_t routing_next_addr(const routing_table_t* table, uint8_t dest_addr);

@@ -17,8 +17,11 @@
 #include "server_essentials.h"
 #include "server_handler.h"
 
+
+__attribute__((warn_unused_result))
 static bool handle_client_request(server_t* server_data, void** payload, const uint8_t* buf, size_t received_bytes, void* data);
 
+__attribute__((warn_unused_result))
 static bool handle_node_request(const server_t* server_data, void** payload, const uint8_t* buf, size_t received_bytes, void* data);
 
 bool server_server_handle(server_t* server, const uint8_t* buf, ssize_t received_bytes, int32_t conn_fd, void* data) { // NOLINT
@@ -51,10 +54,7 @@ static bool handle_client_request(server_t* server_data, void** payload, const u
 	bool res;
 
 	*payload = NULL;
-	if (format_server_client_parse_message(&cmd_type, payload, buf, received_bytes)) {
-		custom_log_error("Failed to parse message");
-		return false;
-	}
+	format_server_client_parse_message(&cmd_type, payload, buf, received_bytes);
 
 	res = true;
 	switch (cmd_type) {
@@ -89,10 +89,7 @@ static bool handle_node_request(const server_t* server_data, void** payload, con
 	bool res;
 
 	*payload = NULL;
-	if (format_server_node_parse_message(&cmd_type, payload, buf, received_bytes)) {
-		custom_log_error("Failed to parse message");
-		return false;
-	}
+	format_server_node_parse_message(&cmd_type, payload, buf, received_bytes);
 
 	res = true;
 	switch (cmd_type) {

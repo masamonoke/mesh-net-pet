@@ -10,26 +10,26 @@
 #include "format_client_server.h"
 #include "settings.h"
 
-static int32_t parse_message(enum request* request, void** payload, const uint8_t* buf);
+static void parse_message(enum request* request, void** payload, const uint8_t* buf);
 
-static int32_t create_message(enum request request, const void* payload, uint8_t* message, uint32_t* msg_len);
+static void create_message(enum request request, const void* payload, uint8_t* message, uint32_t* msg_len);
 
-int32_t format_server_node_parse_message(enum request* req, void** payload, const void* buf, size_t len) {
+void format_server_node_parse_message(enum request* req, void** payload, const void* buf, size_t len) {
 	(void) len;
-	return parse_message(req, payload, (uint8_t*) buf);
+	parse_message(req, payload, (uint8_t*) buf);
 }
 
-int32_t format_server_node_create_message(enum request req, const void* payload, uint8_t* buf, uint32_t* len) {
-	return create_message(req, payload, buf, len);
+void format_server_node_create_message(enum request req, const void* payload, uint8_t* buf, uint32_t* len) {
+	create_message(req, payload, buf, len);
 }
 
-static int32_t set_node_update_payload(const uint8_t* buf, void* ret_payload);
+static void set_node_update_payload(const uint8_t* buf, void* ret_payload);
 
-static int32_t set_send_payload(const uint8_t* buf, struct send_to_node_ret_payload* payload);
+static void set_send_payload(const uint8_t* buf, struct send_to_node_ret_payload* payload);
 
-static int32_t set_notify_payload(const uint8_t* buf, struct node_notify_payload* payload);
+static void set_notify_payload(const uint8_t* buf, struct node_notify_payload* payload);
 
-static int32_t parse_message(enum request* request, void** payload, const uint8_t* buf) {
+static void parse_message(enum request* request, void** payload, const uint8_t* buf) {
 	const uint8_t* p;
 	enum request cmd;
 
@@ -70,11 +70,9 @@ static int32_t parse_message(enum request* request, void** payload, const uint8_
 			custom_log_error("Unknown server-node command");
 			break;
 	}
-
-	return 0;
 }
 
-static int32_t create_message(enum request request, const void* payload, uint8_t* message, uint32_t* msg_len) {
+static void create_message(enum request request, const void* payload, uint8_t* message, uint32_t* msg_len) {
 	uint32_t payload_len;
 	int32_t pid;
 	uint8_t* p;
@@ -154,11 +152,9 @@ static int32_t create_message(enum request request, const void* payload, uint8_t
 			not_implemented();
 			break;
 	}
-
-	return 0;
 }
 
-static int32_t set_node_update_payload(const uint8_t* buf, void* ret_payload) {
+static void set_node_update_payload(const uint8_t* buf, void* ret_payload) {
 	const uint8_t* p;
 	struct node_update_ret_payload* payload;
 
@@ -173,11 +169,9 @@ static int32_t set_node_update_payload(const uint8_t* buf, void* ret_payload) {
 	p += sizeof(payload->addr);
 	memcpy(&payload->pid, p, sizeof(payload->pid));
 	p += sizeof(payload->pid);
-
-	return 0;
 }
 
-static int32_t set_send_payload(const uint8_t* buf, struct send_to_node_ret_payload* payload) {
+static void set_send_payload(const uint8_t* buf, struct send_to_node_ret_payload* payload) {
 	const uint8_t* p;
 
 	p = format_skip_base(buf);
@@ -189,17 +183,13 @@ static int32_t set_send_payload(const uint8_t* buf, struct send_to_node_ret_payl
 	p += sizeof(payload->addr_to);
 
 	format_app_parse_message(&payload->app_payload, p);
-
-	return 0;
 }
 
-static int32_t set_notify_payload(const uint8_t* buf, struct node_notify_payload* payload) {
+static void set_notify_payload(const uint8_t* buf, struct node_notify_payload* payload) {
 	const uint8_t* p;
 
 	p = format_skip_base(buf);
 
 	// parse payload
 	memcpy(&payload->notify_type, p, sizeof_enum(payload->notify_type));
-
-	return 0;
 }

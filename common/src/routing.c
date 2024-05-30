@@ -5,7 +5,7 @@
 
 #include "custom_logger.h"
 
-int8_t routing_table_fill_default(routing_table_t* table) {
+void routing_table_fill_default(routing_table_t* table) {
 	size_t i;
 
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
@@ -14,8 +14,6 @@ int8_t routing_table_fill_default(routing_table_t* table) {
 	}
 
 	table->len = 0;
-
-	return 0;
 }
 
 uint8_t routing_next_addr(const routing_table_t* table, uint8_t dest_addr) {

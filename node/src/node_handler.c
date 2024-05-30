@@ -14,34 +14,38 @@ static bool stop_broadcast = false;
 static bool stop_inverse = false;
 static bool was_message = false;
 
-int32_t handle_ping(int32_t conn_fd) {
+bool handle_ping(int32_t conn_fd) {
 	enum request_result req_res;
 
 	req_res = REQUEST_OK;
 	if (io_write_all(conn_fd, (char*) &req_res, sizeof_enum(req_res))) {
 		node_log_error("Failed to response to ping");
-		return -1;
+		return false;
 	}
 
-	return 0;
+	return true;
 }
 
-int32_t handle_server_send(enum request cmd_type, uint8_t addr, const void* payload, const routing_table_t* routing, app_t apps[APPS_COUNT]) { // NOLINT
+bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload, const routing_table_t* routing, app_t apps[APPS_COUNT]) { // NOLINT
 	struct send_to_node_ret_payload* ret_payload;
 	uint8_t b[256];
 	uint32_t buf_len;
 	int32_t node_conn;
 	uint8_t next_addr;
-	int32_t res;
+	bool res;
 
-	res = 0;
+	res = true;
 	ret_payload = (struct send_to_node_ret_payload*) payload;
 
 	if (ret_payload->addr_to == addr) {
 		node_log_warn("Message for node itself");
 
 		if (node_app_handle_request(apps, &ret_payload->app_payload, 0)) {
-			node_essentials_notify_server(NOTIFY_GOT_MESSAGE);
+			if (!node_essentials_notify_server(NOTIFY_GOT_MESSAGE)) {
+				node_log_error("Failed to notify server");
+			}
+		} else {
+			node_log_error("Failed to handle app request");
 		}
 
 		return res;
@@ -49,11 +53,7 @@ int32_t handle_server_send(enum request cmd_type, uint8_t addr, const void* payl
 
 	node_app_setup_delivery(apps, &ret_payload->app_payload, ret_payload->addr_to);
 
-	if (format_node_node_create_message(cmd_type, ret_payload, b, &buf_len)) {
-		node_log_error("Failed to create message");
-		res = -1;
-		return res;
-	}
+	format_node_node_create_message(cmd_type, ret_payload, b, &buf_len);
 
 	node_log_debug("Finding route to %d", ret_payload->addr_to);
 	next_addr = routing_next_addr(routing, ret_payload->addr_to);
@@ -72,44 +72,53 @@ int32_t handle_server_send(enum request cmd_type, uint8_t addr, const void* payl
 
 		node_essentials_broadcast(addr, UINT8_MAX, &route_payload, stop_broadcast);
 
-		res = -1;
-		return res;
+		return false;
 	}
 
 	node_conn = node_essentials_get_conn(node_port(next_addr));
 	if (node_conn < 0) {
 		node_log_error("Failed to create connection with node %d", next_addr);
-		res = -1;
+		res = false;
 	} else {
 		if (io_write_all(node_conn, (char*) b, buf_len)) {
 			node_log_error("Failed to send request");
-			res = -1;
+			res = false;
 		}
 	}
 
-	return 0;
+	return res;
 }
 
+__attribute__((warn_unused_result))
 static bool send_delivery(const routing_table_t* routing, uint8_t old_from, uint8_t old_to, struct app_payload* old_app_payload, app_t apps[APPS_COUNT]);
 
+__attribute__((warn_unused_result))
 static bool send_key_exchange(const routing_table_t* routing, struct app_payload* app_payload, uint8_t receiver_addr, uint8_t sender_addr);
 
+__attribute__((warn_unused_result))
 static bool node_handle_app_request(const routing_table_t* routing, app_t apps[APPS_COUNT], struct send_to_node_ret_payload* send_payload);
 
+__attribute__((warn_unused_result))
 static bool send_next(const routing_table_t* routing, struct send_to_node_ret_payload* ret_payload);
 
-int32_t handle_node_send(uint8_t addr, const void* payload, const routing_table_t* routing, app_t apps[APPS_COUNT]) {
+bool handle_node_send(uint8_t addr, const void* payload, const routing_table_t* routing, app_t apps[APPS_COUNT]) {
 	uint8_t addr_to;
-	int32_t res;
+	bool res;
 
 	node_log_warn("Send node %d", addr);
 
-	res = 0;
+	res = true;
 	addr_to = ((struct send_to_node_ret_payload*) payload)->addr_to;
 	if (addr_to == addr) {
-		node_handle_app_request(routing, apps, (struct send_to_node_ret_payload*) payload);
+		if (!node_handle_app_request(routing, apps, (struct send_to_node_ret_payload*) payload)) {
+			node_log_error("Failed to handle app request");
+			res = false;
+		}
 	} else {
-		send_next(routing, (struct send_to_node_ret_payload*) payload);
+		if (!send_next(routing, (struct send_to_node_ret_payload*) payload)) {
+			node_log_error("Failed to send app request next");
+			res = false;
+		}
 	}
 
 	return res;
@@ -117,7 +126,7 @@ int32_t handle_node_send(uint8_t addr, const void* payload, const routing_table_
 
 bool route_direct_handle_delivered(routing_table_t* routing, struct node_route_direct_payload* route_payload, uint8_t server_addr, app_t apps[APPS_COUNT]);
 
-int32_t handle_node_route_direct(routing_table_t* routing, uint8_t server_addr, void* payload, app_t apps[APPS_COUNT]) {
+bool handle_node_route_direct(routing_table_t* routing, uint8_t server_addr, void* payload, app_t apps[APPS_COUNT]) {
 	struct node_route_direct_payload* route_payload;
 	uint8_t prev_addr;
 
@@ -139,12 +148,12 @@ int32_t handle_node_route_direct(routing_table_t* routing, uint8_t server_addr, 
 
 	if (route_payload->receiver_addr == server_addr) {
 		route_direct_handle_delivered(routing, route_payload, server_addr, apps);
-		return 0;
+		return true;
 	}
 
 	if (route_payload->time_to_live <= 0) {
 		node_log_warn("Message died with ttl %d", route_payload->time_to_live);
-		return 0;
+		return true;
 	}
 
 	prev_addr = route_payload->local_sender_addr;
@@ -152,10 +161,10 @@ int32_t handle_node_route_direct(routing_table_t* routing, uint8_t server_addr, 
 
 	node_essentials_broadcast(server_addr, prev_addr, route_payload, stop_broadcast);
 
-	return 0;
+	return true;
 }
 
-int32_t handle_node_route_inverse(routing_table_t* routing, void* payload, uint8_t server_addr) {
+bool handle_node_route_inverse(routing_table_t* routing, void* payload, uint8_t server_addr) {
 	struct node_route_inverse_payload* route_payload;
 	int32_t conn_fd;
 	uint8_t next_addr;
@@ -172,22 +181,19 @@ int32_t handle_node_route_inverse(routing_table_t* routing, void* payload, uint8
 
 	if (route_payload->sender_addr == server_addr) {
 		node_log_info("Route inverse request came back");
-		return 0;
+		return true;
 	}
 
 	next_addr = routing_next_addr(routing, route_payload->sender_addr);
 	if (next_addr == UINT8_MAX) {
 		node_log_error("Failed to get next addr to %d", route_payload->sender_addr);
-		return -1;
+		return false;
 	}
 
 	route_payload->local_sender_addr = server_addr;
 	route_payload->metric++;
 
-	if (format_node_node_create_message(REQUEST_ROUTE_INVERSE, route_payload, b, &buf_len)) {
-		node_log_error("Failed to create route inverse message");
-		return -1;
-	}
+	format_node_node_create_message(REQUEST_ROUTE_INVERSE, route_payload, b, &buf_len);
 
 	conn_fd = node_essentials_get_conn(node_port(next_addr));
 
@@ -196,16 +202,18 @@ int32_t handle_node_route_inverse(routing_table_t* routing, void* payload, uint8
 		// on next send there should be route direct from this node and path will be rebuilt
 		node_log_error("Failed to connect to node %d while travel back", next_addr);
 		routing_del(routing, route_payload->sender_addr);
-		node_essentials_notify_server(NOTIFY_INVERES_COMPLETED);
-		return -1;
+		if (!node_essentials_notify_server(NOTIFY_INVERES_COMPLETED)) {
+			node_log_error("Failed to notify server");
+		}
+		return false;
 	}
 
 	if (io_write_all(conn_fd, (char*) b, buf_len)) {
 		node_log_error("Failed to send route inverse request");
-		return -1;
+		return false;
 	}
 
-	return 0;
+	return true;
 }
 
 void handle_stop_broadcast(void) {
@@ -235,10 +243,7 @@ static bool send_delivery(const routing_table_t* routing, uint8_t old_from, uint
 
 	node_app_setup_delivery(apps, &new_send.app_payload, new_send.addr_to);
 
-	if (format_node_node_create_message(REQUEST_SEND, &new_send, b, &buf_len)) {
-		node_log_error("Faield to create send request");
-		return false;
-	}
+	format_node_node_create_message(REQUEST_SEND, &new_send, b, &buf_len);
 
 	next_addr = routing_next_addr(routing, new_send.addr_to);
 	if (next_addr == UINT8_MAX) {
@@ -275,10 +280,8 @@ static bool send_key_exchange(const routing_table_t* routing, struct app_payload
 		.addr_from = receiver_addr,
 		.app_payload = *app_payload
 	};
-	if (format_node_node_create_message(REQUEST_SEND, &send_payload, b, &buf_len)) {
-		node_log_error("Failed to create send request");
-		return false;
-	}
+
+	format_node_node_create_message(REQUEST_SEND, &send_payload, b, &buf_len);
 
 	next_addr = routing_next_addr(routing, send_payload.addr_to);
 	if (next_addr == UINT8_MAX) {
@@ -310,6 +313,7 @@ static bool send_key_exchange(const routing_table_t* routing, struct app_payload
 	return true;
 }
 
+__attribute__((warn_unused_result))
 static bool node_handle_app_request(const routing_table_t* routing, app_t apps[APPS_COUNT], struct send_to_node_ret_payload* send_payload) {
 	enum app_request app_req;
 	bool res;
@@ -321,7 +325,10 @@ static bool node_handle_app_request(const routing_table_t* routing, app_t apps[A
 		case APP_REQUEST_EXCHANGED_KEY:
 			node_log_debug("Get exchange key notify. Sending message");
 			if (node_app_save_key(apps, &send_payload->app_payload, send_payload->addr_from)) {
-				send_delivery(routing, send_payload->addr_from, send_payload->addr_to, &send_payload->app_payload, apps);
+				if (!send_delivery(routing, send_payload->addr_from, send_payload->addr_to, &send_payload->app_payload, apps)) {
+					node_log_error("Failed to send app message");
+					res = false;
+				}
 			} else {
 				node_log_error("Failed to save key");
 				res = false;
@@ -329,7 +336,10 @@ static bool node_handle_app_request(const routing_table_t* routing, app_t apps[A
 			break;
 		case APP_REQUEST_DELIVERY:
 				if (node_app_handle_request(apps, &send_payload->app_payload, send_payload->addr_from)) {
-					node_essentials_notify_server(NOTIFY_GOT_MESSAGE);
+					if (!node_essentials_notify_server(NOTIFY_GOT_MESSAGE)) {
+						node_log_error("Failed to notify server");
+						res = false;
+					}
 				} else {
 					res = false;
 				}
@@ -351,6 +361,7 @@ static bool node_handle_app_request(const routing_table_t* routing, app_t apps[A
 	return res;
 }
 
+__attribute__((warn_unused_result))
 static bool send_next(const routing_table_t* routing, struct send_to_node_ret_payload* ret_payload) {
 	int32_t node_conn;
 	uint8_t next_addr;
@@ -374,10 +385,7 @@ static bool send_next(const routing_table_t* routing, struct send_to_node_ret_pa
 		uint8_t b[256];
 		uint32_t buf_len;
 
-		if (format_node_node_create_message(REQUEST_SEND, ret_payload, b, &buf_len)) {
-			node_log_error("Failed to create node-send message");
-			return false;
-		}
+		format_node_node_create_message(REQUEST_SEND, ret_payload, b, &buf_len);
 
 		if (io_write_all(node_conn, (char*) b, buf_len)) {
 			node_log_error("Failed to send request");
@@ -408,10 +416,7 @@ bool route_direct_handle_delivered(routing_table_t* routing, struct node_route_d
 	route_payload->time_to_live = TTL;
 	route_payload->local_sender_addr = server_addr;
 
-	if (format_node_node_create_message(REQUEST_ROUTE_INVERSE, route_payload, b, &buf_len)) {
-		node_log_error("Failed to create route inverse message");
-		return false;
-	}
+	format_node_node_create_message(REQUEST_ROUTE_INVERSE, route_payload, b, &buf_len);
 
 	next_addr_to_back = routing_next_addr(routing, route_payload->sender_addr);
 	if (next_addr_to_back == UINT8_MAX) {
@@ -444,7 +449,10 @@ bool route_direct_handle_delivered(routing_table_t* routing, struct node_route_d
 			break;
 		case APP_REQUEST_EXCHANGED_KEY:
 				node_log_debug("Get exchange key notify. Sending message");
-				send_delivery(routing, route_payload->sender_addr, route_payload->receiver_addr, &route_payload->app_payload, apps);
+				if (!send_delivery(routing, route_payload->sender_addr, route_payload->receiver_addr, &route_payload->app_payload, apps)) {
+					node_log_error("Failed to send app request");
+					return false;
+				}
 			break;
 		default:
 			node_log_error("Unexpected app request: %d", route_payload->app_payload.req_type);

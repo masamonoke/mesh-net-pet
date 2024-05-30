@@ -20,10 +20,10 @@ struct serving_data {
 	size_t pfd_capacity;
 	socklen_t addrlen;
 	struct sockaddr_storage remoteaddr;
-	int32_t (*handle_request)(int32_t sender_fd, void* data);
+	bool (*handle_request)(int32_t sender_fd, void* data);
 };
 
-void serving_init(struct serving_data* serving, int32_t server_fd, int32_t (*handle_request)(int32_t sender_fd, void* data));
+void serving_init(struct serving_data* serving, int32_t server_fd, bool (*handle_request)(int32_t sender_fd, void* data));
 
 void serving_free(struct serving_data* serving);
 
