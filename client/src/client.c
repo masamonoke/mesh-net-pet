@@ -42,7 +42,7 @@ int32_t main(int32_t argc, char** argv) {
 	status = REQUEST_UNKNOWN;
 	format_server_client_create_message(req, payload, buf, &buf_len);
 
-	if (io_write_all(server_fd, buf, buf_len)) {
+	if (!io_write_all(server_fd, buf, buf_len)) {
 		custom_log_error("Failed to send client command");
 	}
 

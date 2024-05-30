@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <stdlib.h>
 
 #include "connection.h"
 #include "control_utils.h"
@@ -50,6 +51,8 @@ int32_t main(void) {
 			custom_log_error("Failed to create child process");
 		} else if (server_data.children[i].pid == 0) {
 			run_node((uint8_t) i);
+			perror("execl()");
+			exit(EXIT_FAILURE);
 		} else {
 			// parent
 			server_data.children[i].write_fd = -1;
@@ -81,7 +84,9 @@ static void int_handler(int32_t dummy) {
 static void term_handler(int32_t dummy) {
 	size_t i;
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
-		kill(server_data.children[i].pid, SIGINT);
+		if (server_data.children[i].pid > 0) {
+			kill(server_data.children[i].pid, SIGINT);
+		}
 	}
 	int_handler(dummy);
 }
@@ -93,13 +98,13 @@ static bool handle_request(int32_t conn_fd, void* data) {
 
 	msg_len = 0;
 
-	if (io_read_all(conn_fd, &msg_len, sizeof(msg_len), &received_bytes)) {
+	if (!io_read_all(conn_fd, &msg_len, sizeof(msg_len), &received_bytes)) {
 		custom_log_error("Failed to read message length");
 		return false;
 	}
 
 	if (received_bytes > 0) {
-		if (io_read_all(conn_fd, buf, msg_len - sizeof(msg_len), &received_bytes)) {
+		if (!io_read_all(conn_fd, buf, msg_len - sizeof(msg_len), &received_bytes)) {
 			custom_log_error("Failed to read message");
 			return false;
 		}

@@ -18,7 +18,7 @@ bool handle_ping(int32_t conn_fd) {
 	enum request_result req_res;
 
 	req_res = REQUEST_OK;
-	if (io_write_all(conn_fd, (uint8_t*) &req_res, sizeof_enum(req_res))) {
+	if (!io_write_all(conn_fd, (uint8_t*) &req_res, sizeof_enum(req_res))) {
 		node_log_error("Failed to response to ping");
 		return false;
 	}
@@ -80,7 +80,7 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 		node_log_error("Failed to create connection with node %d", next_addr);
 		res = false;
 	} else {
-		if (io_write_all(node_conn, b, buf_len)) {
+		if (!io_write_all(node_conn, b, buf_len)) {
 			node_log_error("Failed to send request");
 			res = false;
 		}
@@ -208,7 +208,7 @@ bool handle_node_route_inverse(routing_table_t* routing, void* payload, uint8_t 
 		return false;
 	}
 
-	if (io_write_all(conn_fd, b, buf_len)) {
+	if (!io_write_all(conn_fd, b, buf_len)) {
 		node_log_error("Failed to send route inverse request");
 		return false;
 	}
@@ -253,7 +253,7 @@ static bool send_delivery(const routing_table_t* routing, uint8_t old_from, uint
 
 	node_conn = node_essentials_get_conn(node_port(next_addr));
 
-	if (io_write_all(node_conn, b, buf_len)) {
+	if (!io_write_all(node_conn, b, buf_len)) {
 		node_log_error("Failed to send request");
 		return false;
 	}
@@ -305,7 +305,7 @@ static bool send_key_exchange(const routing_table_t* routing, struct app_payload
 
 	node_conn = node_essentials_get_conn(node_port(next_addr));
 
-	if (io_write_all(node_conn, b, buf_len)) {
+	if (!io_write_all(node_conn, b, buf_len)) {
 		node_log_error("Failed to send request");
 		return false;
 	}
@@ -387,7 +387,7 @@ static bool send_next(const routing_table_t* routing, struct send_to_node_ret_pa
 
 		format_node_node_create_message(REQUEST_SEND, ret_payload, b, &buf_len);
 
-		if (io_write_all(node_conn, b, buf_len)) {
+		if (!io_write_all(node_conn, b, buf_len)) {
 			node_log_error("Failed to send request");
 			return false;
 		}
@@ -432,7 +432,7 @@ bool route_direct_handle_delivered(routing_table_t* routing, struct node_route_d
 		return false;
 	}
 
-	if (io_write_all(conn_fd, b, buf_len)) {
+	if (!io_write_all(conn_fd, b, buf_len)) {
 		node_log_error("Failed to send route inverse request");
 		return false;
 	}

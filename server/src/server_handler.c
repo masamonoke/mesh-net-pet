@@ -34,7 +34,7 @@ bool handle_ping(const struct node* children, int32_t client_fd, const void* pay
 
 			format_server_node_create_message(REQUEST_PING, NULL, b, &buf_len);
 
-			if (io_write_all(children[i].write_fd, b, buf_len)) {
+			if (!io_write_all(children[i].write_fd, b, buf_len)) {
 				custom_log_error("Failed to send request to node");
 				return send_res_to_client(client_fd, REQUEST_ERR);
 			}
@@ -49,7 +49,7 @@ bool handle_ping(const struct node* children, int32_t client_fd, const void* pay
 			setsockopt(children[i].write_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof(tv));
 
 			if (received > 0) {
-				if (io_write_all(client_fd, b, received)) {
+				if (!io_write_all(client_fd, b, received)) {
 					custom_log_error("Failed to send ping result to client");
 					return false;
 				}
@@ -92,7 +92,7 @@ bool handle_notify(const struct node* children, int32_t client_fd, enum notify_t
 
 	switch(notify) {
 		case NOTIFY_GOT_MESSAGE:
-			if (io_write_all(client_fd, (uint8_t*) &req_res, sizeof_enum(req_res))) {
+			if (!io_write_all(client_fd, (uint8_t*) &req_res, sizeof_enum(req_res))) {
 				custom_log_error("Failed to response to notify");
 				res = false;
 			}
@@ -102,7 +102,7 @@ bool handle_notify(const struct node* children, int32_t client_fd, enum notify_t
 
 			for (size_t i = 0; i < (size_t) NODE_COUNT; i++) {
 				if (children[i].write_fd != -1) {
-					if (io_write_all(children[i].write_fd, b, buf_len)) {
+					if (!io_write_all(children[i].write_fd, b, buf_len)) {
 						custom_log_error("Failed to send stop broadcast");
 						res = false;
 					}
@@ -127,7 +127,7 @@ bool handle_reset(struct node* children, int32_t client_fd) {
 
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		if (children[i].write_fd != -1) {
-			if (io_write_all(children[i].write_fd, b, buf_len)) {
+			if (!io_write_all(children[i].write_fd, b, buf_len)) {
 				custom_log_error("Failed to send reset request to node %d", children[i].addr);
 				res = send_res_to_client(client_fd, REQUEST_UNKNOWN);
 			}
@@ -155,7 +155,7 @@ bool handle_client_send(struct node* children, const void* payload) {
 
 	for (size_t i = 0; i < (size_t) NODE_COUNT; i++) {
 		if (children[i].write_fd != -1) {
-			if (io_write_all(children[i].write_fd, b, buf_len)) {
+			if (!io_write_all(children[i].write_fd, b, buf_len)) {
 				custom_log_error("Failed to send reset broadcast request");
 			}
 		}
@@ -207,7 +207,7 @@ void handle_update_child(const void* payload, struct node* children) {
 }
 
 static bool send_res_to_client(int32_t client_fd, enum request_result res) {
-	if (io_write_all(client_fd, (uint8_t*) &res, sizeof_enum(res))) {
+	if (!io_write_all(client_fd, (uint8_t*) &res, sizeof_enum(res))) {
 		custom_log_error("Failed to send ping result to client");
 		return false;
 	}
@@ -240,7 +240,7 @@ static bool make_send_to_node(const struct node* children, const void* payload) 
 
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		if (children[i].addr == ((struct send_to_node_ret_payload*) payload)->addr_from) {
-			if (io_write_all(children[i].write_fd, b, buf_len)) {
+			if (!io_write_all(children[i].write_fd, b, buf_len)) {
 				custom_log_error("Failed to send request to node");
 				return false;
 			}

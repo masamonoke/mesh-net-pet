@@ -76,7 +76,7 @@ bool node_essentials_notify_server(enum notify_type notify) {
 		node_log_error("Failed to connect to server");
 		return false;
 	} else {
-		if (io_write_all(server_fd, b, buf_len)) {
+		if (!io_write_all(server_fd, b, buf_len)) {
 			node_log_error("Failed to send notify request to server");
 			return false;
 		}
@@ -185,7 +185,7 @@ static void get_conn_and_send(uint16_t port, uint8_t* buf, msg_len_type buf_len)
 		return;
 	}
 
-	if (io_write_all(conn_fd, buf, buf_len)) {
+	if (!io_write_all(conn_fd, buf, buf_len)) {
 		node_log_error("Failed to send route direct request: address %d", node_addr(port));
 		return;
 	}

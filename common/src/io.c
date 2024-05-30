@@ -9,7 +9,7 @@
 #include "append_string.h"
 #include "custom_logger.h"
 
-int16_t io_read_all(int32_t fd, uint8_t* buf_mut, msg_len_type n, int16_t* bytes_received) {
+bool io_read_all(int32_t fd, uint8_t* buf_mut, msg_len_type n, int16_t* bytes_received) {
 	int16_t rv;
 
 	if (bytes_received != NULL) {
@@ -19,7 +19,12 @@ int16_t io_read_all(int32_t fd, uint8_t* buf_mut, msg_len_type n, int16_t* bytes
 	while (n > 0) {
 		rv = (int16_t) recv(fd, buf_mut, n, 0);
 		if (rv <= 0) {
-			return rv; // unexpected eof
+			if (rv == 0) {
+				return true;
+			} else {
+				custom_log_error("EOF");
+				return false;
+			}
 		}
 		n -= rv;
 		buf_mut += rv;
@@ -29,19 +34,19 @@ int16_t io_read_all(int32_t fd, uint8_t* buf_mut, msg_len_type n, int16_t* bytes
 		}
 	}
 
-	return 0;
+	return true;
 }
 
-int16_t io_write_all(int32_t fd, const uint8_t* buf, msg_len_type n) {
+bool io_write_all(int32_t fd, const uint8_t* buf, msg_len_type n) {
 	int16_t rv;
 
 	while (n > 0) {
 		rv = (int16_t) send(fd, buf, n, 0);
 		if (rv <= 0) {
-			return -1;
+			return false;
 		}
 		n -= (uint8_t) rv;
 		buf += rv;
 	}
-	return 0;
+	return true;
 }
