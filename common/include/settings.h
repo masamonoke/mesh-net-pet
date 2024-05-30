@@ -33,7 +33,8 @@
 
 #define enum_ir uint8_t
 
-#define sizeof_enum(_) sizeof(enum_ir)
+// argument needs for readability only
+#define sizeof_enum(enum_name_or_var) sizeof(enum_ir)
 
 #define node_port(addr) (uint16_t) (SERVER_PORT + (addr) + 1)
 
