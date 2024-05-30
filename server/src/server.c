@@ -115,7 +115,7 @@ static bool handle_request(int32_t conn_fd, void* data) {
 	if (received_bytes > 0) {
 		bool processed;
 
-		processed = server_server_handle(&server_data, (uint8_t*) buf, received_bytes, conn_fd, data);
+		processed = server_server_handle(&server_data, (uint8_t*) buf, conn_fd, data);
 
 		if (processed) {
 			return true;

@@ -19,7 +19,7 @@
 #include "node_handler.h"
 
 __attribute__((warn_unused_result))
-static bool handle_server(node_server_t* server, int32_t conn_fd, enum request* cmd_type, void** payload, uint8_t* buf, size_t received_bytes, void* data);
+static bool handle_server(node_server_t* server, int32_t conn_fd, enum request* cmd_type, void** payload, uint8_t* buf, void* data);
 
 __attribute__((warn_unused_result))
 static bool handle_node(node_server_t* server, enum request* cmd_type, void** payload, uint8_t* buf, size_t received_bytes, void* data);
@@ -34,7 +34,7 @@ bool node_server_handle_request(node_server_t* server, int32_t conn_fd, uint8_t*
 
 	switch (sender) {
 		case REQUEST_SENDER_SERVER:
-			res = handle_server(server, conn_fd, &request, &payload, buf, (size_t) received_bytes, data);
+			res = handle_server(server, conn_fd, &request, &payload, buf, data);
 			break;
 		case REQUEST_SENDER_NODE:
 			res = handle_node(server, &request, &payload,  buf, (size_t) received_bytes, data);
@@ -47,12 +47,12 @@ bool node_server_handle_request(node_server_t* server, int32_t conn_fd, uint8_t*
 	return res;
 }
 
-static bool handle_server(node_server_t* server, int32_t conn_fd, enum request* cmd_type, void** payload, uint8_t* buf, size_t received_bytes, void* data) {
+static bool handle_server(node_server_t* server, int32_t conn_fd, enum request* cmd_type, void** payload, uint8_t* buf, void* data) {
 	(void) data;
 	bool res;
 
 	*payload = NULL;
-	format_server_node_parse_message(cmd_type, payload, buf, received_bytes);
+	format_server_node_parse_message(cmd_type, payload, buf);
 
 	res = true;
 	switch (*cmd_type) {
@@ -94,7 +94,7 @@ static bool handle_node(node_server_t* server, enum request* cmd_type, void** pa
 	bool res;
 
 	*payload = NULL;
-	format_node_node_parse_message(cmd_type, payload, buf, received_bytes);
+	format_node_node_parse_message(cmd_type, payload, buf);
 
 	res = true;
 	switch (*cmd_type) {

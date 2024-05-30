@@ -12,4 +12,4 @@ typedef struct server {
 	struct node children[NODE_COUNT];
 } server_t;
 
-bool server_server_handle(server_t* server, const uint8_t* buf, ssize_t received_bytes, int32_t conn_fd, void* data);
+bool server_server_handle(server_t* server, const uint8_t* buf, int32_t conn_fd, void* data);

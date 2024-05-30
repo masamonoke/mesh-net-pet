@@ -19,12 +19,12 @@
 
 
 __attribute__((warn_unused_result))
-static bool handle_client_request(server_t* server_data, void** payload, const uint8_t* buf, size_t received_bytes, void* data);
+static bool handle_client_request(server_t* server_data, void** payload, const uint8_t* buf, void* data);
 
 __attribute__((warn_unused_result))
-static bool handle_node_request(const server_t* server_data, void** payload, const uint8_t* buf, size_t received_bytes, void* data);
+static bool handle_node_request(const server_t* server_data, void** payload, const uint8_t* buf, void* data);
 
-bool server_server_handle(server_t* server, const uint8_t* buf, ssize_t received_bytes, int32_t conn_fd, void* data) { // NOLINT
+bool server_server_handle(server_t* server, const uint8_t* buf, int32_t conn_fd, void* data) {
 	bool processed;
 	enum request_sender sender;
 	void* payload;
@@ -34,10 +34,10 @@ bool server_server_handle(server_t* server, const uint8_t* buf, ssize_t received
 	switch(sender) {
 		case REQUEST_SENDER_CLIENT:
 			server->client_fd = conn_fd;
-			processed = handle_client_request(server, &payload, buf, (size_t) received_bytes, data);
+			processed = handle_client_request(server, &payload, buf, data);
 			break;
 		case REQUEST_SENDER_NODE:
-			processed = handle_node_request(server, &payload, buf, (size_t) received_bytes, data);
+			processed = handle_node_request(server, &payload, buf, data);
 			break;
 		default:
 			processed = false;
@@ -48,13 +48,13 @@ bool server_server_handle(server_t* server, const uint8_t* buf, ssize_t received
 	return processed;
 }
 
-static bool handle_client_request(server_t* server_data, void** payload, const uint8_t* buf, size_t received_bytes, void* data) {
+static bool handle_client_request(server_t* server_data, void** payload, const uint8_t* buf, void* data) {
 	(void) data;
 	enum request cmd_type;
 	bool res;
 
 	*payload = NULL;
-	format_server_client_parse_message(&cmd_type, payload, buf, received_bytes);
+	format_server_client_parse_message(&cmd_type, payload, buf);
 
 	res = true;
 	switch (cmd_type) {
@@ -84,12 +84,12 @@ static bool handle_client_request(server_t* server_data, void** payload, const u
 	return res;
 }
 
-static bool handle_node_request(const server_t* server_data, void** payload, const uint8_t* buf, size_t received_bytes, void* data) {
+static bool handle_node_request(const server_t* server_data, void** payload, const uint8_t* buf, void* data) {
 	enum request cmd_type;
 	bool res;
 
 	*payload = NULL;
-	format_server_node_parse_message(&cmd_type, payload, buf, received_bytes);
+	format_server_node_parse_message(&cmd_type, payload, buf);
 
 	res = true;
 	switch (cmd_type) {

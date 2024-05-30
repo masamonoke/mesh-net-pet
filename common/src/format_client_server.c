@@ -13,8 +13,7 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 
 static void create_message(enum request request, const void* payload, uint8_t* message, uint32_t* msg_len);
 
-void format_server_client_parse_message(enum request* req, void** payload, const void* buf, size_t len) {
-	(void) len;
+void format_server_client_parse_message(enum request* req, void** payload, const void* buf) {
 	parse_message(req, payload, (uint8_t*) buf);
 }
 
