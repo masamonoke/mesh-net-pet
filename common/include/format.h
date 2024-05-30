@@ -6,6 +6,12 @@
 
 #include <format_app.h>
 
+#define msg_len_type uint8_t
+
+#define MSG_LEN_SIZE sizeof(msg_len_type)
+
+#define MSG_LEN (sizeof_enum(request) + sizeof_enum(sender) + MSG_LEN_SIZE)
+
 enum request_result {
 	REQUEST_OK,
 	REQUEST_ERR,
@@ -47,10 +53,10 @@ __attribute__((warn_unused_result))
 enum request_sender format_define_sender(const uint8_t* buf);
 
 __attribute__((nonnull(1), warn_unused_result))
-uint8_t* format_create_base(uint8_t* message, uint32_t msg_len, enum request cmd, enum request_sender sender);
+uint8_t* format_create_base(uint8_t* message, msg_len_type msg_len, enum request cmd, enum request_sender sender);
 
 __attribute__((nonnull(1), warn_unused_result))
 uint8_t* format_skip_base(const uint8_t* message);
 
 __attribute__((warn_unused_result))
-bool format_is_message_correct(size_t buf_len, uint32_t msg_len);
+bool format_is_message_correct(size_t buf_len, msg_len_type msg_len);

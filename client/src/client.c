@@ -20,8 +20,8 @@ static bool parse_args(int32_t argc, char** argv, enum request* cmd, void** payl
 int32_t main(int32_t argc, char** argv) {
 	int32_t server_fd;
 	enum request req;
-	uint8_t buf[256];
-	uint32_t buf_len;
+	uint8_t buf[MAX_MSG_LEN];
+	msg_len_type buf_len;
 	void* payload;
 	ssize_t received_bytes;
 	enum request_result status;
@@ -42,7 +42,7 @@ int32_t main(int32_t argc, char** argv) {
 	status = REQUEST_UNKNOWN;
 	format_server_client_create_message(req, payload, buf, &buf_len);
 
-	if (io_write_all(server_fd, (const char*) buf, buf_len)) {
+	if (io_write_all(server_fd, buf, buf_len)) {
 		custom_log_error("Failed to send client command");
 	}
 
@@ -53,7 +53,10 @@ int32_t main(int32_t argc, char** argv) {
 
 	received_bytes = recv(server_fd, buf, sizeof(buf), 0);
 	if (received_bytes > 0) {
-		memcpy(&status, buf, sizeof(status));
+		enum_ir tmp;
+
+		memcpy(&tmp, buf, sizeof_enum(status));
+		status = (enum request_result) tmp;
 	}
 
 	format_sprint_result(status, (char*) buf, sizeof(buf));
@@ -93,7 +96,7 @@ static bool parse_args(int32_t argc, char** argv, enum request* cmd, void** payl
 				uint8_t app_addr_to;
 				uint8_t app_addr_from;
 				char* endptr;
-				char message[150];
+				char message[APP_MESSAGE_LEN];
 				struct send_to_node_ret_payload* send_payload;
 
 				*cmd = REQUEST_SEND;

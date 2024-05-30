@@ -107,8 +107,8 @@ static bool parse_args(char** args, size_t argc, uint16_t* port) {
 }
 
 static bool update_node_state(uint16_t port) {
-	uint8_t buf[256];
-	uint32_t buf_len;
+	uint8_t buf[UPDATE_LEN + MSG_LEN];
+	msg_len_type buf_len;
 	int32_t server_fd;
 	bool status;
 
@@ -127,7 +127,7 @@ static bool update_node_state(uint16_t port) {
 
 	format_server_node_create_message(REQUEST_UPDATE, &payload, buf, &buf_len);
 
-	if (io_write_all(server_fd, (const char*) buf, buf_len)) {
+	if (io_write_all(server_fd, buf, buf_len)) {
 		node_log_error("Failed to send node init data");
 		status = false;
 	}
@@ -138,17 +138,16 @@ static bool update_node_state(uint16_t port) {
 }
 
 static bool handle_request(int32_t conn_fd, void* data) {
-	ssize_t received_bytes;
-	uint8_t buf[256];
-	uint32_t msg_len;
+	int16_t received_bytes;
+	uint8_t buf[MAX_MSG_LEN];
+	uint8_t msg_len;
 
-
-	if (io_read_all(conn_fd, (char*) &msg_len, sizeof(msg_len), (size_t*) &received_bytes)) {
+	if (io_read_all(conn_fd, &msg_len, sizeof(msg_len), &received_bytes)) {
 		node_log_error("Failed to read message length");
 	}
 
 	if (received_bytes > 0) {
-		if (io_read_all(conn_fd, (char*) buf, msg_len - sizeof(uint32_t), (size_t*) &received_bytes)) {
+		if (io_read_all(conn_fd, buf, msg_len - sizeof(msg_len), &received_bytes)) {
 			node_log_error("Failed to read message");
 			return false;
 		}

@@ -5,6 +5,10 @@
 
 #include "format.h"
 
+#define UPDATE_LEN sizeof(struct node_update_ret_payload)
+
+#define NOTIFY_LEN sizeof(enum_ir)
+
 struct node_update_ret_payload {
 	int32_t pid;
 	uint16_t port;
@@ -16,12 +20,8 @@ enum notify_type {
 	NOTIFY_INVERES_COMPLETED,
 };
 
-struct node_notify_payload {
-	enum notify_type notify_type;
-};
-
 __attribute__((nonnull(3, 4)))
-void format_server_node_create_message(enum request req,  const void* payload, uint8_t* buf, uint32_t* len);
+void format_server_node_create_message(enum request req,  const void* payload, uint8_t* buf, msg_len_type* len);
 
 __attribute__((nonnull(1, 2, 3)))
 void format_server_node_parse_message(enum request* req, void** payload, const void* buf);

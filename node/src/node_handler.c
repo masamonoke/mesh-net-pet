@@ -18,7 +18,7 @@ bool handle_ping(int32_t conn_fd) {
 	enum request_result req_res;
 
 	req_res = REQUEST_OK;
-	if (io_write_all(conn_fd, (char*) &req_res, sizeof_enum(req_res))) {
+	if (io_write_all(conn_fd, (uint8_t*) &req_res, sizeof_enum(req_res))) {
 		node_log_error("Failed to response to ping");
 		return false;
 	}
@@ -28,8 +28,8 @@ bool handle_ping(int32_t conn_fd) {
 
 bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload, const routing_table_t* routing, app_t apps[APPS_COUNT]) { // NOLINT
 	struct send_to_node_ret_payload* ret_payload;
-	uint8_t b[256];
-	uint32_t buf_len;
+	uint8_t b[MAX_MSG_LEN];
+	msg_len_type buf_len;
 	int32_t node_conn;
 	uint8_t next_addr;
 	bool res;
@@ -80,7 +80,7 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 		node_log_error("Failed to create connection with node %d", next_addr);
 		res = false;
 	} else {
-		if (io_write_all(node_conn, (char*) b, buf_len)) {
+		if (io_write_all(node_conn, b, buf_len)) {
 			node_log_error("Failed to send request");
 			res = false;
 		}
@@ -168,8 +168,8 @@ bool handle_node_route_inverse(routing_table_t* routing, void* payload, uint8_t 
 	struct node_route_inverse_payload* route_payload;
 	int32_t conn_fd;
 	uint8_t next_addr;
-	uint8_t b[256];
-	uint32_t buf_len;
+	uint8_t b[ROUTE_INVERSE_LEN + MSG_LEN];
+	msg_len_type buf_len;
 
 	route_payload = (struct node_route_inverse_payload*) payload;
 
@@ -208,7 +208,7 @@ bool handle_node_route_inverse(routing_table_t* routing, void* payload, uint8_t 
 		return false;
 	}
 
-	if (io_write_all(conn_fd, (char*) b, buf_len)) {
+	if (io_write_all(conn_fd, b, buf_len)) {
 		node_log_error("Failed to send route inverse request");
 		return false;
 	}
@@ -227,8 +227,8 @@ void handle_reset_broadcast_status(void) {
 }
 
 static bool send_delivery(const routing_table_t* routing, uint8_t old_from, uint8_t old_to, struct app_payload* old_app_payload, app_t apps[APPS_COUNT]) {
-	uint8_t b[256];
-	uint32_t buf_len;
+	uint8_t b[MAX_MSG_LEN];
+	msg_len_type buf_len;
 	uint8_t next_addr;
 	int32_t node_conn;
 
@@ -253,7 +253,7 @@ static bool send_delivery(const routing_table_t* routing, uint8_t old_from, uint
 
 	node_conn = node_essentials_get_conn(node_port(next_addr));
 
-	if (io_write_all(node_conn, (char*) b, buf_len)) {
+	if (io_write_all(node_conn, b, buf_len)) {
 		node_log_error("Failed to send request");
 		return false;
 	}
@@ -263,8 +263,8 @@ static bool send_delivery(const routing_table_t* routing, uint8_t old_from, uint
 
 static bool send_key_exchange(const routing_table_t* routing, struct app_payload* app_payload, uint8_t receiver_addr, uint8_t sender_addr) {
 	uint8_t tmp;
-	uint8_t b[256];
-	uint32_t buf_len;
+	uint8_t b[MAX_MSG_LEN - APP_MESSAGE_LEN];
+	msg_len_type buf_len;
 	uint8_t next_addr;
 	int32_t node_conn;
 
@@ -305,7 +305,7 @@ static bool send_key_exchange(const routing_table_t* routing, struct app_payload
 
 	node_conn = node_essentials_get_conn(node_port(next_addr));
 
-	if (io_write_all(node_conn, (char*) b, buf_len)) {
+	if (io_write_all(node_conn, b, buf_len)) {
 		node_log_error("Failed to send request");
 		return false;
 	}
@@ -382,12 +382,12 @@ static bool send_next(const routing_table_t* routing, struct send_to_node_ret_pa
 		// delete old addr from routing and start broadcast from here
 		return false;
 	} else {
-		uint8_t b[256];
-		uint32_t buf_len;
+		uint8_t b[MAX_MSG_LEN];
+		msg_len_type buf_len;
 
 		format_node_node_create_message(REQUEST_SEND, ret_payload, b, &buf_len);
 
-		if (io_write_all(node_conn, (char*) b, buf_len)) {
+		if (io_write_all(node_conn, b, buf_len)) {
 			node_log_error("Failed to send request");
 			return false;
 		}
@@ -397,8 +397,8 @@ static bool send_next(const routing_table_t* routing, struct send_to_node_ret_pa
 }
 
 bool route_direct_handle_delivered(routing_table_t* routing, struct node_route_direct_payload* route_payload, uint8_t server_addr, app_t apps[APPS_COUNT]) {
-	uint8_t b[256];
-	uint32_t buf_len;
+	uint8_t b[MAX_MSG_LEN];
+	msg_len_type buf_len;
 	uint8_t next_addr_to_back;
 	int32_t conn_fd;
 
@@ -432,7 +432,7 @@ bool route_direct_handle_delivered(routing_table_t* routing, struct node_route_d
 		return false;
 	}
 
-	if (io_write_all(conn_fd, (char*) b, buf_len)) {
+	if (io_write_all(conn_fd, b, buf_len)) {
 		node_log_error("Failed to send route inverse request");
 		return false;
 	}

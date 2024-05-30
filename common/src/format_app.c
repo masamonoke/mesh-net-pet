@@ -24,10 +24,12 @@ void format_app_create_message(const struct app_payload* app_payload, uint8_t* p
 
 void format_app_parse_message(void* payload, const uint8_t* p) {
 	struct app_payload* app_payload;
+	enum_ir tmp;
 
 	app_payload = (struct app_payload*) payload;
 
-	memcpy(&app_payload->req_type, p, sizeof_enum(app_payload->req_type));
+	memcpy(&tmp, p, sizeof_enum(app_payload->req_type));
+	app_payload->req_type = (enum app_request) tmp;
 	p += sizeof_enum(app_payload->req_type);
 	memcpy(&app_payload->addr_from, p, sizeof(app_payload->addr_from));
 	p += sizeof(app_payload->addr_from);
@@ -43,7 +45,7 @@ void format_app_parse_message(void* payload, const uint8_t* p) {
 	}
 }
 
-uint32_t format_app_message_len(struct app_payload* payload) {
+uint8_t format_app_message_len(struct app_payload* payload) {
 	return sizeof(payload->addr_from) + sizeof(payload->addr_to) + sizeof(payload->key) +
 		sizeof(payload->message_len) + payload->message_len + sizeof_enum(app_payload->req_type);
 }

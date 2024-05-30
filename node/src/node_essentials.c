@@ -62,12 +62,12 @@ int32_t node_essentials_get_conn(uint16_t port) {
 }
 
 bool node_essentials_notify_server(enum notify_type notify) {
-	uint8_t b[256];
-	uint32_t buf_len;
+	uint8_t b[NOTIFY_LEN + MSG_LEN];
+	msg_len_type buf_len;
 	int32_t server_fd;
-	struct node_notify_payload notify_payload = {
-		.notify_type = notify
-	};
+	enum notify_type notify_payload;
+
+	notify_payload = notify;
 
 	format_server_node_create_message(REQUEST_NOTIFY, (void*) &notify_payload, b, &buf_len);
 
@@ -76,7 +76,7 @@ bool node_essentials_notify_server(enum notify_type notify) {
 		node_log_error("Failed to connect to server");
 		return false;
 	} else {
-		if (io_write_all(server_fd, (char*) b, buf_len)) {
+		if (io_write_all(server_fd, b, buf_len)) {
 			node_log_error("Failed to send notify request to server");
 			return false;
 		}
@@ -87,15 +87,15 @@ bool node_essentials_notify_server(enum notify_type notify) {
 
 static void fill_neighbour_port(uint8_t addr, uint16_t* up_port, uint16_t* down_port, uint16_t* left_port, uint16_t* right_port);
 
-static void get_conn_and_send(uint16_t port, char* buf, uint32_t buf_len);
+static void get_conn_and_send(uint16_t port, uint8_t* buf, msg_len_type buf_len);
 
 void node_essentials_broadcast(uint8_t current_addr, uint8_t banned_addr, struct node_route_direct_payload* route_payload, bool stop_broadcast) { // NOLINT
 	uint16_t up_port;
 	uint16_t down_port;
 	uint16_t left_port;
 	uint16_t right_port;
-	uint8_t b[256];
-	uint32_t buf_len;
+	uint8_t b[MAX_MSG_LEN];
+	msg_len_type buf_len;
 	uint16_t banned_port;
 
 	if (!stop_broadcast) {
@@ -114,19 +114,19 @@ void node_essentials_broadcast(uint8_t current_addr, uint8_t banned_addr, struct
 		format_node_node_create_message(REQUEST_ROUTE_DIRECT, route_payload, b, &buf_len);
 
 		if (up_port != UINT16_MAX && up_port != banned_port) {
-			get_conn_and_send(up_port, (char*) b, buf_len);
+			get_conn_and_send(up_port, b, buf_len);
 		}
 
 		if (down_port != UINT16_MAX && down_port != banned_port) {
-			get_conn_and_send(down_port, (char*) b, buf_len);
+			get_conn_and_send(down_port, b, buf_len);
 		}
 
 		if (left_port != UINT16_MAX && left_port != banned_port) {
-			get_conn_and_send(left_port, (char*) b, buf_len);
+			get_conn_and_send(left_port, b, buf_len);
 		}
 
 		if (right_port != UINT16_MAX && right_port != banned_port) {
-			get_conn_and_send(right_port, (char*) b, buf_len);
+			get_conn_and_send(right_port, b, buf_len);
 		}
 	}
 }
@@ -175,7 +175,7 @@ static void fill_neighbour_port(uint8_t addr, uint16_t* up_port, uint16_t* down_
 	}
 }
 
-static void get_conn_and_send(uint16_t port, char* buf, uint32_t buf_len) {
+static void get_conn_and_send(uint16_t port, uint8_t* buf, msg_len_type buf_len) {
 	int32_t conn_fd;
 
 	conn_fd = node_essentials_get_conn(port);

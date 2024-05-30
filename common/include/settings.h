@@ -23,7 +23,17 @@
 #define TTL (MATRIX_SIZE * 2)
 #endif
 
-#define sizeof_enum(_) (sizeof(uint32_t))
+#ifndef MAX_MSG_LEN
+#define MAX_MSG_LEN 256
+#endif
+
+#ifndef APP_MESSAGE_LEN
+#define APP_MESSAGE_LEN 150
+#endif
+
+#define enum_ir uint8_t
+
+#define sizeof_enum(_) sizeof(enum_ir)
 
 #define node_port(addr) (uint16_t) (SERVER_PORT + (addr) + 1)
 

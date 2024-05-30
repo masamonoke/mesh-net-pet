@@ -9,9 +9,7 @@
 #include "control_utils.h"
 #include "format_client_server.h"
 
-#define MESSAGE_LEN 150
-
-static uint8_t msg_storage[MESSAGE_LEN];
+static uint8_t msg_storage[APP_MESSAGE_LEN];
 static uint8_t storage_msg_len;
 
 void node_app_fill_default(app_t apps[APPS_COUNT], uint8_t node_addr) {

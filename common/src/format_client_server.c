@@ -11,13 +11,13 @@
 
 static void parse_message(enum request* request, void** payload, const uint8_t* buf);
 
-static void create_message(enum request request, const void* payload, uint8_t* message, uint32_t* msg_len);
+static void create_message(enum request request, const void* payload, uint8_t* message, msg_len_type* msg_len);
 
 void format_server_client_parse_message(enum request* req, void** payload, const void* buf) {
 	parse_message(req, payload, (uint8_t*) buf);
 }
 
-void format_server_client_create_message(enum request req, const void* payload, uint8_t* buf, uint32_t* len) {
+void format_server_client_create_message(enum request req, const void* payload, uint8_t* buf, msg_len_type* len) {
 	create_message(req, payload, buf, len);
 }
 
@@ -28,11 +28,13 @@ static void parse_send(const uint8_t* buf, struct send_to_node_ret_payload* ret_
 static void parse_message(enum request* request, void** payload, const uint8_t* buf) {
 	const uint8_t* p;
 	enum request cmd;
+	enum_ir tmp;
 
 	*request = REQUEST_UNDEFINED;
 	p = buf;
 
-	memcpy(&cmd, p, sizeof_enum(cmd));
+	memcpy(&tmp, p, sizeof_enum(cmd));
+	cmd = (enum request) tmp;
 
 	switch (cmd) {
 		case REQUEST_SEND:
@@ -44,7 +46,7 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 		case REQUEST_REVIVE_NODE:
 		case REQUEST_KILL_NODE:
 			*request = cmd;
-			*payload = malloc(sizeof(int32_t));
+			*payload = malloc(sizeof(uint8_t));
 			parse_addr_payload(buf, *payload);
 			break;
 		case REQUEST_RESET:
@@ -55,8 +57,8 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 	}
 }
 
-static void create_message(enum request request, const void* payload, uint8_t* message, uint32_t* msg_len) {
-	uint32_t payload_len;
+static void create_message(enum request request, const void* payload, uint8_t* message, msg_len_type* msg_len) {
+	uint8_t payload_len;
 	uint8_t* p;
 	enum request_sender sender;
 

@@ -7,6 +7,8 @@
 #include "settings.h"
 #include "format_app.h"
 
+#define ROUTE_INVERSE_LEN sizeof(struct node_route_inverse_payload)
+
 struct node_route_direct_payload {
 	uint8_t sender_addr;
 	uint8_t receiver_addr;
@@ -27,7 +29,7 @@ struct node_route_inverse_payload {
 };
 
 __attribute__((nonnull(3, 4)))
-void format_node_node_create_message(enum request req, const void* payload, uint8_t* buf, uint32_t* len);
+void format_node_node_create_message(enum request req, const void* payload, uint8_t* buf, msg_len_type* len);
 
 __attribute__((nonnull(1, 2, 3)))
 void format_node_node_parse_message(enum request* req, void** payload, const void* buf);

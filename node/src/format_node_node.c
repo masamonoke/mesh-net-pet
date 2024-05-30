@@ -10,13 +10,13 @@
 
 static void parse_message(enum request* request, void** payload, const uint8_t* buf);
 
-static void create_message(enum request request, const void* payload, uint8_t* message, uint32_t* msg_len);
+static void create_message(enum request request, const void* payload, uint8_t* message, msg_len_type* msg_len);
 
 void format_node_node_parse_message(enum request* req, void** payload, const void* buf) {
 	parse_message(req, payload, (uint8_t*) buf);
 }
 
-void format_node_node_create_message(enum request req, const void* payload, uint8_t* buf, uint32_t* len) {
+void format_node_node_create_message(enum request req, const void* payload, uint8_t* buf, msg_len_type* len) {
 	create_message(req, payload, buf, len);
 }
 
@@ -29,12 +29,14 @@ static void set_route_direct_payload(const uint8_t* buf, struct node_route_direc
 static void parse_message(enum request* request, void** payload, const uint8_t* buf) {
 	const uint8_t* p;
 	enum request cmd;
+	enum_ir tmp;
 
 	*request = REQUEST_UNDEFINED;
 
 	p = buf;
 
-	memcpy(&cmd, p, sizeof_enum(cmd));
+	memcpy(&tmp, p, sizeof_enum(cmd));
+	cmd = (enum request) tmp;
 
 	switch (cmd) {
 		case REQUEST_SEND:
@@ -64,8 +66,8 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 	}
 }
 
-static void create_message(enum request request, const void* payload, uint8_t* message, uint32_t* msg_len) {
-	uint32_t payload_len;
+static void create_message(enum request request, const void* payload, uint8_t* message, msg_len_type* msg_len) {
+	uint8_t payload_len;
 	uint8_t* p;
 	enum request_sender sender;
 
@@ -123,9 +125,10 @@ static void create_message(enum request request, const void* payload, uint8_t* m
 
 				route_payload = (struct node_route_inverse_payload*) payload;
 
-				payload_len = sizeof(route_payload->local_sender_addr) + sizeof(route_payload->sender_addr) + sizeof(route_payload->receiver_addr)
-					+ sizeof(route_payload->metric) + sizeof(route_payload->time_to_live) + sizeof(route_payload->id);
-				*msg_len = payload_len + sizeof_enum(request) + sizeof(*msg_len) + sizeof_enum(sender);
+				*msg_len = ROUTE_INVERSE_LEN + MSG_LEN;
+				/* payload_len = sizeof(route_payload->local_sender_addr) + sizeof(route_payload->sender_addr) + sizeof(route_payload->receiver_addr) */
+				/* 	+ sizeof(route_payload->metric) + sizeof(route_payload->time_to_live) + sizeof(route_payload->id); */
+				/* *msg_len = payload_len + sizeof_enum(request) + sizeof(*msg_len) + sizeof_enum(sender); */
 
 				p = format_create_base(message, *msg_len, request, sender);
 

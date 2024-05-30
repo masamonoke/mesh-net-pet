@@ -87,19 +87,19 @@ static void term_handler(int32_t dummy) {
 }
 
 static bool handle_request(int32_t conn_fd, void* data) {
-	ssize_t received_bytes;
-	uint8_t buf[256];
-	uint32_t msg_len;
+	int16_t received_bytes;
+	uint8_t buf[MAX_MSG_LEN];
+	uint8_t msg_len;
 
 	msg_len = 0;
 
-	if (io_read_all(conn_fd, (char*) &msg_len, sizeof(msg_len), (size_t*) &received_bytes)) {
+	if (io_read_all(conn_fd, &msg_len, sizeof(msg_len), &received_bytes)) {
 		custom_log_error("Failed to read message length");
 		return false;
 	}
 
 	if (received_bytes > 0) {
-		if (io_read_all(conn_fd, (char*) buf, msg_len - sizeof(uint32_t), (size_t*) &received_bytes)) {
+		if (io_read_all(conn_fd, buf, msg_len - sizeof(msg_len), &received_bytes)) {
 			custom_log_error("Failed to read message");
 			return false;
 		}

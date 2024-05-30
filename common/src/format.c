@@ -25,15 +25,17 @@ void format_sprint_result(enum request_result res, char buf[], size_t len) {
 enum request_sender format_define_sender(const uint8_t* buf) {
 	const uint8_t* p;
 	enum request_sender sender;
+	enum_ir tmp;
 
 	p = buf;
 	p += sizeof_enum(enum request); // skip cmd
-	memcpy(&sender, p, sizeof_enum(sender));
+	memcpy(&tmp, p, sizeof_enum(sender));
+	sender = (enum request_sender) tmp;
 
 	return sender;
 }
 
-uint8_t* format_create_base(uint8_t* message, uint32_t msg_len, enum request cmd, enum request_sender sender) { // NOLINT
+uint8_t* format_create_base(uint8_t* message, msg_len_type msg_len, enum request cmd, enum request_sender sender) { // NOLINT
 	uint8_t* p;
 
 	p = message;
@@ -58,9 +60,9 @@ uint8_t* format_skip_base(const uint8_t* message) {
 	return p;
 }
 
-bool format_is_message_correct(size_t buf_len, uint32_t msg_len) {
+bool format_is_message_correct(size_t buf_len, msg_len_type msg_len) {
 
-	if (buf_len > sizeof(uint32_t)) {
+	if (buf_len > sizeof(msg_len)) {
 		if (buf_len != msg_len) {
 			custom_log_error("Incorrect message format: buffer length (%d) != delcared message length (%d)", buf_len, msg_len);
 			return false;
