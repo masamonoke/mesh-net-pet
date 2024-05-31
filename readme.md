@@ -7,18 +7,17 @@ First to get all necessary files with all dependencies:
 ```console
 git clone https://github.com/masamonoke/mesh-net-pet --recursive
 ```
-
 </br>
 
-To build with cmake:
+Before any build command do:
 ```console
-mkdir build && cd build
-cmake ..
-cmake --build . -j 4
-```
-</br>
+cd ./deps/zlib/configure
 
-To build with make:
+```
+
+Then you can build as usual:
+
+
 ```console
 make
 ```
@@ -28,25 +27,11 @@ If you are using clangd language server you can build using this commands:
 ```console
 compiledb make
 ```
-or
-```console
-cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-```
 
-By default make builds debug type. You can specify build type:
+By default make builds release type. You can specify build type:
 ```console
 make BUILD_TYPE=debug
 ```
-or
-```console
-make BUILD_TYPE=release
-```
-
-CMake builds release type by default. To specify build type update cache:
-```console
-cmake .. -DCMAKE_BUILD_TYPE=Debug 
-```
-and then rebuild project.
 
 # Run
 
@@ -79,6 +64,7 @@ To specify message:
 ```console
 make client TARGET_ARGS="send -s <sender node> -r <receiver node> -a 'some meaningful message' -as <sender app> -ar <receiver app>"
 ```
+There is limitation in 150 symbols. Otherwise your message will be clipped.
 
 ### Kill
 
@@ -103,6 +89,14 @@ make client TARGET_ARGS="send -s <sender node> -r <receiver node> -a 'some meani
 ```console
  make client TARGET_ARGS="broadcast -s <sender node addr> -a '<message>'"
 ```
+
+### Unicast
+
+```console
+ make client TARGET_ARGS="unicast -s <sender node addr> -a '<message>'"
+```
+
+Unicast works similiar to broadcast but request is handled by one node only (may be more if handle happend in the same time)
 
 ## Tests
 
