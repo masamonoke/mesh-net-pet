@@ -19,6 +19,7 @@ struct app_payload {
 	uint8_t key;
 	uint8_t message[APP_MESSAGE_LEN];
 	uint8_t message_len;
+	uint16_t crc;
 };
 
 __attribute__((nonnull(2)))

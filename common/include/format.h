@@ -60,3 +60,7 @@ uint8_t* format_skip_base(const uint8_t* message);
 
 __attribute__((warn_unused_result))
 bool format_is_message_correct(size_t buf_len, msg_len_type msg_len);
+
+void format_create_send(uint8_t* p, const void* payload, uint8_t* message, msg_len_type* msg_len, enum request_sender sender);
+
+void format_parse_send(const uint8_t* buf, struct send_to_node_ret_payload* payload);

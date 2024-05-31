@@ -9,8 +9,8 @@ OBJS_BUILD = $(patsubst %.c, $(EXEC_BUILD_DIR)/%.o, $(SRC))
 DEPENDS = $(patsubst %.c, %.d, $(SRC))
 
 IDEPS = -I$(ROOT_DIR)/deps/log.c/src
-INCLUDE = -Iinclude -I$(ROOT_DIR)/common/include $(IDEPS)
-LIBS = $(BUILD_DIR)/$(BUILD_TYPE)/common/libcommon.a
+INCLUDE = -Iinclude -I$(ROOT_DIR)/common/include $(IDEPS) -I$(ROOT_DIR)/deps/zlib
+LIBS = $(BUILD_DIR)/$(BUILD_TYPE)/common/libcommon.a $(ROOT_DIR)/deps/zlib/libz.a
 
 NAME = mesh_node
 

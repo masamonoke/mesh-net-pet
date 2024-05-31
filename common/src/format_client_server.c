@@ -23,8 +23,6 @@ void format_server_client_create_message(enum request req, const void* payload, 
 
 static void parse_addr_payload(const uint8_t* buf, void* ret_payload);
 
-static void parse_send(const uint8_t* buf, struct send_to_node_ret_payload* ret_payload);
-
 static void parse_message(enum request* request, void** payload, const uint8_t* buf) {
 	const uint8_t* p;
 	enum request cmd;
@@ -40,7 +38,7 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 		case REQUEST_SEND:
 			*request = cmd;
 			*payload = malloc(sizeof(struct send_to_node_ret_payload));
-			parse_send(buf, *payload);
+			format_parse_send(buf, (struct send_to_node_ret_payload*) *payload);
 			break;
 		case REQUEST_PING:
 		case REQUEST_REVIVE_NODE:
@@ -63,7 +61,7 @@ static void create_message(enum request request, const void* payload, uint8_t* m
 	enum request_sender sender;
 
 	sender = REQUEST_SENDER_CLIENT;
-
+	p = NULL;
 	switch (request) {
 		case REQUEST_PING:
 		case REQUEST_KILL_NODE:
@@ -84,20 +82,7 @@ static void create_message(enum request request, const void* payload, uint8_t* m
 			break;
 		case REQUEST_SEND:
 			if (payload) {
-				struct send_to_node_ret_payload* ret_payload;
-
-				ret_payload = (struct send_to_node_ret_payload*) payload;
-
-				payload_len = sizeof(ret_payload->addr_to) + sizeof(ret_payload->addr_from) + format_app_message_len(&ret_payload->app_payload);
-				*msg_len = payload_len + sizeof_enum(request) + sizeof(*msg_len) + sizeof_enum(sender);
-				p = format_create_base(message, *msg_len, request, sender);
-
-				memcpy(p, &ret_payload->addr_from, sizeof(ret_payload->addr_from));
-				p += sizeof(ret_payload->addr_from);
-				memcpy(p, &ret_payload->addr_to, sizeof(ret_payload->addr_to));
-				p += sizeof(ret_payload->addr_to);
-
-				format_app_create_message(&ret_payload->app_payload, p);
+				format_create_send(p, payload, message, msg_len, sender);
 			} else {
 				return;
 			}
@@ -123,17 +108,4 @@ static void parse_addr_payload(const uint8_t* buf, void* ret_payload) {
 
 	memcpy(payload, p, sizeof(*payload));
 	p += sizeof(payload);
-}
-
-static void parse_send(const uint8_t* buf, struct send_to_node_ret_payload* ret_payload) {
-	const uint8_t* p;
-
-	p = format_skip_base(buf);
-
-	memcpy(&ret_payload->addr_from, p, sizeof(ret_payload->addr_from));
-	p += sizeof(ret_payload->addr_from);
-	memcpy(&ret_payload->addr_to, p, sizeof(ret_payload->addr_to));
-	p += sizeof(ret_payload->addr_to);
-
-	format_app_parse_message(&ret_payload->app_payload, p);
 }

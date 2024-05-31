@@ -20,8 +20,6 @@ void format_node_node_create_message(enum request req, const void* payload, uint
 	create_message(req, payload, buf, len);
 }
 
-static void set_send_payload(const uint8_t* buf, struct send_to_node_ret_payload* payload);
-
 static void set_route_inverse_payload(const uint8_t* buf, struct node_route_inverse_payload* payload);
 
 static void set_route_direct_payload(const uint8_t* buf, struct node_route_direct_payload* payload);
@@ -43,7 +41,7 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 			{
 				*request = cmd;
 				*payload = malloc(sizeof(struct send_to_node_ret_payload));
-				set_send_payload(buf, (struct send_to_node_ret_payload*) *payload);
+				format_parse_send(buf, (struct send_to_node_ret_payload*) *payload);
 			}
 			break;
 		case REQUEST_ROUTE_DIRECT:
@@ -71,24 +69,12 @@ static void create_message(enum request request, const void* payload, uint8_t* m
 	uint8_t* p;
 	enum request_sender sender;
 
+	p = NULL;
 	sender = REQUEST_SENDER_NODE;
 	switch (request) {
 		case REQUEST_SEND:
 			{
-				struct send_to_node_ret_payload* ret_payload;
-
-				ret_payload = (struct send_to_node_ret_payload*) payload;
-
-				payload_len = sizeof(ret_payload->addr_to) + sizeof(ret_payload->addr_from) + format_app_message_len(&ret_payload->app_payload);
-				*msg_len = payload_len + sizeof_enum(request) + sizeof(*msg_len) + sizeof_enum(sender);
-				p = format_create_base(message, *msg_len, request, sender);
-
-				memcpy(p, &ret_payload->addr_from, sizeof(ret_payload->addr_from));
-				p += sizeof(ret_payload->addr_from);
-				memcpy(p, &ret_payload->addr_to, sizeof(ret_payload->addr_to));
-				p += sizeof(ret_payload->addr_to);
-
-				format_app_create_message(&ret_payload->app_payload, p);
+				format_create_send(p, payload, message, msg_len, sender);
 			}
 			break;
 		case REQUEST_ROUTE_DIRECT:
@@ -116,6 +102,8 @@ static void create_message(enum request request, const void* payload, uint8_t* m
 				memcpy(p, &route_payload->id, sizeof(route_payload->id));
 				p += sizeof(route_payload->id);
 
+				// TODO: calculate crc
+
 				format_app_create_message(&route_payload->app_payload, p);
 			}
 			break;
@@ -126,9 +114,6 @@ static void create_message(enum request request, const void* payload, uint8_t* m
 				route_payload = (struct node_route_inverse_payload*) payload;
 
 				*msg_len = ROUTE_INVERSE_LEN + MSG_LEN;
-				/* payload_len = sizeof(route_payload->local_sender_addr) + sizeof(route_payload->sender_addr) + sizeof(route_payload->receiver_addr) */
-				/* 	+ sizeof(route_payload->metric) + sizeof(route_payload->time_to_live) + sizeof(route_payload->id); */
-				/* *msg_len = payload_len + sizeof_enum(request) + sizeof(*msg_len) + sizeof_enum(sender); */
 
 				p = format_create_base(message, *msg_len, request, sender);
 
@@ -143,25 +128,14 @@ static void create_message(enum request request, const void* payload, uint8_t* m
 				memcpy(p, &route_payload->time_to_live, sizeof(route_payload->time_to_live));
 				p += sizeof(route_payload->time_to_live);
 				memcpy(p, &route_payload->id, sizeof(route_payload->id));
+
+				// TODO: calculate crc
 			}
 			break;
 		default:
 			custom_log_error("Not supported node-node command");
 			break;
 	}
-}
-
-static void set_send_payload(const uint8_t* buf, struct send_to_node_ret_payload* payload) {
-	const uint8_t* p;
-
-	p = format_skip_base(buf);
-
-	memcpy(&payload->addr_from, p, sizeof(payload->addr_from));
-	p += sizeof(payload->addr_from);
-	memcpy(&payload->addr_to, p, sizeof(payload->addr_to));
-	p += sizeof(payload->addr_to);
-
-	format_app_parse_message(&payload->app_payload, p);
 }
 
 static void set_route_inverse_payload(const uint8_t* buf, struct node_route_inverse_payload* payload) {
@@ -181,6 +155,8 @@ static void set_route_inverse_payload(const uint8_t* buf, struct node_route_inve
 	memcpy(&payload->time_to_live, p, sizeof(payload->time_to_live));
 	p += sizeof(payload->time_to_live);
 	memcpy(&payload->id, p, sizeof(payload->id));
+
+	// TODO: get net crc and compare with counted once
 }
 
 static void set_route_direct_payload(const uint8_t* buf, struct node_route_direct_payload* payload) {
@@ -201,6 +177,8 @@ static void set_route_direct_payload(const uint8_t* buf, struct node_route_direc
 	p += sizeof(payload->time_to_live);
 	memcpy(&payload->id, p, sizeof(payload->id));
 	p += sizeof(payload->id);
+
+	// TODO: get net crc and compare with counted
 
 	format_app_parse_message(&payload->app_payload, p);
 }

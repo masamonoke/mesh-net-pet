@@ -6,6 +6,14 @@ ifeq ($(origin CC),default)
   CC = gcc
 endif
 
-all:
+CFLAGS=
 
-.PHONY: clean
+all: zlib
+
+.PHONY: clean zlib
+
+zlib:
+	cd zlib && $(MAKE)
+
+clean:
+	cd zlib && $(MAKE) clean

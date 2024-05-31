@@ -19,7 +19,9 @@ void format_app_create_message(const struct app_payload* app_payload, uint8_t* p
 	p += sizeof(app_payload->message_len);
 	if (app_payload->message_len) {
 		memcpy(p, app_payload->message, app_payload->message_len);
+		p += app_payload->message_len;
 	}
+	memcpy(p, &app_payload->crc, sizeof(app_payload->crc));
 }
 
 void format_app_parse_message(void* payload, const uint8_t* p) {
@@ -42,10 +44,12 @@ void format_app_parse_message(void* payload, const uint8_t* p) {
 	p += sizeof(app_payload->message_len);
 	if (app_payload->message_len) {
 		memcpy(app_payload->message, p, app_payload->message_len);
+		p += app_payload->message_len;
 	}
+	memcpy(&app_payload->crc, p, sizeof(app_payload->crc));
 }
 
 uint8_t format_app_message_len(struct app_payload* payload) {
 	return sizeof(payload->addr_from) + sizeof(payload->addr_to) + sizeof(payload->key) +
-		sizeof(payload->message_len) + payload->message_len + sizeof_enum(app_payload->req_type);
+		sizeof(payload->message_len) + payload->message_len + sizeof_enum(app_payload->req_type) + sizeof(payload->crc);
 }

@@ -109,7 +109,13 @@ bool handle_notify(const struct node* children, int32_t client_fd, enum notify_t
 				}
 			}
 			break;
-
+		case NOTIFY_FAIL:
+			req_res = REQUEST_ERR;
+			if (!io_write_all(client_fd, (uint8_t*) &req_res, sizeof_enum(req_res))) {
+				custom_log_error("Failed to response to notify");
+				res = false;
+			}
+			break;
 	}
 
 	return res;

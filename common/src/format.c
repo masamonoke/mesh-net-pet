@@ -74,3 +74,37 @@ bool format_is_message_correct(size_t buf_len, msg_len_type msg_len) {
 
 	return true;
 }
+
+void format_create_send(uint8_t* p, const void* payload, uint8_t* message, msg_len_type* msg_len, enum request_sender sender) {
+	struct send_to_node_ret_payload* ret_payload;
+	uint8_t payload_len;
+
+	ret_payload = (struct send_to_node_ret_payload*) payload;
+
+	payload_len = sizeof(ret_payload->addr_to) + sizeof(ret_payload->addr_from) + format_app_message_len(&ret_payload->app_payload);
+	*msg_len = payload_len + sizeof_enum(REQUEST_SEND) + sizeof(*msg_len) + sizeof_enum(sender);
+
+	p = format_create_base(message, *msg_len, REQUEST_SEND, sender);
+
+	memcpy(p, &ret_payload->addr_from, sizeof(ret_payload->addr_from));
+	p += sizeof(ret_payload->addr_from);
+	memcpy(p, &ret_payload->addr_to, sizeof(ret_payload->addr_to));
+	p += sizeof(ret_payload->addr_to);
+
+	format_app_create_message(&ret_payload->app_payload, p);
+	p += format_app_message_len(&ret_payload->app_payload);
+}
+
+void format_parse_send(const uint8_t* buf, struct send_to_node_ret_payload* payload) {
+	const uint8_t* p;
+
+	p = format_skip_base(buf);
+
+	memcpy(&payload->addr_from, p, sizeof(payload->addr_from));
+	p += sizeof(payload->addr_from);
+	memcpy(&payload->addr_to, p, sizeof(payload->addr_to));
+	p += sizeof(payload->addr_to);
+
+	format_app_parse_message(&payload->app_payload, p);
+	p += format_app_message_len(&payload->app_payload);
+}

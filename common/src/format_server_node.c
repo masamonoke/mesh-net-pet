@@ -24,8 +24,6 @@ void format_server_node_create_message(enum request req, const void* payload, ui
 
 static void set_node_update_payload(const uint8_t* buf, void* ret_payload);
 
-static void set_send_payload(const uint8_t* buf, struct send_to_node_ret_payload* payload);
-
 static void set_notify_payload(const uint8_t* buf, enum notify_type* payload);
 
 static void parse_message(enum request* request, void** payload, const uint8_t* buf) {
@@ -57,7 +55,7 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 			{
 				*request = cmd;
 				*payload = malloc(sizeof(struct send_to_node_ret_payload));
-				set_send_payload(buf, *payload);
+				format_parse_send(buf, (struct send_to_node_ret_payload*) *payload);
 			}
 			break;
 		case REQUEST_NOTIFY:
@@ -74,11 +72,11 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 }
 
 static void create_message(enum request request, const void* payload, uint8_t* message, msg_len_type* msg_len) {
-	uint8_t payload_len;
 	int32_t pid;
 	uint8_t* p;
 	enum request_sender sender;
 
+	p = NULL;
 	switch (request) {
 		case REQUEST_UPDATE:
 			{
@@ -116,23 +114,8 @@ static void create_message(enum request request, const void* payload, uint8_t* m
 			break;
 		case REQUEST_SEND:
 			{
-				struct send_to_node_ret_payload* send_payload;
-
-				send_payload = (struct send_to_node_ret_payload*) payload;
-
-				payload_len = sizeof(send_payload->addr_to) + sizeof(send_payload->addr_from) + format_app_message_len(&send_payload->app_payload);
-				*msg_len = sizeof_enum(sender) + sizeof_enum(request) + sizeof(*msg_len) + payload_len;
-
 				sender = REQUEST_SENDER_SERVER;
-				p = format_create_base(message, *msg_len, request, sender);
-
-				// payload
-				memcpy(p, &send_payload->addr_from, sizeof(send_payload->addr_from));
-				p += sizeof(send_payload->addr_from);
-				memcpy(p, &send_payload->addr_to, sizeof(send_payload->addr_to));
-				p += sizeof(send_payload->addr_to);
-
-				format_app_create_message(&send_payload->app_payload, p);
+				format_create_send(p, payload, message, msg_len, sender);
 			}
 			break;
 		case REQUEST_NOTIFY:
@@ -170,20 +153,6 @@ static void set_node_update_payload(const uint8_t* buf, void* ret_payload) {
 	p += sizeof(payload->addr);
 	memcpy(&payload->pid, p, sizeof(payload->pid));
 	p += sizeof(payload->pid);
-}
-
-static void set_send_payload(const uint8_t* buf, struct send_to_node_ret_payload* payload) {
-	const uint8_t* p;
-
-	p = format_skip_base(buf);
-
-	// parse payload
-	memcpy(&payload->addr_from, p, sizeof(payload->addr_from));
-	p += sizeof(payload->addr_from);
-	memcpy(&payload->addr_to, p, sizeof(payload->addr_to));
-	p += sizeof(payload->addr_to);
-
-	format_app_parse_message(&payload->app_payload, p);
 }
 
 static void set_notify_payload(const uint8_t* buf, enum notify_type* payload) {

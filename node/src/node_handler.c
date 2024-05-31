@@ -8,6 +8,8 @@
 #include "control_utils.h"
 #include "node_app.h"
 
+#include <assert.h>
+
 // if there is multiple clients then replace it with id key array and check it for occurence
 // id then should be taken from server in order to be unique between nodes
 static bool stop_broadcast = false;
@@ -37,6 +39,8 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 	res = true;
 	ret_payload = (struct send_to_node_ret_payload*) payload;
 
+	node_log_warn("msg len %d", ret_payload->app_payload.message_len);
+
 	if (ret_payload->addr_to == addr) {
 		node_log_warn("Message for node itself");
 
@@ -46,6 +50,9 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 			}
 		} else {
 			node_log_error("Failed to handle app request");
+			if (!node_essentials_notify_server(NOTIFY_FAIL)) {
+				node_log_error("Failed to notify fail");
+			}
 		}
 
 		return res;
@@ -58,7 +65,7 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 	node_log_debug("Finding route to %d", ret_payload->addr_to);
 	next_addr = routing_next_addr(routing, ret_payload->addr_to);
 	if (next_addr == UINT8_MAX) {
-		node_log_error("Failed to find route");
+		node_log_warn("Failed to find route");
 
 		struct node_route_direct_payload route_payload = {
 			.local_sender_addr = addr,
@@ -74,6 +81,9 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 
 		return false;
 	}
+
+	node_log_info("Sent message (length %d) from %d:%d to %d:%d",
+		ret_payload->app_payload.message_len, ret_payload->addr_from, ret_payload->app_payload.addr_from, ret_payload->addr_to, ret_payload->app_payload.addr_to);
 
 	node_conn = node_essentials_get_conn(node_port(next_addr));
 	if (node_conn < 0) {
@@ -180,7 +190,7 @@ bool handle_node_route_inverse(routing_table_t* routing, void* payload, uint8_t 
 	}
 
 	if (route_payload->sender_addr == server_addr) {
-		node_log_info("Route inverse request came back");
+		node_log_debug("Route inverse request came back");
 		return true;
 	}
 
@@ -238,7 +248,7 @@ static bool send_delivery(const routing_table_t* routing, uint8_t old_from, uint
 		.app_payload.addr_to = old_app_payload->addr_from,
 		.app_payload.addr_from = old_app_payload->addr_to,
 		.app_payload.req_type = APP_REQUEST_DELIVERY,
-		.app_payload.key = old_app_payload->key
+		.app_payload.key = old_app_payload->key,
 	};
 
 	node_app_setup_delivery(apps, &new_send.app_payload, new_send.addr_to);
@@ -257,6 +267,9 @@ static bool send_delivery(const routing_table_t* routing, uint8_t old_from, uint
 		node_log_error("Failed to send request");
 		return false;
 	}
+
+	node_log_info("Sent message (length %d) from %d:%d to %d:%d",
+		new_send.app_payload.message_len, new_send.addr_from, new_send.app_payload.addr_from, new_send.addr_to, new_send.app_payload.addr_to);
 
 	return true;
 }
@@ -341,6 +354,9 @@ static bool node_handle_app_request(const routing_table_t* routing, app_t apps[A
 						res = false;
 					}
 				} else {
+					if (!node_essentials_notify_server(NOTIFY_FAIL)) {
+						node_log_error("Failed to notify fail");
+					}
 					res = false;
 				}
 			break;
@@ -402,7 +418,7 @@ bool route_direct_handle_delivered(routing_table_t* routing, struct node_route_d
 	uint8_t next_addr_to_back;
 	int32_t conn_fd;
 
-	node_log_info("Reached the recevier addr %d", route_payload->receiver_addr);
+	node_log_debug("Reached the recevier addr %d", route_payload->receiver_addr);
 
 	if (!stop_inverse) {
 		// replace with finding id function

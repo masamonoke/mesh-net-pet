@@ -69,15 +69,18 @@ void log_file_(enum log_type type, int32_t line, const char* file, const char* f
 #endif
 }
 
-static int32_t log(const char* color, const char* log_type, int32_t line, const char* file, const char* buf, FILE* fp) {
+static int32_t log(const char* color, const char* log_type, int32_t line, const char* file, const char* buf, FILE* fp, enum log_type type) {
 	(void) fp;
+	(void) type;
 
 	if (fprintf(stderr, "%s %-6s %-20s %-5d" ANSI_COLOR_RESET ": %-30s\n", color, log_type,  file, line, buf) < 0) {
 		return -1;
 	}
 #ifdef LOG_FILE
-	if (fprintf(fp, "%-6s %-20s %-5d: %-30s\n", log_type, file, line, buf) < 0) {
-		return - 1;
+	if (type == LOG_TYPE_INFO || type == LOG_TYPE_ERROR) {
+		if (fprintf(fp, "%-6s %-20s %-5d: %-30s\n", log_type, file, line, buf) < 0) {
+			return - 1;
+		}
 	}
 #endif
 	return 0;
@@ -89,17 +92,17 @@ static int32_t write_log(enum log_type type, int32_t line, const char* file, con
 	res = 0;
 	switch(type) {
 		case LOG_TYPE_INFO:
-			res = log(ANSI_COLOR_CYAN, "info", line, file, buf, fp);
+			res = log(ANSI_COLOR_CYAN, "info", line, file, buf, fp, type);
 			break;
 		case LOG_TYPE_ERROR:
-			res = log(ANSI_COLOR_RED, "error", line, file, buf, fp);
+			res = log(ANSI_COLOR_RED, "error", line, file, buf, fp, type);
 			break;
 		case LOG_TYPE_WARN:
-			res = log(ANSI_COLOR_YELLOW, "warn", line, file, buf, fp);
+			res = log(ANSI_COLOR_YELLOW, "warn", line, file, buf, fp, type);
 			break;
 		case LOG_TYPE_DEBUG:
 #ifdef DEBUG
-			res = log(ANSI_COLOR_GREEN, "debug", line, file, buf, fp);
+			res = log(ANSI_COLOR_GREEN, "debug", line, file, buf, fp, type);
 #endif
 			break;
 	}

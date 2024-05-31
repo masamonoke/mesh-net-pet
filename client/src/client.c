@@ -13,6 +13,7 @@
 #include "format_client_server.h"
 #include "io.h"
 #include "settings.h"
+#include "crc.h"
 
 __attribute__((warn_unused_result))
 static bool parse_args(int32_t argc, char** argv, enum request* cmd, void** payload);
@@ -133,7 +134,12 @@ static bool parse_args(int32_t argc, char** argv, enum request* cmd, void** payl
 				if (argc > 6) {
 					for (i = 0; i < argc; i++) {
 						if (0 == strcmp(argv[i], "--app") || 0 == strcmp(argv[i], "-a")) {
-							strcpy(message, argv[i + 1]);
+							if (strlen(argv[i + 1]) > APP_MESSAGE_LEN - 1) {
+								custom_log_warn("You passed message > 150 symbols. It will be trimmed to 150 symbols.");
+								strncpy(message, argv[i + 1], APP_MESSAGE_LEN - 1);
+							} else {
+								strcpy(message, argv[i + 1]);
+							}
 						}
 						if (0 == strcmp(argv[i], "-ar") || 0 == strcmp(argv[i], "--app-receiver")) {
 							endptr = NULL;
@@ -162,6 +168,7 @@ static bool parse_args(int32_t argc, char** argv, enum request* cmd, void** payl
 					send_payload->app_payload.message_len = 0;
 				}
 				send_payload->app_payload.req_type = APP_REQUEST_DELIVERY;
+				send_payload->app_payload.crc = crc16(send_payload->app_payload.message, send_payload->app_payload.message_len);
 
 				return true;
 			}
