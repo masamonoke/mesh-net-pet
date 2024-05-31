@@ -5,6 +5,8 @@
 
 #include <memory.h>
 
+#include "custom_logger.h"
+
 void format_app_create_message(const struct app_payload* app_payload, uint8_t* p) {
 	memcpy(p, &app_payload->req_type, sizeof_enum(app_payload->req_type));
 	p += sizeof_enum(app_payload->req_type);

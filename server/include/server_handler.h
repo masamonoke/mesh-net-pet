@@ -18,6 +18,9 @@ bool handle_notify(const struct node* children, int32_t client_fd, enum notify_t
 __attribute__((nonnull(1, 2), warn_unused_result))
 bool handle_client_send(struct node* children, const void* payload);
 
+__attribute__((nonnull(1, 2), warn_unused_result))
+bool handle_broadcast(struct node* children, const void* payload);
+
 __attribute__((nonnull(1), warn_unused_result))
 bool handle_reset(struct node* children, int32_t client_fd);
 

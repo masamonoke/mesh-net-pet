@@ -89,6 +89,20 @@ bool node_app_handle_request(app_t* apps, struct app_payload* app_payload, uint8
 				app_payload->req_type = APP_REQUEST_EXCHANGED_KEY;
 				return node_app_save_key(apps, app_payload, node_addr_from);
 			break;
+		case APP_REQUEST_BROADCAST:
+			if (app_payload->message_len != 0) {
+				uint16_t calc_crc;
+
+				calc_crc = crc16(app_payload->message, app_payload->message_len);
+				if (calc_crc != app_payload->crc) {
+					node_log_error("App message damaged: got CRC %d, calculated %d", app_payload->crc, calc_crc);
+					return false;
+				}
+			}
+			node_log_info("App %d got broadcast message (length %d): %.*s",
+				app_payload->addr_to, app_payload->message_len, app_payload->message_len, app_payload->message);
+			return true;
+			break;
 		default:
 			node_log_error("Unexpected app request: %d", app_payload->req_type);
 			break;

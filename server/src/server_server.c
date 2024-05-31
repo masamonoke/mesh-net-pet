@@ -74,6 +74,12 @@ static bool handle_client_request(server_t* server_data, void** payload, const u
 		case REQUEST_REVIVE_NODE:
 			res = handle_revive(server_data->children, *((uint8_t*) *payload), server_data->client_fd);
 			break;
+		case REQUEST_BROADCAST:
+			res = handle_broadcast(server_data->children, *payload);
+			break;
+		case REQUEST_UNICAST:
+			not_implemented();
+			break;
 		default:
 			res = false;
 			break;

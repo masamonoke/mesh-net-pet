@@ -108,3 +108,39 @@ void format_parse_send(const uint8_t* buf, struct send_to_node_ret_payload* payl
 	format_app_parse_message(&payload->app_payload, p);
 	p += format_app_message_len(&payload->app_payload);
 }
+
+void format_create_broadcast(uint8_t* p, const void* payload, uint8_t* message, msg_len_type* msg_len, enum request_sender sender) {
+	struct broadcast_payload* ret_payload;
+	uint8_t payload_len;
+
+	ret_payload = (struct broadcast_payload*) payload;
+
+	payload_len = sizeof(ret_payload->addr_from) + sizeof(ret_payload->time_to_live) + sizeof(ret_payload->local_from) + format_app_message_len(&ret_payload->app_payload);
+	*msg_len = payload_len + sizeof_enum(REQUEST_BROADCAST) + sizeof(*msg_len) + sizeof_enum(sender);
+
+	p = format_create_base(message, *msg_len, REQUEST_BROADCAST, sender);
+
+	memcpy(p, &ret_payload->addr_from, sizeof(ret_payload->addr_from));
+	p += sizeof(ret_payload->addr_from);
+	memcpy(p, &ret_payload->time_to_live, sizeof(ret_payload->time_to_live));
+	p += sizeof(ret_payload->time_to_live);
+	memcpy(p, &ret_payload->local_from, sizeof(ret_payload->local_from));
+	p += sizeof(ret_payload->local_from);
+
+	format_app_create_message(&ret_payload->app_payload, p);
+}
+
+void format_parse_broadcast(const uint8_t* buf, struct broadcast_payload* payload) {
+	const uint8_t* p;
+
+	p = format_skip_base(buf);
+
+	memcpy(&payload->addr_from, p, sizeof(payload->addr_from));
+	p += sizeof(payload->addr_from);
+	memcpy(&payload->time_to_live, p, sizeof(payload->time_to_live));
+	p += sizeof(payload->time_to_live);
+	memcpy(&payload->local_from, p, sizeof(payload->local_from));
+	p += sizeof(payload->local_from);
+
+	format_app_parse_message(&payload->app_payload, p);
+}

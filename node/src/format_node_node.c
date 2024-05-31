@@ -58,6 +58,13 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 				set_route_inverse_payload(buf, (struct node_route_inverse_payload*) *payload);
 			}
 			break;
+		case REQUEST_BROADCAST:
+			*request = cmd;
+			*payload = malloc(sizeof(struct send_to_node_ret_payload));
+			format_parse_broadcast(buf, (struct broadcast_payload*) *payload);
+			break;
+		case REQUEST_UNICAST:
+			break;
 		default:
 			custom_log_error("Unknown node-node request");
 			break;
@@ -102,8 +109,6 @@ static void create_message(enum request request, const void* payload, uint8_t* m
 				memcpy(p, &route_payload->id, sizeof(route_payload->id));
 				p += sizeof(route_payload->id);
 
-				// TODO: calculate crc
-
 				format_app_create_message(&route_payload->app_payload, p);
 			}
 			break;
@@ -128,9 +133,15 @@ static void create_message(enum request request, const void* payload, uint8_t* m
 				memcpy(p, &route_payload->time_to_live, sizeof(route_payload->time_to_live));
 				p += sizeof(route_payload->time_to_live);
 				memcpy(p, &route_payload->id, sizeof(route_payload->id));
-
-				// TODO: calculate crc
 			}
+			break;
+		case REQUEST_BROADCAST:
+			if (payload) {
+				sender = REQUEST_SENDER_SERVER;
+				format_create_broadcast(p, payload, message, msg_len, sender);
+			}
+			break;
+		case REQUEST_UNICAST:
 			break;
 		default:
 			custom_log_error("Not supported node-node command");
@@ -155,8 +166,6 @@ static void set_route_inverse_payload(const uint8_t* buf, struct node_route_inve
 	memcpy(&payload->time_to_live, p, sizeof(payload->time_to_live));
 	p += sizeof(payload->time_to_live);
 	memcpy(&payload->id, p, sizeof(payload->id));
-
-	// TODO: get net crc and compare with counted once
 }
 
 static void set_route_direct_payload(const uint8_t* buf, struct node_route_direct_payload* payload) {
@@ -177,8 +186,6 @@ static void set_route_direct_payload(const uint8_t* buf, struct node_route_direc
 	p += sizeof(payload->time_to_live);
 	memcpy(&payload->id, p, sizeof(payload->id));
 	p += sizeof(payload->id);
-
-	// TODO: get net crc and compare with counted
 
 	format_app_parse_message(&payload->app_payload, p);
 }

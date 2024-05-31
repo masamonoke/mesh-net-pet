@@ -86,91 +86,21 @@ static bool create_addr_payload(const char* arg, void** payload) {
 	return true;
 }
 
+static bool parse_send_cmd(int32_t argc, char** argv, enum request* cmd, void** payload);
+
+static bool parse_broadcast_cmd(int32_t argc, char** argv, enum request* cmd, void** payload);
+
 static bool parse_args(int32_t argc, char** argv, enum request* cmd, void** payload) {
 	int32_t i;
 
 	if (argc > 2) {
 		for (i = 0; i < argc; i++) {
 			if (0 == strcmp(argv[i], "send") && argc >= 6) {
-				uint8_t addr_to;
-				uint8_t addr_from;
-				uint8_t app_addr_to;
-				uint8_t app_addr_from;
-				char* endptr;
-				char message[APP_MESSAGE_LEN];
-				struct send_to_node_ret_payload* send_payload;
+				return parse_send_cmd(argc, argv, cmd, payload);
+			}
 
-				*cmd = REQUEST_SEND;
-				addr_to = UINT8_MAX;
-				addr_from = UINT8_MAX;
-				for (i = 0; i < argc; i++) {
-					if (0 == strcmp(argv[i], "-s") || 0 == strcmp(argv[i], "--sender")) {
-						endptr = NULL;
-						addr_from = (uint8_t) strtol(argv[i + 1], &endptr, 10);
-						if (argv[i + 1] == endptr) {
-							return false;
-						}
-					}
-					if (0 == strcmp(argv[i], "-r") || 0 == strcmp(argv[i], "--receiver")) {
-						endptr = NULL;
-						addr_to = (uint8_t) strtol(argv[i + 1], &endptr, 10);
-						if (argv[i + 1] == endptr) {
-							return false;
-						}
-					}
-				}
-
-				if (addr_to == UINT8_MAX || addr_from == UINT8_MAX) {
-					custom_log_error("Failed to parse send command");
-					return false;
-				}
-
-				*payload = malloc(sizeof(struct send_to_node_ret_payload));
-				send_payload = (struct send_to_node_ret_payload*) *payload;
-
-				send_payload->addr_from = addr_from;
-				send_payload->addr_to = addr_to;
-
-				if (argc > 6) {
-					for (i = 0; i < argc; i++) {
-						if (0 == strcmp(argv[i], "--app") || 0 == strcmp(argv[i], "-a")) {
-							if (strlen(argv[i + 1]) > APP_MESSAGE_LEN - 1) {
-								custom_log_warn("You passed message > 150 symbols. It will be trimmed to 150 symbols.");
-								strncpy(message, argv[i + 1], APP_MESSAGE_LEN - 1);
-							} else {
-								strcpy(message, argv[i + 1]);
-							}
-						}
-						if (0 == strcmp(argv[i], "-ar") || 0 == strcmp(argv[i], "--app-receiver")) {
-							endptr = NULL;
-							app_addr_to = (uint8_t) strtol(argv[i + 1], &endptr, 10);
-							if (argv[i + 1] == endptr) {
-								return false;
-							}
-						}
-						if (0 == strcmp(argv[i], "-as") || 0 == strcmp(argv[i], "--app-sender")) {
-							endptr = NULL;
-							app_addr_from = (uint8_t) strtol(argv[i + 1], &endptr, 10);
-							if (argv[i + 1] == endptr) {
-								return false;
-							}
-						}
-
-					}
-
-					send_payload->app_payload.addr_from = app_addr_from;
-					send_payload->app_payload.addr_to = app_addr_to;
-					send_payload->app_payload.message_len = (uint8_t) strlen(message);
-					memcpy(send_payload->app_payload.message, message, send_payload->app_payload.message_len);
-				} else {
-					send_payload->app_payload.addr_from = 0;
-					send_payload->app_payload.addr_to = 0;
-					send_payload->app_payload.message_len = 0;
-				}
-				send_payload->app_payload.req_type = APP_REQUEST_DELIVERY;
-				send_payload->app_payload.crc = crc16(send_payload->app_payload.message, send_payload->app_payload.message_len);
-
-				return true;
+			if (0 == strcmp(argv[i], "broadcast") && argc >= 4) {
+				return parse_broadcast_cmd(argc, argv, cmd, payload);
 			}
 
 			if (0 == strcmp(argv[i], "ping")) {
@@ -193,4 +123,142 @@ static bool parse_args(int32_t argc, char** argv, enum request* cmd, void** payl
 	}
 
 	return false;
+}
+
+static bool parse_send_cmd(int32_t argc, char** argv, enum request* cmd, void** payload) {
+	uint8_t addr_to;
+	uint8_t addr_from;
+	uint8_t app_addr_to;
+	uint8_t app_addr_from;
+	char* endptr;
+	char message[APP_MESSAGE_LEN];
+	struct send_to_node_ret_payload* send_payload;
+	int32_t i;
+
+	*cmd = REQUEST_SEND;
+	addr_to = UINT8_MAX;
+	addr_from = UINT8_MAX;
+	for (i = 0; i < argc; i++) {
+		if (0 == strcmp(argv[i], "-s") || 0 == strcmp(argv[i], "--sender")) {
+			endptr = NULL;
+			addr_from = (uint8_t) strtol(argv[i + 1], &endptr, 10);
+			if (argv[i + 1] == endptr) {
+				return false;
+			}
+		}
+		if (0 == strcmp(argv[i], "-r") || 0 == strcmp(argv[i], "--receiver")) {
+			endptr = NULL;
+			addr_to = (uint8_t) strtol(argv[i + 1], &endptr, 10);
+			if (argv[i + 1] == endptr) {
+				return false;
+			}
+		}
+	}
+
+	if (addr_to == UINT8_MAX || addr_from == UINT8_MAX) {
+		custom_log_error("Failed to parse send command");
+		return false;
+	}
+
+	*payload = malloc(sizeof(struct send_to_node_ret_payload));
+	send_payload = (struct send_to_node_ret_payload*) *payload;
+
+	send_payload->addr_from = addr_from;
+	send_payload->addr_to = addr_to;
+
+	if (argc > 6) {
+		for (i = 0; i < argc; i++) {
+			if (0 == strcmp(argv[i], "--app") || 0 == strcmp(argv[i], "-a")) {
+				if (strlen(argv[i + 1]) > APP_MESSAGE_LEN - 1) {
+					custom_log_warn("You passed message > 150 symbols. It will be trimmed to 150 symbols.");
+					strncpy(message, argv[i + 1], APP_MESSAGE_LEN - 1);
+				} else {
+					strcpy(message, argv[i + 1]);
+				}
+			}
+			if (0 == strcmp(argv[i], "-ar") || 0 == strcmp(argv[i], "--app-receiver")) {
+				endptr = NULL;
+				app_addr_to = (uint8_t) strtol(argv[i + 1], &endptr, 10);
+				if (argv[i + 1] == endptr) {
+					return false;
+				}
+			}
+			if (0 == strcmp(argv[i], "-as") || 0 == strcmp(argv[i], "--app-sender")) {
+				endptr = NULL;
+				app_addr_from = (uint8_t) strtol(argv[i + 1], &endptr, 10);
+				if (argv[i + 1] == endptr) {
+					return false;
+				}
+			}
+
+		}
+
+		send_payload->app_payload.addr_from = app_addr_from;
+		send_payload->app_payload.addr_to = app_addr_to;
+		send_payload->app_payload.message_len = (uint8_t) strlen(message);
+		memcpy(send_payload->app_payload.message, message, send_payload->app_payload.message_len);
+	} else {
+		send_payload->app_payload.addr_from = 0;
+		send_payload->app_payload.addr_to = 0;
+		send_payload->app_payload.message_len = 0;
+	}
+	send_payload->app_payload.req_type = APP_REQUEST_DELIVERY;
+	send_payload->app_payload.crc = crc16(send_payload->app_payload.message, send_payload->app_payload.message_len);
+
+	return true;
+}
+
+static bool parse_broadcast_cmd(int32_t argc, char** argv, enum request* cmd, void** payload) {
+	uint8_t addr_from;
+	char* endptr;
+	char message[APP_MESSAGE_LEN];
+	struct broadcast_payload* broadcast_payload;
+	int32_t i;
+
+	*cmd = REQUEST_BROADCAST;
+	addr_from = UINT8_MAX;
+	for (i = 0; i < argc; i++) {
+		if (0 == strcmp(argv[i], "-s") || 0 == strcmp(argv[i], "--sender")) {
+			endptr = NULL;
+			addr_from = (uint8_t) strtol(argv[i + 1], &endptr, 10);
+			if (argv[i + 1] == endptr) {
+				return false;
+			}
+		}
+	}
+
+	if (addr_from == UINT8_MAX) {
+		custom_log_error("Failed to parse send command");
+		return false;
+	}
+
+	*payload = malloc(sizeof(struct broadcast_payload));
+	broadcast_payload = (struct broadcast_payload*) *payload;
+
+	broadcast_payload->addr_from = addr_from;
+
+	if (argc >= 6) {
+		for (i = 0; i < argc; i++) {
+			if (0 == strcmp(argv[i], "--app") || 0 == strcmp(argv[i], "-a")) {
+				if (strlen(argv[i + 1]) > APP_MESSAGE_LEN - 1) {
+					custom_log_warn("You passed message > 150 symbols. It will be trimmed to 150 symbols.");
+					strncpy(message, argv[i + 1], APP_MESSAGE_LEN - 1);
+				} else {
+					strcpy(message, argv[i + 1]);
+				}
+			}
+		}
+
+		broadcast_payload->app_payload.message_len = (uint8_t) strlen(message);
+		memcpy(broadcast_payload->app_payload.message, message, broadcast_payload->app_payload.message_len);
+	} else {
+		broadcast_payload->app_payload.addr_from = 0;
+		broadcast_payload->app_payload.addr_to = 0;
+		broadcast_payload->app_payload.message_len = 0;
+	}
+	broadcast_payload->app_payload.req_type = APP_REQUEST_BROADCAST;
+	broadcast_payload->time_to_live = BROADCAST_RADIUS;
+	broadcast_payload->app_payload.crc = crc16(broadcast_payload->app_payload.message, broadcast_payload->app_payload.message_len);
+
+	return true;
 }

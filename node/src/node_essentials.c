@@ -89,7 +89,7 @@ static void fill_neighbour_port(uint8_t addr, uint16_t* up_port, uint16_t* down_
 
 static void get_conn_and_send(uint16_t port, uint8_t* buf, msg_len_type buf_len);
 
-void node_essentials_broadcast(uint8_t current_addr, uint8_t banned_addr, struct node_route_direct_payload* route_payload, bool stop_broadcast) { // NOLINT
+void node_essentials_broadcast_route(uint8_t current_addr, uint8_t banned_addr, struct node_route_direct_payload* route_payload, bool stop_broadcast) { // NOLINT
 	uint16_t up_port;
 	uint16_t down_port;
 	uint16_t left_port;
@@ -128,6 +128,40 @@ void node_essentials_broadcast(uint8_t current_addr, uint8_t banned_addr, struct
 		if (right_port != UINT16_MAX && right_port != banned_port) {
 			get_conn_and_send(right_port, b, buf_len);
 		}
+	}
+}
+
+void node_essentials_broadcast(uint8_t current_addr, struct broadcast_payload* broadcast_payload) {
+	uint16_t up_port;
+	uint16_t down_port;
+	uint16_t left_port;
+	uint16_t right_port;
+	uint8_t b[MAX_MSG_LEN];
+	msg_len_type buf_len;
+	uint16_t banned_port;
+
+	broadcast_payload->time_to_live--;
+	banned_port = broadcast_payload->local_from;
+	broadcast_payload->local_from = current_addr;
+
+	fill_neighbour_port(current_addr, &up_port, &down_port, &left_port, &right_port);
+
+	format_node_node_create_message(REQUEST_BROADCAST, broadcast_payload, b, &buf_len);
+
+	if (up_port != UINT16_MAX && up_port != banned_port) {
+		get_conn_and_send(up_port, b, buf_len);
+	}
+
+	if (down_port != UINT16_MAX && down_port != banned_port) {
+		get_conn_and_send(down_port, b, buf_len);
+	}
+
+	if (left_port != UINT16_MAX && left_port != banned_port) {
+		get_conn_and_send(left_port, b, buf_len);
+	}
+
+	if (right_port != UINT16_MAX && right_port != banned_port) {
+		get_conn_and_send(right_port, b, buf_len);
 	}
 }
 

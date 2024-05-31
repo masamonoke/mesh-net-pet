@@ -37,12 +37,21 @@ enum request {
 	REQUEST_KILL_NODE,
 	REQUEST_REVIVE_NODE,
 	REQUEST_RESET,
+	REQUEST_BROADCAST,
+	REQUEST_UNICAST,
 	REQUEST_UNDEFINED
 };
 
 struct send_to_node_ret_payload {
 	uint8_t addr_to;
 	uint8_t addr_from;
+	struct app_payload app_payload;
+};
+
+struct broadcast_payload {
+	uint8_t addr_from;
+	uint8_t time_to_live;
+	uint8_t local_from;
 	struct app_payload app_payload;
 };
 
@@ -61,6 +70,14 @@ uint8_t* format_skip_base(const uint8_t* message);
 __attribute__((warn_unused_result))
 bool format_is_message_correct(size_t buf_len, msg_len_type msg_len);
 
+__attribute__((nonnull(2, 3, 4)))
 void format_create_send(uint8_t* p, const void* payload, uint8_t* message, msg_len_type* msg_len, enum request_sender sender);
 
+__attribute__((nonnull(1, 2)))
 void format_parse_send(const uint8_t* buf, struct send_to_node_ret_payload* payload);
+
+__attribute__((nonnull(2, 3, 4)))
+void format_create_broadcast(uint8_t* p, const void* payload, uint8_t* message, msg_len_type* msg_len, enum request_sender sender);
+
+__attribute__((nonnull(1, 2)))
+void format_parse_broadcast(const uint8_t* buf, struct broadcast_payload* payload);

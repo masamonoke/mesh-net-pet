@@ -98,6 +98,12 @@ make client TARGET_ARGS="send -s <sender node> -r <receiver node> -a 'some meani
  make client TARGET_ARGS="reset"
 ```
 
+### Broadcast
+
+```console
+ make client TARGET_ARGS="broadcast -s <sender node addr> -a '<message>'"
+```
+
 ## Tests
 
 Run server before testing

@@ -50,8 +50,17 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 		case REQUEST_RESET:
 			*request = cmd;
 			break;
-		default:
+		case REQUEST_UNDEFINED:
 			custom_log_error("Unknown client-server request");
+			break;
+		case REQUEST_BROADCAST:
+			*request = cmd;
+			*payload = malloc(sizeof(struct send_to_node_ret_payload));
+			format_parse_broadcast(buf, (struct broadcast_payload*) *payload);
+			break;
+		default:
+			not_implemented();
+			break;
 	}
 }
 
@@ -91,6 +100,13 @@ static void create_message(enum request request, const void* payload, uint8_t* m
 			*msg_len = sizeof_enum(sender) + sizeof_enum(request) + sizeof(*msg_len);
 			sender = REQUEST_SENDER_CLIENT;
 			p = format_create_base(message, *msg_len, request, sender);
+			break;
+		case REQUEST_BROADCAST:
+			if (payload) {
+				format_create_broadcast(p, payload, message, msg_len, sender);
+			}
+			break;
+		case REQUEST_UNICAST:
 			break;
 		default:
 			not_implemented();

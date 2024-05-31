@@ -65,6 +65,13 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 				set_notify_payload(buf, *payload);
 			}
 			break;
+		case REQUEST_BROADCAST:
+			*request = cmd;
+			*payload = malloc(sizeof(struct send_to_node_ret_payload));
+			format_parse_broadcast(buf, (struct broadcast_payload*) *payload);
+			break;
+		case REQUEST_UNICAST:
+			break;
 		default:
 			custom_log_error("Unknown server-node command");
 			break;
@@ -131,6 +138,14 @@ static void create_message(enum request request, const void* payload, uint8_t* m
 				//payload
 				memcpy(p, notify_payload, sizeof_enum(notify_payload));
 			}
+			break;
+		case REQUEST_BROADCAST:
+			if (payload) {
+				sender = REQUEST_SENDER_SERVER;
+				format_create_broadcast(p, payload, message, msg_len, sender);
+			}
+			break;
+		case REQUEST_UNICAST:
 			break;
 		default:
 			not_implemented();

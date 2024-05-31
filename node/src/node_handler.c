@@ -77,7 +77,7 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 			// id is not used yet
 		};
 
-		node_essentials_broadcast(addr, UINT8_MAX, &route_payload, stop_broadcast);
+		node_essentials_broadcast_route(addr, UINT8_MAX, &route_payload, stop_broadcast);
 
 		return false;
 	}
@@ -97,6 +97,26 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 	}
 
 	return res;
+}
+
+void handle_broadcast(uint8_t current_addr, struct broadcast_payload* broadcast_payload, app_t apps[APPS_COUNT]) {
+
+	if (node_app_handle_request(apps, &broadcast_payload->app_payload, 0)) {
+		if (!node_essentials_notify_server(NOTIFY_GOT_MESSAGE)) {
+			node_log_error("Failed to notify server");
+		}
+	} else {
+		node_log_error("Failed to handle app request");
+		if (!node_essentials_notify_server(NOTIFY_FAIL)) {
+			node_log_error("Failed to notify fail");
+		}
+	}
+
+	if (broadcast_payload->time_to_live > 0) {
+		node_essentials_broadcast(current_addr, broadcast_payload);
+	} else {
+		node_log_debug("Done broadcast: TTL is 0");
+	}
 }
 
 __attribute__((warn_unused_result))
@@ -169,7 +189,7 @@ bool handle_node_route_direct(routing_table_t* routing, uint8_t server_addr, voi
 	prev_addr = route_payload->local_sender_addr;
 	route_payload->local_sender_addr = server_addr;
 
-	node_essentials_broadcast(server_addr, prev_addr, route_payload, stop_broadcast);
+	node_essentials_broadcast_route(server_addr, prev_addr, route_payload, stop_broadcast);
 
 	return true;
 }
@@ -311,7 +331,7 @@ static bool send_key_exchange(const routing_table_t* routing, struct app_payload
 		};
 
 		node_log_warn("Sending broadcast");
-		node_essentials_broadcast(receiver_addr, UINT8_MAX, &route_payload, stop_broadcast);
+		node_essentials_broadcast_route(receiver_addr, UINT8_MAX, &route_payload, stop_broadcast);
 
 		return true;
 	}
@@ -372,6 +392,8 @@ static bool node_handle_app_request(const routing_table_t* routing, app_t apps[A
 				res = false;
 			}
 			break;
+		default:
+			node_log_error("Unexpected app request");
 	}
 
 	return res;

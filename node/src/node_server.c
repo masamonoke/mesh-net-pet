@@ -75,6 +75,9 @@ static bool handle_server(node_server_t* server, int32_t conn_fd, enum request* 
 			node_essentials_reset_connections();
 			node_app_fill_default(server->apps, server->addr);
 			break;
+		case REQUEST_BROADCAST:
+			handle_broadcast(server->addr, *payload, server->apps);
+			break;
 		case REQUEST_UNDEFINED:
 			node_log_error("Undefined server-node request type");
 			res = false;

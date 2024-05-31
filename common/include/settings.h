@@ -31,6 +31,10 @@
 #define APP_MESSAGE_LEN 150
 #endif
 
+#ifndef BROADCAST_RADIUS
+#define BROADCAST_RADIUS 3
+#endif
+
 #define enum_ir uint8_t
 
 // argument needs for readability only
