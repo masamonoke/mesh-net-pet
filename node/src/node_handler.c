@@ -100,7 +100,6 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 }
 
 void handle_broadcast(uint8_t current_addr, struct broadcast_payload* broadcast_payload, app_t apps[APPS_COUNT]) {
-
 	if (node_app_handle_request(apps, &broadcast_payload->app_payload, 0)) {
 		if (!node_essentials_notify_server(NOTIFY_GOT_MESSAGE)) {
 			node_log_error("Failed to notify server");
@@ -113,7 +112,31 @@ void handle_broadcast(uint8_t current_addr, struct broadcast_payload* broadcast_
 	}
 
 	if (broadcast_payload->time_to_live > 0) {
-		node_essentials_broadcast(current_addr, broadcast_payload);
+		node_essentials_broadcast(current_addr, broadcast_payload, REQUEST_BROADCAST);
+	} else {
+		node_log_debug("Done broadcast: TTL is 0");
+	}
+}
+
+void handle_unicast(uint8_t current_addr, struct broadcast_payload* broadcast_payload, app_t apps[APPS_COUNT]) {
+	if (!stop_broadcast) {
+		if (node_app_handle_request(apps, &broadcast_payload->app_payload, 0)) {
+			if (!node_essentials_notify_server(NOTIFY_GOT_MESSAGE)) {
+				node_log_error("Failed to notify server");
+			}
+			if (!node_essentials_notify_server(NOTIFY_UNICAST_HANDLED)) {
+				node_log_error("Failed to notify server");
+			}
+		} else {
+			node_log_error("Failed to handle app request");
+			if (!node_essentials_notify_server(NOTIFY_FAIL)) {
+				node_log_error("Failed to notify fail");
+			}
+		}
+	}
+
+	if (broadcast_payload->time_to_live > 0 && !stop_broadcast) {
+		node_essentials_broadcast(current_addr, broadcast_payload, REQUEST_UNICAST);
 	} else {
 		node_log_debug("Done broadcast: TTL is 0");
 	}

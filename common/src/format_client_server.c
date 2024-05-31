@@ -54,8 +54,12 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 			custom_log_error("Unknown client-server request");
 			break;
 		case REQUEST_BROADCAST:
+		case REQUEST_UNICAST:
+			if (*request == REQUEST_UNICAST) {
+				custom_log_warn("parsing unicast");
+			}
 			*request = cmd;
-			*payload = malloc(sizeof(struct send_to_node_ret_payload));
+			*payload = malloc(sizeof(struct broadcast_payload));
 			format_parse_broadcast(buf, (struct broadcast_payload*) *payload);
 			break;
 		default:
@@ -102,11 +106,10 @@ static void create_message(enum request request, const void* payload, uint8_t* m
 			p = format_create_base(message, *msg_len, request, sender);
 			break;
 		case REQUEST_BROADCAST:
-			if (payload) {
-				format_create_broadcast(p, payload, message, msg_len, sender);
-			}
-			break;
 		case REQUEST_UNICAST:
+			if (payload) {
+				format_create_broadcast(p, payload, message, msg_len, sender, request);
+			}
 			break;
 		default:
 			not_implemented();

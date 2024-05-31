@@ -18,7 +18,8 @@ struct node_update_ret_payload {
 enum notify_type {
 	NOTIFY_GOT_MESSAGE,
 	NOTIFY_INVERES_COMPLETED,
-	NOTIFY_FAIL
+	NOTIFY_FAIL,
+	NOTIFY_UNICAST_HANDLED
 };
 
 __attribute__((nonnull(3, 4)))

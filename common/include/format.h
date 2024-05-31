@@ -77,7 +77,7 @@ __attribute__((nonnull(1, 2)))
 void format_parse_send(const uint8_t* buf, struct send_to_node_ret_payload* payload);
 
 __attribute__((nonnull(2, 3, 4)))
-void format_create_broadcast(uint8_t* p, const void* payload, uint8_t* message, msg_len_type* msg_len, enum request_sender sender);
+void format_create_broadcast(uint8_t* p, const void* payload, uint8_t* message, msg_len_type* msg_len, enum request_sender sender, enum request cmd);
 
 __attribute__((nonnull(1, 2)))
 void format_parse_broadcast(const uint8_t* buf, struct broadcast_payload* payload);

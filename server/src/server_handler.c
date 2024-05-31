@@ -92,12 +92,13 @@ bool handle_notify(const struct node* children, int32_t client_fd, enum notify_t
 
 	switch(notify) {
 		case NOTIFY_GOT_MESSAGE:
-			if (!io_write_all(client_fd, (uint8_t*) &req_res, sizeof_enum(req_res))) {
+			if (client_fd > 0 && !io_write_all(client_fd, (uint8_t*) &req_res, sizeof_enum(req_res))) {
 				custom_log_error("Failed to response to notify");
 				res = false;
 			}
 			break;
 		case NOTIFY_INVERES_COMPLETED:
+		case NOTIFY_UNICAST_HANDLED:
 			format_server_node_create_message(REQUEST_STOP_BROADCAST, NULL, b, &buf_len);
 
 			for (size_t i = 0; i < (size_t) NODE_COUNT; i++) {
@@ -111,7 +112,7 @@ bool handle_notify(const struct node* children, int32_t client_fd, enum notify_t
 			break;
 		case NOTIFY_FAIL:
 			req_res = REQUEST_ERR;
-			if (!io_write_all(client_fd, (uint8_t*) &req_res, sizeof_enum(req_res))) {
+			if (client_fd > 0 && !io_write_all(client_fd, (uint8_t*) &req_res, sizeof_enum(req_res))) {
 				custom_log_error("Failed to response to notify");
 				res = false;
 			}
@@ -154,12 +155,13 @@ static bool make_send_to_node(const struct node* children, const void* payload);
 bool handle_client_send(struct node* children, const void* payload) {
 	uint8_t b[NOTIFY_LEN + MSG_LEN];
 	msg_len_type buf_len;
+	size_t i;
 
 	custom_log_debug("Send command from client");
 
 	format_server_node_create_message(REQUEST_RESET_BROADCAST, NULL, b, &buf_len);
 
-	for (size_t i = 0; i < (size_t) NODE_COUNT; i++) {
+	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		if (children[i].write_fd != -1) {
 			if (!io_write_all(children[i].write_fd, b, buf_len)) {
 				custom_log_error("Failed to send reset broadcast request");
@@ -170,12 +172,24 @@ bool handle_client_send(struct node* children, const void* payload) {
 	return make_send_to_node(children, payload);
 }
 
-bool handle_broadcast(struct node* children, const void* payload) {
+bool handle_broadcast(struct node* children, const void* payload, enum request cmd) {
 	uint8_t b[MAX_MSG_LEN];
 	msg_len_type buf_len;
 	size_t i;
 
-	format_server_node_create_message(REQUEST_BROADCAST, payload, (uint8_t*) b, &buf_len);
+	if (cmd == REQUEST_UNICAST) {
+		format_server_node_create_message(REQUEST_RESET_BROADCAST, NULL, b, &buf_len);
+
+		for (i = 0; i < (size_t) NODE_COUNT; i++) {
+			if (children[i].write_fd != -1) {
+				if (!io_write_all(children[i].write_fd, b, buf_len)) {
+					custom_log_error("Failed to send reset broadcast request");
+				}
+			}
+		}
+	}
+
+	format_server_node_create_message(cmd, payload, (uint8_t*) b, &buf_len);
 
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		if (children[i].addr == ((struct broadcast_payload*) payload)->addr_from) {

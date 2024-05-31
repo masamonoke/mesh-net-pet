@@ -65,11 +65,8 @@ bool node_essentials_notify_server(enum notify_type notify) {
 	uint8_t b[NOTIFY_LEN + MSG_LEN];
 	msg_len_type buf_len;
 	int32_t server_fd;
-	enum notify_type notify_payload;
 
-	notify_payload = notify;
-
-	format_server_node_create_message(REQUEST_NOTIFY, (void*) &notify_payload, b, &buf_len);
+	format_server_node_create_message(REQUEST_NOTIFY, (void*) &notify, b, &buf_len);
 
 	server_fd = node_essentials_get_conn(SERVER_PORT);
 	if (server_fd < 0) {
@@ -131,7 +128,7 @@ void node_essentials_broadcast_route(uint8_t current_addr, uint8_t banned_addr, 
 	}
 }
 
-void node_essentials_broadcast(uint8_t current_addr, struct broadcast_payload* broadcast_payload) {
+void node_essentials_broadcast(uint8_t current_addr, struct broadcast_payload* broadcast_payload, enum request req) {
 	uint16_t up_port;
 	uint16_t down_port;
 	uint16_t left_port;
@@ -146,7 +143,7 @@ void node_essentials_broadcast(uint8_t current_addr, struct broadcast_payload* b
 
 	fill_neighbour_port(current_addr, &up_port, &down_port, &left_port, &right_port);
 
-	format_node_node_create_message(REQUEST_BROADCAST, broadcast_payload, b, &buf_len);
+	format_node_node_create_message(req, broadcast_payload, b, &buf_len);
 
 	if (up_port != UINT16_MAX && up_port != banned_port) {
 		get_conn_and_send(up_port, b, buf_len);

@@ -22,7 +22,7 @@ __attribute__((warn_unused_result))
 static bool handle_client_request(server_t* server_data, void** payload, const uint8_t* buf, void* data);
 
 __attribute__((warn_unused_result))
-static bool handle_node_request(const server_t* server_data, void** payload, const uint8_t* buf, void* data);
+static bool handle_node_request(server_t* server_data, void** payload, const uint8_t* buf, void* data);
 
 bool server_server_handle(server_t* server, const uint8_t* buf, int32_t conn_fd, void* data) {
 	bool processed;
@@ -75,12 +75,11 @@ static bool handle_client_request(server_t* server_data, void** payload, const u
 			res = handle_revive(server_data->children, *((uint8_t*) *payload), server_data->client_fd);
 			break;
 		case REQUEST_BROADCAST:
-			res = handle_broadcast(server_data->children, *payload);
-			break;
 		case REQUEST_UNICAST:
-			not_implemented();
+			res = handle_broadcast(server_data->children, *payload, cmd_type);
 			break;
 		default:
+			custom_log_error("Unknown client request: %d", cmd_type);
 			res = false;
 			break;
 	}
@@ -90,7 +89,7 @@ static bool handle_client_request(server_t* server_data, void** payload, const u
 	return res;
 }
 
-static bool handle_node_request(const server_t* server_data, void** payload, const uint8_t* buf, void* data) {
+static bool handle_node_request(server_t* server_data, void** payload, const uint8_t* buf, void* data) {
 	enum request cmd_type;
 	bool res;
 
@@ -104,6 +103,9 @@ static bool handle_node_request(const server_t* server_data, void** payload, con
 			break;
 		case REQUEST_NOTIFY:
 			res = handle_notify(server_data->children, server_data->client_fd, *(((enum notify_type*) *payload)));
+			if (res) {
+				server_data->client_fd = -1;
+			}
 			break;
 		default:
 			custom_log_error("Unsupported request");

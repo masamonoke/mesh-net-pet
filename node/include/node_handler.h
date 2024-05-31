@@ -23,6 +23,8 @@ bool handle_node_route_inverse(routing_table_t* routing, void* payload, uint8_t 
 
 void handle_broadcast(uint8_t current_addr, struct broadcast_payload* broadcast_payload, app_t apps[APPS_COUNT]);
 
+void handle_unicast(uint8_t current_addr, struct broadcast_payload* broadcast_payload, app_t apps[APPS_COUNT]);
+
 void handle_stop_broadcast(void);
 
 void handle_reset_broadcast_status(void);
