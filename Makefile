@@ -2,7 +2,7 @@ ifeq ($(origin CC),default)
   CC = gcc
 endif
 
-BUILD_TYPE = debug
+BUILD_TYPE = release
 
 ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 BUILD_DIR = $(ROOT_DIR)/bin

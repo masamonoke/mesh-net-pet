@@ -7,7 +7,6 @@
 #include "settings.h"
 #include "custom_logger.h"
 #include "format_server_node.h"
-#include "format_client_server.h"
 #include "io.h"
 #include "server_essentials.h"
 #include "connection.h"

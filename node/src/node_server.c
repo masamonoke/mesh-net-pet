@@ -5,16 +5,10 @@
 #include <unistd.h>
 #include <memory.h>
 
-#include "connection.h"
 #include "custom_logger.h"
 #include "format.h"
-#include "format_client_server.h"
 #include "format_node_node.h"
 #include "format_server_node.h"
-#include "io.h"
-#include "settings.h"
-#include "control_utils.h"
-#include "id.h"
 #include "node_essentials.h"
 #include "node_handler.h"
 

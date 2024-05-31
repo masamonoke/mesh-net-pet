@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "custom_logger.h"
-
 static void add_to_pfds(struct pollfd* pfds[], int newfd, uint32_t* fd_count, size_t* fd_size);
 
 static void del_from_pfds(struct pollfd pfds[], size_t i, uint32_t* fd_count);

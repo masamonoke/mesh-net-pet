@@ -6,11 +6,9 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <errno.h>
 
 #include "connection.h"
 #include "control_utils.h"
-#include "custom_logger.h"
 #include "format.h"
 #include "format_server_node.h"
 #include "io.h"

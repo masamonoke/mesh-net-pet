@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
-#include "append_string.h"
 #include "custom_logger.h"
 
 bool io_read_all(int32_t fd, uint8_t* buf_mut, msg_len_type n, int16_t* bytes_received) {

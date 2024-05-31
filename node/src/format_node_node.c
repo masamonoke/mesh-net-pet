@@ -3,9 +3,7 @@
 #include <assert.h>
 
 #include "format_node_node.h"
-#include "format_client_server.h"
 #include "custom_logger.h"
-#include "control_utils.h"
 #include "settings.h"
 
 static void parse_message(enum request* request, void** payload, const uint8_t* buf);

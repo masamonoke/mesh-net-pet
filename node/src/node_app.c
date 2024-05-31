@@ -8,8 +8,6 @@
 
 #include "node_essentials.h"
 #include "settings.h"
-#include "control_utils.h"
-#include "format_client_server.h"
 #include "crc.h"
 
 static uint8_t msg_storage[APP_MESSAGE_LEN];

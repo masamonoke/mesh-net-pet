@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/fcntl.h>
+#include <sys/file.h>
 #include <stdarg.h>
 
 #include "control_utils.h"

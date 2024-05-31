@@ -2,7 +2,6 @@
 
 #include <unistd.h>
 
-#include "node_server.h"
 #include "connection.h"
 #include "io.h"
 #include "format_server_node.h"

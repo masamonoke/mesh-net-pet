@@ -1,10 +1,5 @@
 #include "routing.h"
 
-#include <stdio.h>
-#include <string.h>
-
-#include "custom_logger.h"
-
 void routing_table_fill_default(routing_table_t* table) {
 	size_t i;
 

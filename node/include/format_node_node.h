@@ -4,7 +4,6 @@
 #include <stddef.h>
 
 #include "format.h"
-#include "settings.h"
 #include "format_app.h"
 
 #define ROUTE_INVERSE_LEN sizeof(struct node_route_inverse_payload)

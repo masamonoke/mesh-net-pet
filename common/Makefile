@@ -5,8 +5,6 @@
 SRC = src/append_string.c src/io.c src/control_utils.c src/custom_logger.c src/connection.c src/format_client_server.c \
 	  src/format_server_node.c src/serving.c src/format.c src/routing.c src/id.c src/format_app.c src/crc.c
 
-BUILD_TYPE = debug
-
 OBJS_BUILD = $(patsubst %.c, $(BUILD_DIR)/$(BUILD_TYPE)/common/%.o, $(SRC)) $(DEPS_OBJ)
 DEPENDS = $(patsubst %.c, %.d, $(SRC))
 

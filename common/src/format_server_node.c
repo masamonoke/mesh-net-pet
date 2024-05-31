@@ -7,7 +7,6 @@
 #include "control_utils.h"
 #include "custom_logger.h"
 #include "format.h"
-#include "format_client_server.h"
 #include "settings.h"
 
 static void parse_message(enum request* request, void** payload, const uint8_t* buf);
