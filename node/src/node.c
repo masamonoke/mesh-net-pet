@@ -50,8 +50,8 @@ int32_t main(int32_t argc, char** argv) {
 	}
 
 	routing_table_fill_default(&server.routing);
-
 	node_app_fill_default(server.apps, server.addr);
+	node_essentials_fill_neighbors_port(server.addr);
 
 	node_server_fd = connection_socket_to_listen(port);
 

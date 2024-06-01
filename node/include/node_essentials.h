@@ -32,3 +32,5 @@ void node_essentials_broadcast_route(uint8_t current_addr, uint8_t banned_addr, 
 void node_essentials_broadcast(uint8_t current_addr, struct broadcast_payload* broadcast_payload, enum request req);
 
 void node_essentials_reset_connections(void);
+
+void node_essentials_fill_neighbors_port(uint8_t addr);
