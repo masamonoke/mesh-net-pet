@@ -16,7 +16,7 @@ enum __attribute__((packed, aligned(1))) app_request {
 	APP_REQUEST_UNICAST,
 };
 
-struct app_payload {
+struct __attribute__((__packed__)) app_payload {
 	enum app_request req_type;
 	uint8_t addr_to;
 	uint8_t addr_from;

@@ -40,6 +40,8 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 	if (ret_payload->addr_to == addr) {
 		node_log_warn("Message for node itself");
 
+		node_log_warn("app req %d", ret_payload->app_payload.req_type);
+
 		if (node_app_handle_request(apps, &ret_payload->app_payload, 0)) {
 			if (!node_essentials_notify_server(NOTIFY_GOT_MESSAGE)) {
 				node_log_error("Failed to notify server");
@@ -96,11 +98,6 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 }
 
 void handle_broadcast(broadcast_t* broadcast_payload) {
-	node_log_warn("Broadcasting from %d", broadcast_payload->addr_from);
-	node_essentials_broadcast(broadcast_payload);
-}
-
-void handle_unicast(broadcast_t* broadcast_payload) {
 	node_essentials_broadcast(broadcast_payload);
 }
 

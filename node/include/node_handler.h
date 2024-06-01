@@ -25,9 +25,6 @@ bool handle_node_route_inverse(routing_table_t* routing, void* payload, uint8_t 
 __attribute__((nonnull(1)))
 void handle_broadcast(broadcast_t* broadcast_payload);
 
-__attribute__((nonnull(1)))
-void handle_unicast(broadcast_t* broadcast_payload);
-
 void handle_stop_broadcast(void);
 
 void handle_reset_broadcast_status(void);
