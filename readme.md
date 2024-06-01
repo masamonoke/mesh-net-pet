@@ -11,7 +11,7 @@ git clone https://github.com/masamonoke/mesh-net-pet --recursive
 
 Before any build command do:
 ```console
-cd ./deps/zlib/configure
+cd /deps/zlib/ && ./configure
 
 ```
 
