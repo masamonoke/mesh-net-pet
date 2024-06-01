@@ -6,11 +6,14 @@
 
 #include "settings.h"
 
-enum app_request {
+#define MAX_APP_LEN (sizeof_enum(req_type) + sizeof(uint8_t) * 4 + sizeof(uint16_t) + APP_MESSAGE_LEN)
+
+enum __attribute__((packed, aligned(1))) app_request {
 	APP_REQUEST_KEY_EXCHANGE,
 	APP_REQUEST_DELIVERY,
 	APP_REQUEST_EXCHANGED_KEY,
-	APP_REQUEST_BROADCAST
+	APP_REQUEST_BROADCAST,
+	APP_REQUEST_UNICAST,
 };
 
 struct app_payload {

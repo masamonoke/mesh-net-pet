@@ -8,6 +8,8 @@
 
 #define ROUTE_INVERSE_LEN sizeof(struct node_route_inverse_payload)
 
+#define ROUTE_DIRECT_LEN (sizeof(uint8_t) * 3 + sizeof(uint8_t) * 2 + sizeof(uint16_t) + MAX_APP_LEN)
+
 struct node_route_direct_payload {
 	uint8_t sender_addr;
 	uint8_t receiver_addr;

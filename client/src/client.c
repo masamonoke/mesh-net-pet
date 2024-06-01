@@ -28,6 +28,8 @@ int32_t main(int32_t argc, char** argv) {
 	enum request_result status;
 	struct timeval tv;
 
+	custom_log_warn("enum size %d", sizeof(req));
+
 	payload = NULL;
 	if (!parse_args(argc, argv, &req, &payload)) {
 		custom_log_error("Failed to parse client args");
@@ -88,7 +90,7 @@ static bool create_addr_payload(const char* arg, void** payload) {
 
 static bool parse_send_cmd(int32_t argc, char** argv, enum request* cmd, void** payload);
 
-static bool parse_broadcast_cmd(int32_t argc, char** argv, void** payload);
+static bool parse_broadcast_cmd(int32_t argc, char** argv, void** payload, enum app_request app_req);
 
 static bool parse_args(int32_t argc, char** argv, enum request* cmd, void** payload) {
 	int32_t i;
@@ -101,12 +103,12 @@ static bool parse_args(int32_t argc, char** argv, enum request* cmd, void** payl
 
 			if (0 == strcmp(argv[i], "broadcast") && argc >= 4) {
 				*cmd = REQUEST_BROADCAST;
-				return parse_broadcast_cmd(argc, argv, payload);
+				return parse_broadcast_cmd(argc, argv, payload, APP_REQUEST_BROADCAST);
 			}
 
 			if (0 == strcmp(argv[i], "unicast") && argc >= 4) {
 				*cmd = REQUEST_UNICAST;
-				return parse_broadcast_cmd(argc, argv, payload);
+				return parse_broadcast_cmd(argc, argv, payload, APP_REQUEST_UNICAST);
 			}
 
 			if (0 == strcmp(argv[i], "ping")) {
@@ -166,7 +168,7 @@ static bool parse_send_cmd(int32_t argc, char** argv, enum request* cmd, void** 
 		return false;
 	}
 
-	*payload = malloc(sizeof(struct send_to_node_ret_payload));
+	*payload = malloc(SEND_LEN);
 	send_payload = (struct send_to_node_ret_payload*) *payload;
 
 	send_payload->addr_from = addr_from;
@@ -214,7 +216,7 @@ static bool parse_send_cmd(int32_t argc, char** argv, enum request* cmd, void** 
 	return true;
 }
 
-static bool parse_broadcast_cmd(int32_t argc, char** argv, void** payload) {
+static bool parse_broadcast_cmd(int32_t argc, char** argv, void** payload, enum app_request app_req) {
 	uint8_t addr_from;
 	char* endptr;
 	char message[APP_MESSAGE_LEN];
@@ -237,7 +239,7 @@ static bool parse_broadcast_cmd(int32_t argc, char** argv, void** payload) {
 		return false;
 	}
 
-	*payload = malloc(sizeof(struct broadcast_payload));
+	*payload = malloc(BROADCAST_LEN);
 	broadcast_payload = (struct broadcast_payload*) *payload;
 
 	broadcast_payload->addr_from = addr_from;
@@ -261,7 +263,7 @@ static bool parse_broadcast_cmd(int32_t argc, char** argv, void** payload) {
 		broadcast_payload->app_payload.addr_to = 0;
 		broadcast_payload->app_payload.message_len = 0;
 	}
-	broadcast_payload->app_payload.req_type = APP_REQUEST_BROADCAST;
+	broadcast_payload->app_payload.req_type = app_req;
 	broadcast_payload->time_to_live = BROADCAST_RADIUS;
 	broadcast_payload->app_payload.crc = crc16(broadcast_payload->app_payload.message, broadcast_payload->app_payload.message_len);
 

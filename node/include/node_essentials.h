@@ -26,10 +26,10 @@ int32_t node_essentials_get_conn(uint16_t port);
 __attribute__((warn_unused_result))
 bool node_essentials_notify_server(enum notify_type notify);
 
-__attribute__((nonnull(3)))
-void node_essentials_broadcast_route(uint8_t current_addr, uint8_t banned_addr, struct node_route_direct_payload* route_payload, bool stop_broadcast);
+__attribute__((nonnull(2)))
+void node_essentials_broadcast_route(uint8_t banned_addr, struct node_route_direct_payload* route_payload, bool stop_broadcast);
 
-void node_essentials_broadcast(uint8_t current_addr, struct broadcast_payload* broadcast_payload, enum request req);
+void node_essentials_broadcast(struct broadcast_payload* broadcast_payload);
 
 void node_essentials_reset_connections(void);
 

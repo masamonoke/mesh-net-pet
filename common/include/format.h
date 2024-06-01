@@ -12,20 +12,24 @@
 
 #define MSG_LEN (sizeof_enum(request) + sizeof_enum(sender) + MSG_LEN_SIZE)
 
-enum request_result {
+#define SEND_LEN (sizeof(uint8_t) * 2 + MAX_APP_LEN)
+
+#define BROADCAST_LEN (sizeof(uint8_t) * 3 + MAX_APP_LEN)
+
+enum __attribute__((packed, aligned(1))) request_result {
 	REQUEST_OK,
 	REQUEST_ERR,
 	REQUEST_UNKNOWN
 };
 
-enum request_sender {
+enum __attribute__((packed, aligned(1))) request_sender {
 	REQUEST_SENDER_CLIENT,
 	REQUEST_SENDER_NODE,
 	REQUEST_SENDER_SERVER,
 	REQUEST_SENDER_UNDEFINED
 };
 
-enum request {
+enum __attribute__((packed, aligned(1))) request {
 	REQUEST_SEND,
 	REQUEST_UPDATE,
 	REQUEST_PING,

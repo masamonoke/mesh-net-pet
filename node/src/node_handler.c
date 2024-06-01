@@ -37,8 +37,6 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 	res = true;
 	ret_payload = (struct send_to_node_ret_payload*) payload;
 
-	node_log_warn("msg len %d", ret_payload->app_payload.message_len);
-
 	if (ret_payload->addr_to == addr) {
 		node_log_warn("Message for node itself");
 
@@ -75,7 +73,7 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 			// id is not used yet
 		};
 
-		node_essentials_broadcast_route(addr, UINT8_MAX, &route_payload, stop_broadcast);
+		node_essentials_broadcast_route(UINT8_MAX, &route_payload, stop_broadcast);
 
 		return false;
 	}
@@ -97,47 +95,13 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 	return res;
 }
 
-void handle_broadcast(uint8_t current_addr, struct broadcast_payload* broadcast_payload, app_t apps[APPS_COUNT]) {
-	if (node_app_handle_request(apps, &broadcast_payload->app_payload, 0)) {
-		if (!node_essentials_notify_server(NOTIFY_GOT_MESSAGE)) {
-			node_log_error("Failed to notify server");
-		}
-	} else {
-		node_log_error("Failed to handle app request");
-		if (!node_essentials_notify_server(NOTIFY_FAIL)) {
-			node_log_error("Failed to notify fail");
-		}
-	}
-
-	if (broadcast_payload->time_to_live > 0) {
-		node_essentials_broadcast(current_addr, broadcast_payload, REQUEST_BROADCAST);
-	} else {
-		node_log_debug("Done broadcast: TTL is 0");
-	}
+void handle_broadcast(struct broadcast_payload* broadcast_payload) {
+	node_log_warn("Broadcasting from %d", broadcast_payload->addr_from);
+	node_essentials_broadcast(broadcast_payload);
 }
 
-void handle_unicast(uint8_t current_addr, struct broadcast_payload* broadcast_payload, app_t apps[APPS_COUNT]) {
-	if (!stop_broadcast) {
-		if (node_app_handle_request(apps, &broadcast_payload->app_payload, 0)) {
-			if (!node_essentials_notify_server(NOTIFY_GOT_MESSAGE)) {
-				node_log_error("Failed to notify server");
-			}
-			if (!node_essentials_notify_server(NOTIFY_UNICAST_HANDLED)) {
-				node_log_error("Failed to notify server");
-			}
-		} else {
-			node_log_error("Failed to handle app request");
-			if (!node_essentials_notify_server(NOTIFY_FAIL)) {
-				node_log_error("Failed to notify fail");
-			}
-		}
-	}
-
-	if (broadcast_payload->time_to_live > 0 && !stop_broadcast) {
-		node_essentials_broadcast(current_addr, broadcast_payload, REQUEST_UNICAST);
-	} else {
-		node_log_debug("Done broadcast: TTL is 0");
-	}
+void handle_unicast(struct broadcast_payload* broadcast_payload) {
+	node_essentials_broadcast(broadcast_payload);
 }
 
 __attribute__((warn_unused_result))
@@ -210,7 +174,7 @@ bool handle_node_route_direct(routing_table_t* routing, uint8_t server_addr, voi
 	prev_addr = route_payload->local_sender_addr;
 	route_payload->local_sender_addr = server_addr;
 
-	node_essentials_broadcast_route(server_addr, prev_addr, route_payload, stop_broadcast);
+	node_essentials_broadcast_route(prev_addr, route_payload, stop_broadcast);
 
 	return true;
 }
@@ -352,7 +316,7 @@ static bool send_key_exchange(const routing_table_t* routing, struct app_payload
 		};
 
 		node_log_warn("Sending broadcast");
-		node_essentials_broadcast_route(receiver_addr, UINT8_MAX, &route_payload, stop_broadcast);
+		node_essentials_broadcast_route(UINT8_MAX, &route_payload, stop_broadcast);
 
 		return true;
 	}
@@ -389,17 +353,31 @@ static bool node_handle_app_request(const routing_table_t* routing, app_t apps[A
 			}
 			break;
 		case APP_REQUEST_DELIVERY:
-				if (node_app_handle_request(apps, &send_payload->app_payload, send_payload->addr_from)) {
+		case APP_REQUEST_BROADCAST:
+		case APP_REQUEST_UNICAST:
+			if (app_req == APP_REQUEST_UNICAST) {
+				if (stop_broadcast) {
+					break;
+				} else {
 					if (!node_essentials_notify_server(NOTIFY_GOT_MESSAGE)) {
 						node_log_error("Failed to notify server");
-						res = false;
 					}
-				} else {
-					if (!node_essentials_notify_server(NOTIFY_FAIL)) {
-						node_log_error("Failed to notify fail");
+					if (!node_essentials_notify_server(NOTIFY_UNICAST_HANDLED)) {
+						node_log_error("Failed to notify server");
 					}
+				}
+			}
+			if (node_app_handle_request(apps, &send_payload->app_payload, send_payload->addr_from)) {
+				if (!node_essentials_notify_server(NOTIFY_GOT_MESSAGE)) {
+					node_log_error("Failed to notify server");
 					res = false;
 				}
+			} else {
+				if (!node_essentials_notify_server(NOTIFY_FAIL)) {
+					node_log_error("Failed to notify fail");
+				}
+				res = false;
+			}
 			break;
 		case APP_REQUEST_KEY_EXCHANGE:
 			if (node_app_handle_request(apps, &send_payload->app_payload, send_payload->addr_from)) {

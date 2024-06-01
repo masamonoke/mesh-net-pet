@@ -53,7 +53,7 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 		case REQUEST_SEND:
 			{
 				*request = cmd;
-				*payload = malloc(sizeof(struct send_to_node_ret_payload));
+				*payload = malloc(SEND_LEN);
 				format_parse_send(buf, (struct send_to_node_ret_payload*) *payload);
 			}
 			break;
@@ -67,7 +67,7 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 		case REQUEST_BROADCAST:
 		case REQUEST_UNICAST:
 			*request = cmd;
-			*payload = malloc(sizeof(struct broadcast_payload));
+			*payload = malloc(BROADCAST_LEN);
 			format_parse_broadcast(buf, (struct broadcast_payload*) *payload);
 			break;
 		default:

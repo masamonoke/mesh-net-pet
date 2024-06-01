@@ -51,11 +51,10 @@ static bool handle_server(node_server_t* server, int32_t conn_fd, enum request* 
 	res = true;
 	switch (*cmd_type) {
 		case REQUEST_PING:
-			node_log_debug("Node %d", server->addr);
+			node_log_info("Ping node %d", server->addr);
 			res = handle_ping(conn_fd);
 			break;
 		case REQUEST_SEND:
-			node_log_debug("Send request");
 			res = handle_server_send(*cmd_type, server->addr, *payload, &server->routing, server->apps);
 			break;
 		case REQUEST_STOP_BROADCAST:
@@ -70,10 +69,12 @@ static bool handle_server(node_server_t* server, int32_t conn_fd, enum request* 
 			node_app_fill_default(server->apps, server->addr);
 			break;
 		case REQUEST_BROADCAST:
-			handle_broadcast(server->addr, *payload, server->apps);
+			res = handle_server_send(*cmd_type, server->addr, *payload, &server->routing, server->apps);
+			handle_broadcast(*payload);
 			break;
 		case REQUEST_UNICAST:
-			handle_unicast(server->addr, *payload, server->apps);
+			res = handle_server_send(*cmd_type, server->addr, *payload, &server->routing, server->apps);
+			handle_unicast(*payload);
 			break;
 		case REQUEST_UNDEFINED:
 			node_log_error("Undefined server-node request type");

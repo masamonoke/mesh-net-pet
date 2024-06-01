@@ -59,7 +59,7 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 				custom_log_warn("parsing unicast");
 			}
 			*request = cmd;
-			*payload = malloc(sizeof(struct broadcast_payload));
+			*payload = malloc(BROADCAST_LEN);
 			format_parse_broadcast(buf, (struct broadcast_payload*) *payload);
 			break;
 		default:

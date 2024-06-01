@@ -15,7 +15,7 @@ struct node_update_ret_payload {
 	uint8_t addr;
 };
 
-enum notify_type {
+enum __attribute__((packed, aligned(1))) notify_type {
 	NOTIFY_GOT_MESSAGE,
 	NOTIFY_INVERES_COMPLETED,
 	NOTIFY_FAIL,

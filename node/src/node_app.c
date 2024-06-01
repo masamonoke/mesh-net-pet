@@ -73,6 +73,7 @@ bool node_app_handle_request(app_t* apps, struct app_payload* app_payload, uint8
 				return node_app_save_key(apps, app_payload, node_addr_from);
 			break;
 		case APP_REQUEST_BROADCAST:
+		case APP_REQUEST_UNICAST:
 			if (app_payload->message_len != 0) {
 				uint16_t calc_crc;
 
