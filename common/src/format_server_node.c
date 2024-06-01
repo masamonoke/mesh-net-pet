@@ -40,7 +40,7 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 	switch (cmd) {
 		case REQUEST_UPDATE:
 			*request = cmd;
-			*payload = malloc(sizeof(struct node_update_ret_payload));
+			*payload = malloc(sizeof(node_update_t));
 			set_node_update_payload(buf, *payload);
 			break;
 		case REQUEST_PING:
@@ -54,7 +54,7 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 			{
 				*request = cmd;
 				*payload = malloc(SEND_LEN);
-				format_parse_send(buf, (struct send_to_node_ret_payload*) *payload);
+				format_parse_send(buf, (send_t*) *payload);
 			}
 			break;
 		case REQUEST_NOTIFY:
@@ -68,7 +68,7 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 		case REQUEST_UNICAST:
 			*request = cmd;
 			*payload = malloc(BROADCAST_LEN);
-			format_parse_broadcast(buf, (struct broadcast_payload*) *payload);
+			format_parse_broadcast(buf, (broadcast_t*) *payload);
 			break;
 		default:
 			custom_log_error("Unknown server-node command");
@@ -86,8 +86,8 @@ static void create_message(enum request request, const void* payload, uint8_t* m
 		case REQUEST_UPDATE:
 			{
 				if (payload) {
-					struct node_update_ret_payload* update_payload;
-					update_payload = (struct node_update_ret_payload*) payload;
+					node_update_t* update_payload;
+					update_payload = (node_update_t*) payload;
 					pid = getpid();
 					sender = REQUEST_SENDER_NODE;
 
@@ -152,9 +152,9 @@ static void create_message(enum request request, const void* payload, uint8_t* m
 
 static void set_node_update_payload(const uint8_t* buf, void* ret_payload) {
 	const uint8_t* p;
-	struct node_update_ret_payload* payload;
+	node_update_t* payload;
 
-	payload = (struct node_update_ret_payload*) ret_payload;
+	payload = (node_update_t*) ret_payload;
 
 	p = format_skip_base(buf);
 

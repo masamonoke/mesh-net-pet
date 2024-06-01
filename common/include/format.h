@@ -46,18 +46,18 @@ enum __attribute__((packed, aligned(1))) request {
 	REQUEST_UNDEFINED
 };
 
-struct send_to_node_ret_payload {
+typedef struct send_payload {
 	uint8_t addr_to;
 	uint8_t addr_from;
 	struct app_payload app_payload;
-};
+} send_t;
 
-struct broadcast_payload {
+typedef struct broadcast_payload {
 	uint8_t addr_from;
 	uint8_t time_to_live;
 	uint8_t local_from;
 	struct app_payload app_payload;
-};
+} broadcast_t;
 
 __attribute__((nonnull(2)))
 void format_sprint_result(enum request_result res, char buf[], size_t len);
@@ -78,10 +78,10 @@ __attribute__((nonnull(2, 3, 4)))
 void format_create_send(uint8_t* p, const void* payload, uint8_t* message, msg_len_type* msg_len, enum request_sender sender);
 
 __attribute__((nonnull(1, 2)))
-void format_parse_send(const uint8_t* buf, struct send_to_node_ret_payload* payload);
+void format_parse_send(const uint8_t* buf, send_t* payload);
 
 __attribute__((nonnull(2, 3, 4)))
 void format_create_broadcast(uint8_t* p, const void* payload, uint8_t* message, msg_len_type* msg_len, enum request_sender sender, enum request cmd);
 
 __attribute__((nonnull(1, 2)))
-void format_parse_broadcast(const uint8_t* buf, struct broadcast_payload* payload);
+void format_parse_broadcast(const uint8_t* buf, broadcast_t* payload);

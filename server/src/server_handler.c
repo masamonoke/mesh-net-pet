@@ -191,7 +191,7 @@ bool handle_broadcast(struct node* children, const void* payload, enum request c
 	format_server_node_create_message(cmd, payload, (uint8_t*) b, &buf_len);
 
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
-		if (children[i].addr == ((struct broadcast_payload*) payload)->addr_from) {
+		if (children[i].addr == ((broadcast_t*) payload)->addr_from) {
 			if (!io_write_all(children[i].write_fd, b, buf_len)) {
 				custom_log_error("Failed to send request to node");
 				return false;
@@ -223,10 +223,10 @@ bool handle_revive(struct node* children, uint8_t addr, int32_t client_fd) { // 
 }
 
 void handle_update_child(const void* payload, struct node* children) {
-	struct node_update_ret_payload* ret;
+	node_update_t* ret;
 	size_t i;
 
-	ret = (struct node_update_ret_payload*) payload;
+	ret = (node_update_t*) payload;
 
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		if (children[i].pid == ret->pid) {
@@ -277,7 +277,7 @@ static bool make_send_to_node(const struct node* children, const void* payload) 
 	format_server_node_create_message(REQUEST_SEND, payload, (uint8_t*) b, &buf_len);
 
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
-		if (children[i].addr == ((struct send_to_node_ret_payload*) payload)->addr_from) {
+		if (children[i].addr == ((send_t*) payload)->addr_from) {
 			if (!io_write_all(children[i].write_fd, b, buf_len)) {
 				custom_log_error("Failed to send request to node");
 				return false;

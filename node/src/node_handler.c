@@ -27,7 +27,7 @@ bool handle_ping(int32_t conn_fd) {
 }
 
 bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload, const routing_table_t* routing, app_t apps[APPS_COUNT]) { // NOLINT
-	struct send_to_node_ret_payload* ret_payload;
+	send_t* ret_payload;
 	uint8_t b[MAX_MSG_LEN];
 	msg_len_type buf_len;
 	int32_t node_conn;
@@ -35,7 +35,7 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 	bool res;
 
 	res = true;
-	ret_payload = (struct send_to_node_ret_payload*) payload;
+	ret_payload = (send_t*) payload;
 
 	if (ret_payload->addr_to == addr) {
 		node_log_warn("Message for node itself");
@@ -95,12 +95,12 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 	return res;
 }
 
-void handle_broadcast(struct broadcast_payload* broadcast_payload) {
+void handle_broadcast(broadcast_t* broadcast_payload) {
 	node_log_warn("Broadcasting from %d", broadcast_payload->addr_from);
 	node_essentials_broadcast(broadcast_payload);
 }
 
-void handle_unicast(struct broadcast_payload* broadcast_payload) {
+void handle_unicast(broadcast_t* broadcast_payload) {
 	node_essentials_broadcast(broadcast_payload);
 }
 
@@ -111,10 +111,10 @@ __attribute__((warn_unused_result))
 static bool send_key_exchange(const routing_table_t* routing, struct app_payload* app_payload, uint8_t receiver_addr, uint8_t sender_addr);
 
 __attribute__((warn_unused_result))
-static bool node_handle_app_request(const routing_table_t* routing, app_t apps[APPS_COUNT], struct send_to_node_ret_payload* send_payload);
+static bool node_handle_app_request(const routing_table_t* routing, app_t apps[APPS_COUNT], send_t* send_payload);
 
 __attribute__((warn_unused_result))
-static bool send_next(const routing_table_t* routing, struct send_to_node_ret_payload* ret_payload);
+static bool send_next(const routing_table_t* routing, send_t* ret_payload);
 
 bool handle_node_send(uint8_t addr, const void* payload, const routing_table_t* routing, app_t apps[APPS_COUNT]) {
 	uint8_t addr_to;
@@ -123,14 +123,14 @@ bool handle_node_send(uint8_t addr, const void* payload, const routing_table_t* 
 	node_log_warn("Send node %d", addr);
 
 	res = true;
-	addr_to = ((struct send_to_node_ret_payload*) payload)->addr_to;
+	addr_to = ((send_t*) payload)->addr_to;
 	if (addr_to == addr) {
-		if (!node_handle_app_request(routing, apps, (struct send_to_node_ret_payload*) payload)) {
+		if (!node_handle_app_request(routing, apps, (send_t*) payload)) {
 			node_log_error("Failed to handle app request");
 			res = false;
 		}
 	} else {
-		if (!send_next(routing, (struct send_to_node_ret_payload*) payload)) {
+		if (!send_next(routing, (send_t*) payload)) {
 			node_log_error("Failed to send app request next");
 			res = false;
 		}
@@ -247,7 +247,7 @@ static bool send_delivery(const routing_table_t* routing, uint8_t old_from, uint
 	uint8_t next_addr;
 	int32_t node_conn;
 
-	struct send_to_node_ret_payload new_send = {
+	send_t new_send = {
 		.addr_to = old_from,
 		.addr_from = old_to,
 		.app_payload.addr_to = old_app_payload->addr_from,
@@ -293,7 +293,7 @@ static bool send_key_exchange(const routing_table_t* routing, struct app_payload
 	app_payload->addr_from = app_payload->addr_to;
 	app_payload->addr_to = tmp;
 
-	struct send_to_node_ret_payload send_payload = {
+	send_t send_payload = {
 		.addr_to = sender_addr,
 		.addr_from = receiver_addr,
 		.app_payload = *app_payload
@@ -332,7 +332,7 @@ static bool send_key_exchange(const routing_table_t* routing, struct app_payload
 }
 
 __attribute__((warn_unused_result))
-static bool node_handle_app_request(const routing_table_t* routing, app_t apps[APPS_COUNT], struct send_to_node_ret_payload* send_payload) {
+static bool node_handle_app_request(const routing_table_t* routing, app_t apps[APPS_COUNT], send_t* send_payload) {
 	enum app_request app_req;
 	bool res;
 
@@ -399,7 +399,7 @@ static bool node_handle_app_request(const routing_table_t* routing, app_t apps[A
 }
 
 __attribute__((warn_unused_result))
-static bool send_next(const routing_table_t* routing, struct send_to_node_ret_payload* ret_payload) {
+static bool send_next(const routing_table_t* routing, send_t* ret_payload) {
 	int32_t node_conn;
 	uint8_t next_addr;
 

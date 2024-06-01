@@ -37,8 +37,8 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 	switch (cmd) {
 		case REQUEST_SEND:
 			*request = cmd;
-			*payload = malloc(sizeof(struct send_to_node_ret_payload));
-			format_parse_send(buf, (struct send_to_node_ret_payload*) *payload);
+			*payload = malloc(SEND_LEN);
+			format_parse_send(buf, (send_t*) *payload);
 			break;
 		case REQUEST_PING:
 		case REQUEST_REVIVE_NODE:
@@ -60,7 +60,7 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 			}
 			*request = cmd;
 			*payload = malloc(BROADCAST_LEN);
-			format_parse_broadcast(buf, (struct broadcast_payload*) *payload);
+			format_parse_broadcast(buf, (broadcast_t*) *payload);
 			break;
 		default:
 			not_implemented();

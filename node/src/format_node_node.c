@@ -39,7 +39,7 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 			{
 				*request = cmd;
 				*payload = malloc(SEND_LEN);
-				format_parse_send(buf, (struct send_to_node_ret_payload*) *payload);
+				format_parse_send(buf, (send_t*) *payload);
 			}
 			break;
 		case REQUEST_ROUTE_DIRECT:
@@ -60,7 +60,7 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 		case REQUEST_UNICAST:
 			*request = cmd;
 			*payload = malloc(SEND_LEN);
-			format_parse_broadcast(buf, (struct broadcast_payload*) *payload);
+			format_parse_broadcast(buf, (broadcast_t*) *payload);
 			break;
 		default:
 			custom_log_error("Unknown node-node request");

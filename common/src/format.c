@@ -76,10 +76,10 @@ bool format_is_message_correct(size_t buf_len, msg_len_type msg_len) {
 }
 
 void format_create_send(uint8_t* p, const void* payload, uint8_t* message, msg_len_type* msg_len, enum request_sender sender) {
-	struct send_to_node_ret_payload* ret_payload;
+	send_t* ret_payload;
 	uint8_t payload_len;
 
-	ret_payload = (struct send_to_node_ret_payload*) payload;
+	ret_payload = (send_t*) payload;
 
 	payload_len = sizeof(ret_payload->addr_to) + sizeof(ret_payload->addr_from) + format_app_message_len(&ret_payload->app_payload);
 	*msg_len = payload_len + sizeof_enum(REQUEST_SEND) + sizeof(*msg_len) + sizeof_enum(sender);
@@ -95,7 +95,7 @@ void format_create_send(uint8_t* p, const void* payload, uint8_t* message, msg_l
 	p += format_app_message_len(&ret_payload->app_payload);
 }
 
-void format_parse_send(const uint8_t* buf, struct send_to_node_ret_payload* payload) {
+void format_parse_send(const uint8_t* buf, send_t* payload) {
 	const uint8_t* p;
 
 	p = format_skip_base(buf);
@@ -110,10 +110,10 @@ void format_parse_send(const uint8_t* buf, struct send_to_node_ret_payload* payl
 }
 
 void format_create_broadcast(uint8_t* p, const void* payload, uint8_t* message, msg_len_type* msg_len, enum request_sender sender, enum request cmd) {
-	struct broadcast_payload* ret_payload;
+	broadcast_t* ret_payload;
 	uint8_t payload_len;
 
-	ret_payload = (struct broadcast_payload*) payload;
+	ret_payload = (broadcast_t*) payload;
 
 	payload_len = sizeof(ret_payload->addr_from) + sizeof(ret_payload->time_to_live) + sizeof(ret_payload->local_from) + format_app_message_len(&ret_payload->app_payload);
 	*msg_len = payload_len + sizeof_enum(cmd) + sizeof(*msg_len) + sizeof_enum(sender);
@@ -130,7 +130,7 @@ void format_create_broadcast(uint8_t* p, const void* payload, uint8_t* message, 
 	format_app_create_message(&ret_payload->app_payload, p);
 }
 
-void format_parse_broadcast(const uint8_t* buf, struct broadcast_payload* payload) {
+void format_parse_broadcast(const uint8_t* buf, broadcast_t* payload) {
 	const uint8_t* p;
 
 	p = format_skip_base(buf);

@@ -128,13 +128,13 @@ void node_essentials_broadcast_route(uint8_t banned_addr, struct node_route_dire
 	}
 }
 
-void node_essentials_broadcast(struct broadcast_payload* broadcast_payload) {
+void node_essentials_broadcast(broadcast_t* broadcast_payload) {
 	uint8_t b[MAX_MSG_LEN];
 	msg_len_type buf_len;
 	size_t i;
 
 	for (i = 0; i < neighbor_num; i++) {
-		struct send_to_node_ret_payload send_payload = {
+		send_t send_payload = {
 			.app_payload = broadcast_payload->app_payload,
 			.addr_from = broadcast_payload->addr_from,
 			.addr_to = (uint8_t) node_addr(broadcast_neighbors[i]),

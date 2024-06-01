@@ -28,8 +28,6 @@ int32_t main(int32_t argc, char** argv) {
 	enum request_result status;
 	struct timeval tv;
 
-	custom_log_warn("enum size %d", sizeof(req));
-
 	payload = NULL;
 	if (!parse_args(argc, argv, &req, &payload)) {
 		custom_log_error("Failed to parse client args");
@@ -140,7 +138,7 @@ static bool parse_send_cmd(int32_t argc, char** argv, enum request* cmd, void** 
 	uint8_t app_addr_from;
 	char* endptr;
 	char message[APP_MESSAGE_LEN];
-	struct send_to_node_ret_payload* send_payload;
+	send_t* send_payload;
 	int32_t i;
 
 	*cmd = REQUEST_SEND;
@@ -169,7 +167,7 @@ static bool parse_send_cmd(int32_t argc, char** argv, enum request* cmd, void** 
 	}
 
 	*payload = malloc(SEND_LEN);
-	send_payload = (struct send_to_node_ret_payload*) *payload;
+	send_payload = (send_t*) *payload;
 
 	send_payload->addr_from = addr_from;
 	send_payload->addr_to = addr_to;
@@ -220,7 +218,7 @@ static bool parse_broadcast_cmd(int32_t argc, char** argv, void** payload, enum 
 	uint8_t addr_from;
 	char* endptr;
 	char message[APP_MESSAGE_LEN];
-	struct broadcast_payload* broadcast_payload;
+	broadcast_t* broadcast_payload;
 	int32_t i;
 
 	addr_from = UINT8_MAX;
@@ -240,7 +238,7 @@ static bool parse_broadcast_cmd(int32_t argc, char** argv, void** payload, enum 
 	}
 
 	*payload = malloc(BROADCAST_LEN);
-	broadcast_payload = (struct broadcast_payload*) *payload;
+	broadcast_payload = (broadcast_t*) *payload;
 
 	broadcast_payload->addr_from = addr_from;
 

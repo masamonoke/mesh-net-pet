@@ -5,15 +5,15 @@
 
 #include "format.h"
 
-#define UPDATE_LEN sizeof(struct node_update_ret_payload)
+#define UPDATE_LEN sizeof(node_update_t)
 
 #define NOTIFY_LEN sizeof(enum_ir)
 
-struct node_update_ret_payload {
+typedef struct node_update_payload {
 	int32_t pid;
 	uint16_t port;
 	uint8_t addr;
-};
+} node_update_t;
 
 enum __attribute__((packed, aligned(1))) notify_type {
 	NOTIFY_GOT_MESSAGE,

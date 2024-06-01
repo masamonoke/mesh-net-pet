@@ -117,7 +117,7 @@ static bool update_node_state(uint16_t port) {
 		die("Failed to get socket");
 	}
 
-	struct node_update_ret_payload payload = {
+	node_update_t payload = {
 		.addr = server.addr,
 		.pid = getpid(),
 		.port = port,

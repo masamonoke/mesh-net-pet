@@ -21,9 +21,9 @@ bool handle_node_route_direct(routing_table_t* routing, uint8_t server_addr, voi
 __attribute__((nonnull(1), warn_unused_result))
 bool handle_node_route_inverse(routing_table_t* routing, void* payload, uint8_t server_addr);
 
-void handle_broadcast(struct broadcast_payload* broadcast_payload);
+void handle_broadcast(broadcast_t* broadcast_payload);
 
-void handle_unicast(struct broadcast_payload* broadcast_payload);
+void handle_unicast(broadcast_t* broadcast_payload);
 
 void handle_stop_broadcast(void);
 
