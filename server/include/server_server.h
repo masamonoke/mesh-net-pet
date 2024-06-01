@@ -12,4 +12,5 @@ typedef struct server {
 	struct node children[NODE_COUNT];
 } server_t;
 
+__attribute__((nonnull(1, 2)))
 bool server_server_handle(server_t* server, const uint8_t* buf, int32_t conn_fd, void* data);

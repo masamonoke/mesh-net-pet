@@ -29,11 +29,13 @@ void node_app_fill_default(app_t apps[APPS_COUNT], uint8_t node_addr) {
 	}
 }
 
-__attribute__((warn_unused_result))
+__attribute__((nonnull(1, 4), warn_unused_result))
 static bool get_key(const app_t* app, uint8_t app_addr, uint8_t node_addr, uint8_t* key);
 
+__attribute__((nonnull(1, 2)))
 static void compress_message(uint8_t* msg, uint8_t* msg_len);
 
+__attribute__((nonnull(1, 2)))
 static void decompress_message(uint8_t* msg, uint8_t* msg_len);
 
 bool node_app_handle_request(app_t* apps, struct app_payload* app_payload, uint8_t node_addr_from) {
@@ -95,6 +97,7 @@ bool node_app_handle_request(app_t* apps, struct app_payload* app_payload, uint8
 	return false;
 }
 
+__attribute__((nonnull(1), warn_unused_result))
 static bool has_pair(app_t* app, uint8_t app_addr, uint8_t node_addr) {
 	size_t i;
 
@@ -107,6 +110,7 @@ static bool has_pair(app_t* app, uint8_t app_addr, uint8_t node_addr) {
 	return false;
 }
 
+__attribute__((nonnull(1, 3), warn_unused_result))
 static bool get_app(const app_t* apps, uint8_t app_addr, app_t* app) {
 	size_t i;
 
@@ -120,7 +124,7 @@ static bool get_app(const app_t* apps, uint8_t app_addr, app_t* app) {
 	return false;
 }
 
-__attribute__((warn_unused_result))
+__attribute__((nonnull(1, 2), warn_unused_result))
 static bool set_app(app_t* apps, app_t* app) {
 	size_t i;
 
@@ -135,7 +139,7 @@ static bool set_app(app_t* apps, app_t* app) {
 	return false;
 }
 
-__attribute__((warn_unused_result))
+__attribute__((nonnull(1), warn_unused_result))
 static bool save_pair(app_t* app, uint8_t app_addr, uint8_t node_addr, uint8_t key) { // NOLINT
 	size_t i;
 

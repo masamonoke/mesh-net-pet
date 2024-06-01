@@ -29,6 +29,7 @@ bool node_essentials_notify_server(enum notify_type notify);
 __attribute__((nonnull(2)))
 void node_essentials_broadcast_route(uint8_t banned_addr, struct node_route_direct_payload* route_payload, bool stop_broadcast);
 
+__attribute__((nonnull(1)))
 void node_essentials_broadcast(broadcast_t* broadcast_payload);
 
 void node_essentials_reset_connections(void);

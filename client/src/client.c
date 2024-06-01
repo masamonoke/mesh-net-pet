@@ -52,6 +52,7 @@ int32_t main(int32_t argc, char** argv) {
 	setsockopt(server_fd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
 	status = REQUEST_UNKNOWN;
 
+	// recv is used for timeout
 	received_bytes = recv(server_fd, buf, sizeof(buf), 0);
 	if (received_bytes > 0) {
 		enum_ir tmp;

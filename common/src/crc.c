@@ -24,7 +24,6 @@ static void init_crc16_table(void) {
 
 uint16_t crc16(const unsigned char *data, size_t length) {
     uint16_t crc;
-	crc = 0xFFFF;
 	size_t i;
 	static bool init = false;
 
@@ -33,6 +32,7 @@ uint16_t crc16(const unsigned char *data, size_t length) {
 		init_crc16_table();
 	}
 
+	crc = 0xFFFF;
     for (i = 0; i < length; i++) {
         crc = (crc >> 8) ^ crc16_table[(crc ^ data[i]) & 0xFF];
     }
