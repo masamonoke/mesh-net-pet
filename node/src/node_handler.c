@@ -73,7 +73,7 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 			// id is not used yet
 		};
 
-		node_essentials_broadcast_route(UINT8_MAX, &route_payload, stop_broadcast);
+		node_essentials_broadcast_route(&route_payload, stop_broadcast);
 
 		return false;
 	}
@@ -143,7 +143,6 @@ bool route_direct_handle_delivered(routing_table_t* routing, struct node_route_d
 
 bool handle_node_route_direct(routing_table_t* routing, uint8_t server_addr, void* payload, app_t apps[APPS_COUNT]) {
 	struct node_route_direct_payload* route_payload;
-	uint8_t prev_addr;
 
 	route_payload = (struct node_route_direct_payload*) payload;
 
@@ -171,10 +170,9 @@ bool handle_node_route_direct(routing_table_t* routing, uint8_t server_addr, voi
 		return true;
 	}
 
-	prev_addr = route_payload->local_sender_addr;
 	route_payload->local_sender_addr = server_addr;
 
-	node_essentials_broadcast_route(prev_addr, route_payload, stop_broadcast);
+	node_essentials_broadcast_route(route_payload, stop_broadcast);
 
 	return true;
 }
@@ -316,7 +314,7 @@ static bool send_key_exchange(const routing_table_t* routing, struct app_payload
 		};
 
 		node_log_warn("Sending broadcast");
-		node_essentials_broadcast_route(UINT8_MAX, &route_payload, stop_broadcast);
+		node_essentials_broadcast_route(&route_payload, stop_broadcast);
 
 		return true;
 	}

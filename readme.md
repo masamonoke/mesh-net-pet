@@ -38,10 +38,9 @@ make BUILD_TYPE=debug
 ## Server
 
 ```console
-make server BUILD_TYPE=release
+make server
 ```
-
-Note that Makefile makes debug build by default.
+Note that Makefile makes release build by default.
 
 ## Client
 

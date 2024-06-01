@@ -15,11 +15,6 @@ struct conn {
 #define CONNECTIONS 29
 static struct conn connections[CONNECTIONS];
 
-static uint16_t up_port;
-static uint16_t down_port;
-static uint16_t right_port;
-static uint16_t left_port;
-
 static uint16_t broadcast_neighbors[CONNECTIONS];
 static uint8_t neighbor_num = 0;
 
@@ -92,38 +87,20 @@ bool node_essentials_notify_server(enum notify_type notify) {
 
 static void get_conn_and_send(uint16_t port, uint8_t* buf, msg_len_type buf_len);
 
-void node_essentials_broadcast_route(uint8_t banned_addr, struct node_route_direct_payload* route_payload, bool stop_broadcast) {
+void node_essentials_broadcast_route(struct node_route_direct_payload* route_payload, bool stop_broadcast) {
 	uint8_t b[MAX_MSG_LEN];
 	msg_len_type buf_len;
-	uint16_t banned_port;
+	size_t i;
 
 	if (!stop_broadcast) {
 
 		route_payload->time_to_live--;
 		route_payload->metric++;
 
-		if (banned_addr > 0) {
-			banned_port = node_port(banned_addr);
-		} else {
-			banned_port = UINT16_MAX;
-		}
-
 		format_node_node_create_message(REQUEST_ROUTE_DIRECT, route_payload, b, &buf_len);
 
-		if (up_port != UINT16_MAX && up_port != banned_port) {
-			get_conn_and_send(up_port, b, buf_len);
-		}
-
-		if (down_port != UINT16_MAX && down_port != banned_port) {
-			get_conn_and_send(down_port, b, buf_len);
-		}
-
-		if (left_port != UINT16_MAX && left_port != banned_port) {
-			get_conn_and_send(left_port, b, buf_len);
-		}
-
-		if (right_port != UINT16_MAX && right_port != banned_port) {
-			get_conn_and_send(right_port, b, buf_len);
+		for (i = 0; i < neighbor_num; i++) {
+			get_conn_and_send(broadcast_neighbors[i], b, buf_len);
 		}
 	}
 }
@@ -145,10 +122,6 @@ void node_essentials_broadcast(broadcast_t* broadcast_payload) {
 	}
 }
 
-static inline bool is_valid_pos(const int8_t pos[2]) {
-	return ((pos[0] >= 0 && pos[0] < MATRIX_SIZE) && (pos[1] >= 0 && pos[1] < MATRIX_SIZE));
-}
-
 static inline uint8_t from_pos(const int8_t pos[2]) {
 	return (uint8_t) (pos[0] * MATRIX_SIZE + pos[1]);
 }
@@ -156,40 +129,6 @@ static inline uint8_t from_pos(const int8_t pos[2]) {
 static void fill_broadcast_neighbors(uint8_t addr, uint8_t radius);
 
 void node_essentials_fill_neighbors_port(uint8_t addr) {
-	int8_t i;
-	int8_t j;
-	int8_t up_pos[2];
-	int8_t down_pos[2];
-	int8_t left_pos[2];
-	int8_t right_pos[2];
-
-	// addresses placed in matrix in sequential order starting from 0
-	i = (int8_t) (addr / MATRIX_SIZE);
-	j = (int8_t) (addr % MATRIX_SIZE);
-
-	up_pos[0] = (int8_t) (i - 1), up_pos[1] = j;
-	down_pos[0] = (int8_t) (i + 1), down_pos[1] = j;
-	left_pos[0] = i, left_pos[1] = (int8_t) (j - 1);
-	right_pos[0] = i, right_pos[1] = (int8_t) (j + 1);
-
-	up_port = UINT16_MAX, down_port = UINT16_MAX, left_port = UINT16_MAX, right_port = UINT16_MAX;
-
-	if (is_valid_pos(up_pos)) {
-		up_port = node_port(from_pos(up_pos));
-	}
-
-	if (is_valid_pos(down_pos)) {
-		down_port = node_port(from_pos(down_pos));
-	}
-
-	if (is_valid_pos(left_pos)) {
-		left_port = node_port(from_pos(left_pos));
-	}
-
-	if (is_valid_pos(right_pos)) {
-		right_port = node_port(from_pos(right_pos));
-	}
-
 	fill_broadcast_neighbors(addr, BROADCAST_RADIUS);
 }
 
