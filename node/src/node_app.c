@@ -36,20 +36,6 @@ static void compress_message(uint8_t* msg, uint8_t* msg_len);
 
 static void decompress_message(uint8_t* msg, uint8_t* msg_len);
 
-// TODO: mock, replace with actual impl
-static void decrypt_app_message(uint8_t key, uint8_t* msg, uint8_t msg_len) {
-	(void) msg;
-	(void) msg_len;
-	node_log_debug("Decrypting message with key %d", key);
-}
-
-// TODO: mock, replace with actual impl
-static void encrypt_app_message(uint8_t key, uint8_t* msg, uint8_t msg_len) {
-	(void) msg;
-	(void) msg_len;
-	node_log_debug("Encrypting message with key %d", key);
-}
-
 bool node_app_handle_request(app_t* apps, struct app_payload* app_payload, uint8_t node_addr_from) {
 	size_t i;
 
@@ -65,7 +51,6 @@ bool node_app_handle_request(app_t* apps, struct app_payload* app_payload, uint8
 							uint16_t calc_crc;
 							if (app_payload->message_len != 0) {
 								decompress_message(app_payload->message, &app_payload->message_len);
-								decrypt_app_message(key, app_payload->message, app_payload->message_len);
 
 								calc_crc = crc16(app_payload->message, app_payload->message_len);
 								if (calc_crc != app_payload->crc) {
@@ -227,7 +212,6 @@ void node_app_setup_delivery(app_t apps[APPS_COUNT], struct app_payload* app_pay
 				// little messages can become bigger after compress but for big ones works fine
 				compress_message(app_payload->message, &app_payload->message_len);
 				custom_log_debug("Before compress: %d, after %d", before_compress_len, app_payload->message_len);
-				encrypt_app_message(key, app_payload->message, app_payload->message_len);
 			}
 		}
 	}
