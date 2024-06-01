@@ -10,7 +10,7 @@
 
 #define ROUTE_DIRECT_LEN (sizeof(uint8_t) * 3 + sizeof(uint8_t) * 2 + sizeof(uint16_t) + MAX_APP_LEN)
 
-struct node_route_direct_payload {
+struct __attribute__((__packed__)) node_route_direct_payload {
 	uint8_t sender_addr;
 	uint8_t receiver_addr;
 	uint8_t local_sender_addr;
