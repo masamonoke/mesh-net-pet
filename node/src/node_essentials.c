@@ -50,7 +50,7 @@ int32_t node_essentials_get_conn(uint16_t port) {
 		if (connections[i].fd == -1) {
 			connections[i].fd = connection_socket_to_send(port);
 			if (connections[i].fd < 0) {
-				node_log_error("Failed to open connection with %d", port);
+				/* node_log_error("Failed to open connection with %d", port); */
 				break;
 			}
 			connections[i].port = port;
@@ -59,7 +59,7 @@ int32_t node_essentials_get_conn(uint16_t port) {
 		}
 	}
 
-	node_log_error("Failed to open connection with %d", port);
+	/* node_log_error("Failed to open connection with %d", port); */
 
 	return -1;
 }
@@ -198,7 +198,7 @@ static void get_conn_and_send(uint16_t port, uint8_t* buf, msg_len_type buf_len)
 	conn_fd = node_essentials_get_conn(port);
 
 	if (conn_fd < 0) {
-		node_log_error("Failed to open connection with neighbor port %d", port);
+		/* node_log_error("Failed to open connection with neighbor port %d", port); */
 		return;
 	}
 

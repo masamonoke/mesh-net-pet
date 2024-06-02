@@ -71,16 +71,6 @@ static bool handle_server(node_server_t* server, int32_t conn_fd, enum request* 
 		case REQUEST_BROADCAST:
 		case REQUEST_UNICAST:
 			{
-				uint8_t b[MAX_MSG_LEN];
-				uint8_t buf_len;
-				send_t send_payload = {
-					.app_payload = ((broadcast_t*) *payload)->app_payload,
-					.addr_from = server->addr,
-					.addr_to = server->addr
-				};
-
-				format_server_node_create_message(REQUEST_SEND, &send_payload, b, &buf_len);
-				res = handle_server_send(*cmd_type, server->addr, &send_payload, &server->routing, server->apps);
 				handle_broadcast(*payload);
 			}
 			break;

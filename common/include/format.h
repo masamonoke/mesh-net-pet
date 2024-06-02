@@ -52,7 +52,7 @@ typedef struct send_payload {
 	struct app_payload app_payload;
 } send_t;
 
-typedef struct broadcast_payload {
+typedef struct __attribute__((__packed__)) broadcast_payload {
 	uint8_t addr_from;
 	uint8_t time_to_live;
 	uint8_t local_from;

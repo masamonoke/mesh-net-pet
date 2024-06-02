@@ -262,6 +262,7 @@ static bool parse_broadcast_cmd(int32_t argc, char** argv, void** payload, enum 
 		broadcast_payload->app_payload.addr_to = 0;
 		broadcast_payload->app_payload.message_len = 0;
 	}
+
 	broadcast_payload->app_payload.req_type = app_req;
 	broadcast_payload->time_to_live = BROADCAST_RADIUS;
 	broadcast_payload->app_payload.crc = crc16(broadcast_payload->app_payload.message, broadcast_payload->app_payload.message_len);

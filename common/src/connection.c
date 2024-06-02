@@ -27,6 +27,7 @@ int32_t connection_socket_to_send(uint16_t port) {
 	status = connect(server_fd, (const struct sockaddr*) &addr, sizeof(addr));
 	if (status) {
 		inet_ntop(AF_INET, &addr.sin_addr, buffer, sizeof(buffer));
+		// TODO: uncomment
 		custom_log_error("Failed to connect to server socket on %s:%d", buffer, port);
 		return -1;
 	}

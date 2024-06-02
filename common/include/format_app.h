@@ -9,9 +9,7 @@
 #define MAX_APP_LEN (sizeof_enum(req_type) + sizeof(uint8_t) * 4 + sizeof(uint16_t) + APP_MESSAGE_LEN)
 
 enum __attribute__((packed, aligned(1))) app_request {
-	APP_REQUEST_KEY_EXCHANGE,
 	APP_REQUEST_DELIVERY,
-	APP_REQUEST_EXCHANGED_KEY,
 	APP_REQUEST_BROADCAST,
 	APP_REQUEST_UNICAST,
 };
@@ -20,7 +18,6 @@ struct __attribute__((__packed__)) app_payload {
 	enum app_request req_type;
 	uint8_t addr_to;
 	uint8_t addr_from;
-	uint8_t key;
 	uint8_t message[APP_MESSAGE_LEN];
 	uint8_t message_len;
 	uint16_t crc;
