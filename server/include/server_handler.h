@@ -13,7 +13,7 @@ __attribute__((nonnull(1), warn_unused_result))
 bool handle_kill(struct node* children, uint8_t addr, int32_t client_fd);
 
 __attribute__((nonnull(1), warn_unused_result))
-bool handle_notify(const struct node* children, int32_t client_fd, enum notify_type notify);
+bool handle_notify(const struct node* children, int32_t client_fd, notify_t* notify);
 
 __attribute__((nonnull(1, 2), warn_unused_result))
 bool handle_client_send(struct node* children, const void* payload);

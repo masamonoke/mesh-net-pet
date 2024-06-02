@@ -28,7 +28,7 @@ static void compress_message(uint8_t* msg, uint8_t* msg_len);
 __attribute__((nonnull(1, 2)))
 static void decompress_message(uint8_t* msg, uint8_t* msg_len);
 
-bool node_app_handle_request(app_t* apps, struct app_payload* app_payload) {
+bool node_app_handle_request(app_t* apps, struct app_payload* app_payload, uint8_t node_addr) {
 	size_t i;
 
 	switch (app_payload->req_type) {
@@ -44,14 +44,15 @@ bool node_app_handle_request(app_t* apps, struct app_payload* app_payload) {
 
 							calc_crc = crc16(app_payload->message, app_payload->message_len);
 							if (calc_crc != app_payload->crc) {
-								node_log_error("App message damaged: got CRC %d, calculated %d", app_payload->crc, calc_crc);
+								node_log_error("App message damaged: got CRC %d, calculated %d. Message: %.*s",
+									app_payload->crc, calc_crc, app_payload->message_len, app_payload->message);
 								return false;
 							}
 						}
-						node_log_info("App got message (length %d): %.*s",
-							app_payload->message_len, app_payload->message_len, app_payload->message);
+						node_log_info("App got message (length %d, id %d): %.*s",
+							app_payload->message_len, app_payload->id, app_payload->message_len, app_payload->message);
 					} else {
-						node_log_info("App %d got empty message from app %d", app_payload->addr_from, app_payload->addr_to);
+						node_log_info("App (id %d, node %d) got empty message from app %d", app_payload->id, node_addr, app_payload->addr_to);
 					}
 					return true;
 				}
@@ -69,8 +70,8 @@ bool node_app_handle_request(app_t* apps, struct app_payload* app_payload) {
 					return false;
 				}
 			}
-			node_log_info("App got broadcast message (length %d): %.*s",
-				app_payload->message_len, app_payload->message_len, app_payload->message);
+			node_log_info("App (id %d) got broadcast message (length %d): %.*s",
+				app_payload->id, app_payload->message_len, app_payload->message_len, app_payload->message);
 			return true;
 			break;
 		default:

@@ -6,7 +6,7 @@
 
 #include "settings.h"
 
-#define MAX_APP_LEN (sizeof_enum(req_type) + sizeof(uint8_t) * 4 + sizeof(uint16_t) + APP_MESSAGE_LEN)
+#define MAX_APP_LEN (sizeof_enum(req_type) + sizeof(uint8_t) * 3 + sizeof(uint16_t) * 2 + APP_MESSAGE_LEN)
 
 enum __attribute__((packed, aligned(1))) app_request {
 	APP_REQUEST_DELIVERY,
@@ -21,6 +21,7 @@ struct __attribute__((__packed__)) app_payload {
 	uint8_t message[APP_MESSAGE_LEN];
 	uint8_t message_len;
 	uint16_t crc;
+	uint16_t id;
 };
 
 __attribute__((nonnull(2)))

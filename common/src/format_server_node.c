@@ -23,7 +23,7 @@ void format_server_node_create_message(enum request req, const void* payload, ui
 
 static void set_node_update_payload(const uint8_t* buf, void* ret_payload);
 
-static void set_notify_payload(const uint8_t* buf, enum notify_type* payload);
+static void set_notify_payload(const uint8_t* buf, notify_t* payload);
 
 static void parse_message(enum request* request, void** payload, const uint8_t* buf) {
 	const uint8_t* p;
@@ -60,7 +60,7 @@ static void parse_message(enum request* request, void** payload, const uint8_t* 
 		case REQUEST_NOTIFY:
 			{
 				*request = cmd;
-				*payload = malloc(sizeof(enum notify_type));
+				*payload = malloc(sizeof(notify_t));
 				set_notify_payload(buf, *payload);
 			}
 			break;
@@ -125,16 +125,19 @@ static void create_message(enum request request, const void* payload, uint8_t* m
 			break;
 		case REQUEST_NOTIFY:
 			{
-				enum notify_type* notify_payload;
+				notify_t* notify_payload;
 
-				notify_payload = (enum notify_type*) payload;
+				notify_payload = (notify_t*) payload;
 
-				*msg_len = MSG_LEN + sizeof_enum(notify_payload);
+				*msg_len = MSG_LEN + sizeof(notify_t);
 
 				sender = REQUEST_SENDER_NODE;
 				p = format_create_base(message, *msg_len, request, sender);
 				//payload
-				memcpy(p, notify_payload, sizeof_enum(notify_payload));
+				/* memcpy(p, notify_payload, sizeof_enum(notify_payload)); */
+				memcpy(p, &notify_payload->type, sizeof(notify_payload->type));
+				p += sizeof(notify_payload->type);
+				memcpy(p, &notify_payload->app_msg_id, sizeof(notify_payload->app_msg_id));
 			}
 			break;
 		case REQUEST_BROADCAST:
@@ -167,13 +170,17 @@ static void set_node_update_payload(const uint8_t* buf, void* ret_payload) {
 	p += sizeof(payload->pid);
 }
 
-static void set_notify_payload(const uint8_t* buf, enum notify_type* payload) {
+static void set_notify_payload(const uint8_t* buf, notify_t* payload) {
 	const uint8_t* p;
-	enum_ir tmp;
+	/* enum_ir tmp; */
 
 	p = format_skip_base(buf);
 
 	// parse payload
-	memcpy(&tmp, p, sizeof_enum(*payload));
-	*payload = (enum notify_type) tmp;
+	/* memcpy(&tmp, p, sizeof_enum(*payload)); */
+	/* *payload = (enum notify_type) tmp; */
+	memcpy(&payload->type, p, sizeof(payload->type));
+	p += sizeof(payload->type);
+	memcpy(&payload->app_msg_id, p, sizeof(payload->app_msg_id));
+	p += sizeof(payload->app_msg_id);
 }

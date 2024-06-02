@@ -24,7 +24,7 @@ __attribute__((warn_unused_result))
 int32_t node_essentials_get_conn(uint16_t port);
 
 __attribute__((warn_unused_result))
-bool node_essentials_notify_server(enum notify_type notify);
+bool node_essentials_notify_server(notify_t* notify);
 
 __attribute__((nonnull(1)))
 void node_essentials_broadcast_route(struct node_route_direct_payload* route_payload, bool stop_broadcast);

@@ -64,12 +64,12 @@ int32_t node_essentials_get_conn(uint16_t port) {
 	return -1;
 }
 
-bool node_essentials_notify_server(enum notify_type notify) {
+bool node_essentials_notify_server(notify_t* notify) {
 	uint8_t b[NOTIFY_LEN + MSG_LEN];
 	msg_len_type buf_len;
 	int32_t server_fd;
 
-	format_server_node_create_message(REQUEST_NOTIFY, (void*) &notify, b, &buf_len);
+	format_server_node_create_message(REQUEST_NOTIFY, notify, b, &buf_len);
 
 	server_fd = node_essentials_get_conn(SERVER_PORT);
 	if (server_fd < 0) {

@@ -80,7 +80,7 @@ bool handle_kill(struct node* children, uint8_t addr, int32_t client_fd) { // NO
 	return send_res_to_client(client_fd, req_res);
 }
 
-bool handle_notify(const struct node* children, int32_t client_fd, enum notify_type notify) { // NOLINT
+bool handle_notify(const struct node* children, int32_t client_fd, notify_t* notify) {
 	enum request_result req_res;
 	uint8_t b[NOTIFY_LEN + MSG_LEN];
 	msg_len_type buf_len;
@@ -89,7 +89,7 @@ bool handle_notify(const struct node* children, int32_t client_fd, enum notify_t
 	req_res = REQUEST_OK;
 	res = true;
 
-	switch(notify) {
+	switch(notify->type) {
 		case NOTIFY_GOT_MESSAGE:
 			if (client_fd > 0 && !io_write_all(client_fd, (uint8_t*) &req_res, sizeof_enum(req_res))) {
 				custom_log_error("Failed to response to notify");
@@ -274,6 +274,7 @@ static bool make_send_to_node(const struct node* children, const void* payload) 
 	msg_len_type buf_len;
 	size_t i;
 
+	/* ((send_t*) payload)->app_payload.id = app_msg_id++; */
 	format_server_node_create_message(REQUEST_SEND, payload, (uint8_t*) b, &buf_len);
 
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {

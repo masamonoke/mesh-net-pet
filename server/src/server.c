@@ -43,8 +43,6 @@ int32_t main(void) {
 		die("Failed to create server");
 	}
 
-	fcntl(server_fd, F_SETFD, fcntl(server_fd, F_GETFD) | FD_CLOEXEC);
-
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		server_data.children[i].pid = fork();
 		if (server_data.children[i].pid < 0) {

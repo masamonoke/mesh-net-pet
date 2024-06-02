@@ -58,7 +58,7 @@ static bool handle_server(node_server_t* server, int32_t conn_fd, enum request* 
 			res = handle_server_send(*cmd_type, server->addr, *payload, &server->routing, server->apps);
 			break;
 		case REQUEST_STOP_BROADCAST:
-			handle_stop_broadcast();
+			/* handle_stop_broadcast(); */
 			break;
 		case REQUEST_RESET_BROADCAST:
 			handle_reset_broadcast_status();
@@ -67,6 +67,7 @@ static bool handle_server(node_server_t* server, int32_t conn_fd, enum request* 
 			routing_table_fill_default(&server->routing);
 			node_essentials_reset_connections();
 			node_app_fill_default(server->apps, server->addr);
+			// TODO: reset node ids table
 			break;
 		case REQUEST_BROADCAST:
 		case REQUEST_UNICAST:

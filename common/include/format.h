@@ -46,7 +46,7 @@ enum __attribute__((packed, aligned(1))) request {
 	REQUEST_UNDEFINED
 };
 
-typedef struct send_payload {
+typedef struct __attribute__((__packed__)) send_payload {
 	uint8_t addr_to;
 	uint8_t addr_from;
 	struct app_payload app_payload;

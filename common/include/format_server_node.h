@@ -7,7 +7,7 @@
 
 #define UPDATE_LEN sizeof(node_update_t)
 
-#define NOTIFY_LEN sizeof(enum_ir)
+#define NOTIFY_LEN sizeof(notify_t)
 
 typedef struct node_update_payload {
 	int32_t pid;
@@ -21,6 +21,11 @@ enum __attribute__((packed, aligned(1))) notify_type {
 	NOTIFY_FAIL,
 	NOTIFY_UNICAST_HANDLED
 };
+
+typedef struct __attribute__((__packed__)) notify {
+	enum notify_type type;
+	uint16_t app_msg_id;
+} notify_t;
 
 __attribute__((nonnull(3, 4)))
 void format_server_node_create_message(enum request req,  const void* payload, uint8_t* buf, msg_len_type* len);
