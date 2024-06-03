@@ -10,9 +10,8 @@
 #include "connection.h"
 #include "control_utils.h"
 #include "format.h"
-#include "format_server_node.h"
 #include "io.h"
-#include "node_server.h"
+#include "node_listener.h"
 #include "routing.h"
 #include "serving.h"
 #include "settings.h"
@@ -105,7 +104,7 @@ static bool parse_args(char** args, size_t argc, uint16_t* port) {
 }
 
 static bool update_node_state(uint16_t port) {
-	uint8_t buf[UPDATE_LEN + MSG_LEN];
+	uint8_t buf[sizeof(node_update_t) + MSG_BASE_LEN];
 	msg_len_type buf_len;
 	int32_t server_fd;
 	bool status;
@@ -123,7 +122,7 @@ static bool update_node_state(uint16_t port) {
 		.port = port,
 	};
 
-	format_server_node_create_message(REQUEST_UPDATE, &payload, buf, &buf_len);
+	format_create(REQUEST_UPDATE, &payload, buf, &buf_len, REQUEST_SENDER_NODE);
 
 	if (!io_write_all(server_fd, buf, buf_len)) {
 		node_log_error("Failed to send node init data");
@@ -158,7 +157,7 @@ static bool handle_request(int32_t conn_fd, void* data) {
 	}
 
 	if (received_bytes > 0) {
-		node_server_handle_request(&server, conn_fd, (uint8_t*) buf, received_bytes, data);
+		node_listener_handle_request(&server, conn_fd, (uint8_t*) buf, received_bytes, data);
 	} else {
 		node_log_error("Failed to read %d bytes", msg_len);
 		return false;

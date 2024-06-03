@@ -4,7 +4,6 @@
 
 #include "connection.h"
 #include "io.h"
-#include "format_server_node.h"
 
 struct conn {
 	int32_t fd;
@@ -28,7 +27,7 @@ void node_essentials_reset_connections(void) {
 	}
 }
 
-int32_t node_essentials_get_conn(uint16_t port) {
+static int32_t get_conn(uint16_t port) {
 	static bool init = false;
 	size_t i;
 
@@ -50,7 +49,6 @@ int32_t node_essentials_get_conn(uint16_t port) {
 		if (connections[i].fd == -1) {
 			connections[i].fd = connection_socket_to_send(port);
 			if (connections[i].fd < 0) {
-				/* node_log_error("Failed to open connection with %d", port); */
 				break;
 			}
 			connections[i].port = port;
@@ -59,19 +57,17 @@ int32_t node_essentials_get_conn(uint16_t port) {
 		}
 	}
 
-	/* node_log_error("Failed to open connection with %d", port); */
-
 	return -1;
 }
 
 bool node_essentials_notify_server(notify_t* notify) {
-	uint8_t b[NOTIFY_LEN + MSG_LEN];
+	uint8_t b[sizeof(notify_t) + MSG_BASE_LEN];
 	msg_len_type buf_len;
 	int32_t server_fd;
 
-	format_server_node_create_message(REQUEST_NOTIFY, notify, b, &buf_len);
+	format_create(REQUEST_NOTIFY, notify, b, &buf_len, REQUEST_SENDER_NODE);
 
-	server_fd = node_essentials_get_conn(SERVER_PORT);
+	server_fd = get_conn(SERVER_PORT);
 	if (server_fd < 0) {
 		node_log_error("Failed to connect to server");
 		return false;
@@ -85,9 +81,7 @@ bool node_essentials_notify_server(notify_t* notify) {
 	return true;
 }
 
-static void get_conn_and_send(uint16_t port, uint8_t* buf, msg_len_type buf_len);
-
-void node_essentials_broadcast_route(struct node_route_direct_payload* route_payload, bool stop_broadcast) {
+void node_essentials_broadcast_route(route_payload_t* route_payload, bool stop_broadcast) {
 	uint8_t b[MAX_MSG_LEN];
 	msg_len_type buf_len;
 	size_t i;
@@ -95,12 +89,11 @@ void node_essentials_broadcast_route(struct node_route_direct_payload* route_pay
 	if (!stop_broadcast) {
 
 		route_payload->time_to_live--;
-		route_payload->metric++;
 
-		format_node_node_create_message(REQUEST_ROUTE_DIRECT, route_payload, b, &buf_len);
+		format_create(REQUEST_ROUTE_DIRECT, route_payload, b, &buf_len, REQUEST_SENDER_NODE);
 
 		for (i = 0; i < neighbor_num; i++) {
-			get_conn_and_send(broadcast_neighbors[i], b, buf_len);
+			node_essentials_get_conn_and_send(broadcast_neighbors[i], b, buf_len);
 		}
 	}
 }
@@ -117,9 +110,32 @@ void node_essentials_broadcast(broadcast_t* broadcast_payload) {
 			.addr_to = (uint8_t) node_addr(broadcast_neighbors[i]),
 		};
 
-		format_node_node_create_message(REQUEST_SEND, &send_payload, b, &buf_len);
-		get_conn_and_send(broadcast_neighbors[i], b, buf_len);
+		format_create(REQUEST_SEND, &send_payload, b, &buf_len, REQUEST_SENDER_NODE);
+
+		node_essentials_get_conn_and_send(broadcast_neighbors[i], b, buf_len);
 	}
+}
+
+void node_essentials_send_unicast_contest(unicast_contest_t* unicast) {
+	uint8_t i;
+	uint8_t b[sizeof(unicast_contest_t) + MSG_BASE_LEN];
+	uint8_t buf_len;
+
+	format_create(REQUEST_UNICAST_CONTEST, unicast, b, &buf_len, REQUEST_SENDER_NODE);
+	for (i = 0; i < neighbor_num; i++) {
+		node_essentials_get_conn_and_send(broadcast_neighbors[i], b, buf_len);
+	}
+}
+
+void node_essentials_send_unicast_first(unicast_contest_t* unicast, uint8_t addr) {
+	uint8_t b[sizeof(unicast_contest_t) + MSG_BASE_LEN];
+	uint8_t buf_len;
+	uint8_t prev_addr;
+
+	prev_addr = unicast->node_addr;
+	unicast->node_addr = addr;
+	format_create(REQUEST_UNICAST_FIRST, unicast, b, &buf_len, REQUEST_SENDER_NODE);
+	node_essentials_get_conn_and_send(node_port(prev_addr), b, buf_len);
 }
 
 static inline uint8_t from_pos(const int8_t pos[2]) {
@@ -192,18 +208,19 @@ static void fill_broadcast_neighbors(uint8_t addr, uint8_t radius) { // NOLINT
 	}
 }
 
-static void get_conn_and_send(uint16_t port, uint8_t* buf, msg_len_type buf_len) {
+bool node_essentials_get_conn_and_send(uint16_t port, uint8_t* buf, msg_len_type buf_len) {
 	int32_t conn_fd;
 
-	conn_fd = node_essentials_get_conn(port);
+	conn_fd = get_conn(port);
 
 	if (conn_fd < 0) {
-		/* node_log_error("Failed to open connection with neighbor port %d", port); */
-		return;
+		return false;
 	}
 
 	if (!io_write_all(conn_fd, buf, buf_len)) {
 		node_log_error("Failed to send route direct request: address %d", node_addr(port));
-		return;
+		return false;
 	}
+
+	return true;
 }

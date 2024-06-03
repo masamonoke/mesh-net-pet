@@ -24,4 +24,9 @@ bool handle_node_route_inverse(routing_table_t* routing, void* payload, uint8_t 
 __attribute__((nonnull(1)))
 void handle_broadcast(broadcast_t* broadcast_payload);
 
-void handle_reset_broadcast_status(void);
+__attribute__((nonnull(1)))
+void handle_server_unicast(broadcast_t* broadcast_payload, uint8_t cur_node_addr);
+
+void handle_unicast_contest(unicast_contest_t* unicast, uint8_t cur_node_addr);
+
+void handle_unicast_first(unicast_contest_t* unicast, uint8_t cur_node_addr);

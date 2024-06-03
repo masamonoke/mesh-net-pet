@@ -1,4 +1,4 @@
-#include "server_server.h"
+#include "server_listener.h"
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -8,8 +8,7 @@
 
 #include "custom_logger.h"
 #include "format.h"
-#include "format_client_server.h"
-#include "format_server_node.h"
+#include "format.h"
 #include "server_handler.h"
 
 static uint16_t app_msg_id = 0;
@@ -27,7 +26,7 @@ static bool handle_client_request(server_t* server_data, void** payload, const u
 __attribute__((warn_unused_result))
 static bool handle_node_request(server_t* server_data, void** payload, const uint8_t* buf, void* data);
 
-bool server_server_handle(server_t* server, const uint8_t* buf, int32_t conn_fd, void* data) {
+bool server_listener_handle(server_t* server, const uint8_t* buf, int32_t conn_fd, void* data) {
 	bool processed;
 	enum request_sender sender;
 	void* payload;
@@ -57,7 +56,7 @@ static bool handle_client_request(server_t* server_data, void** payload, const u
 	bool res;
 
 	*payload = NULL;
-	format_server_client_parse_message(&cmd_type, payload, buf);
+	format_parse(&cmd_type, payload, buf);
 
 	res = true;
 	switch (cmd_type) {
@@ -81,6 +80,8 @@ static bool handle_client_request(server_t* server_data, void** payload, const u
 			break;
 		case REQUEST_BROADCAST:
 		case REQUEST_UNICAST:
+			((broadcast_t*) *payload)->app_payload.id = app_msg_id++;
+			set_client(server_data, ((broadcast_t*) *payload)->app_payload.id, server_data->client_fd);
 			res = handle_broadcast(server_data->children, *payload, cmd_type);
 			break;
 		default:
@@ -100,7 +101,7 @@ static bool handle_node_request(server_t* server_data, void** payload, const uin
 	int32_t client_fd;
 
 	*payload = NULL;
-	format_server_node_parse_message(&cmd_type, payload, buf);
+	format_parse(&cmd_type, payload, buf);
 
 	res = true;
 	switch (cmd_type) {
@@ -109,7 +110,7 @@ static bool handle_node_request(server_t* server_data, void** payload, const uin
 			break;
 		case REQUEST_NOTIFY:
 			client_fd = get_client_fd_by_id(server_data, ((notify_t*) *payload)->app_msg_id);
-			res = handle_notify(server_data->children, client_fd,  *payload);
+			res = handle_notify(client_fd,  *payload);
 			set_client(server_data, ((notify_t*) *payload)->app_msg_id, -1);
 			break;
 		default:

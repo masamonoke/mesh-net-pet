@@ -10,7 +10,6 @@
 #include "control_utils.h"
 #include "custom_logger.h"
 #include "format.h"
-#include "format_client_server.h"
 #include "io.h"
 #include "settings.h"
 #include "crc.h"
@@ -41,7 +40,7 @@ int32_t main(int32_t argc, char** argv) {
 	}
 
 	status = REQUEST_UNKNOWN;
-	format_server_client_create_message(req, payload, buf, &buf_len);
+	format_create(req, payload, buf, &buf_len, REQUEST_SENDER_CLIENT);
 
 	if (!io_write_all(server_fd, buf, buf_len)) {
 		custom_log_error("Failed to send client command");
@@ -167,7 +166,7 @@ static bool parse_send_cmd(int32_t argc, char** argv, enum request* cmd, void** 
 		return false;
 	}
 
-	*payload = malloc(SEND_LEN);
+	*payload = malloc(sizeof(send_t));
 	send_payload = (send_t*) *payload;
 
 	send_payload->addr_from = addr_from;
@@ -238,7 +237,7 @@ static bool parse_broadcast_cmd(int32_t argc, char** argv, void** payload, enum 
 		return false;
 	}
 
-	*payload = malloc(BROADCAST_LEN);
+	*payload = malloc(sizeof(broadcast_t));
 	broadcast_payload = (broadcast_t*) *payload;
 
 	broadcast_payload->addr_from = addr_from;

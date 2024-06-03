@@ -1,4 +1,4 @@
-#include "node_server.h"
+#include "node_listener.h"
 
 #include <stdbool.h>
 #include <stdlib.h>
@@ -7,8 +7,6 @@
 
 #include "custom_logger.h"
 #include "format.h"
-#include "format_node_node.h"
-#include "format_server_node.h"
 #include "node_essentials.h"
 #include "node_handler.h"
 
@@ -18,7 +16,7 @@ static bool handle_server(node_server_t* server, int32_t conn_fd, enum request* 
 __attribute__((warn_unused_result))
 static bool handle_node(node_server_t* server, enum request* cmd_type, void** payload, uint8_t* buf, size_t received_bytes, void* data);
 
-bool node_server_handle_request(node_server_t* server, int32_t conn_fd, uint8_t* buf, ssize_t received_bytes, void* data) {
+bool node_listener_handle_request(node_server_t* server, int32_t conn_fd, uint8_t* buf, ssize_t received_bytes, void* data) {
 	enum request request;
 	void* payload;
 	enum request_sender sender;
@@ -46,7 +44,7 @@ static bool handle_server(node_server_t* server, int32_t conn_fd, enum request* 
 	bool res;
 
 	*payload = NULL;
-	format_server_node_parse_message(cmd_type, payload, buf);
+	format_parse(cmd_type, payload, buf);
 
 	res = true;
 	switch (*cmd_type) {
@@ -57,23 +55,16 @@ static bool handle_server(node_server_t* server, int32_t conn_fd, enum request* 
 		case REQUEST_SEND:
 			res = handle_server_send(*cmd_type, server->addr, *payload, &server->routing, server->apps);
 			break;
-		case REQUEST_STOP_BROADCAST:
-			/* handle_stop_broadcast(); */
-			break;
-		case REQUEST_RESET_BROADCAST:
-			handle_reset_broadcast_status();
-			break;
 		case REQUEST_RESET:
 			routing_table_fill_default(&server->routing);
 			node_essentials_reset_connections();
 			node_app_fill_default(server->apps, server->addr);
-			// TODO: reset node ids table
+			break;
+		case REQUEST_UNICAST:
+			handle_server_unicast(*payload, server->addr);
 			break;
 		case REQUEST_BROADCAST:
-		case REQUEST_UNICAST:
-			{
-				handle_broadcast(*payload);
-			}
+			handle_broadcast(*payload);
 			break;
 		case REQUEST_UNDEFINED:
 			node_log_error("Undefined server-node request type");
@@ -94,7 +85,7 @@ static bool handle_node(node_server_t* server, enum request* cmd_type, void** pa
 	bool res;
 
 	*payload = NULL;
-	format_node_node_parse_message(cmd_type, payload, buf);
+	format_parse(cmd_type, payload, buf);
 
 	res = true;
 	switch (*cmd_type) {
@@ -106,6 +97,12 @@ static bool handle_node(node_server_t* server, enum request* cmd_type, void** pa
 			break;
 		case REQUEST_ROUTE_INVERSE:
 			res = handle_node_route_inverse(&server->routing, *payload, server->addr);
+			break;
+		case REQUEST_UNICAST_CONTEST:
+			handle_unicast_contest(*payload, server->addr);
+			break;
+		case REQUEST_UNICAST_FIRST:
+			handle_unicast_first(*payload, server->addr);
 			break;
 		case REQUEST_UNDEFINED:
 			node_log_error("Undefined request: received bytes %d", received_bytes);

@@ -10,7 +10,7 @@ count_time() {
 
 benchmark() {
 	sum=0
-	n=100
+	n=30
 	for i in $(seq 1 $n);
 	do
 		addr_s=$((0 + $RANDOM % 99))
@@ -31,3 +31,5 @@ benchmark
 echo "Benchmarking sending in path found network"
 
 benchmark
+
+make client TARGET_ARGS="reset" > /dev/null 2>&1

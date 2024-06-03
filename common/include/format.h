@@ -8,13 +8,7 @@
 
 #define msg_len_type uint8_t
 
-#define MSG_LEN_SIZE sizeof(msg_len_type)
-
-#define MSG_LEN (sizeof_enum(request) + sizeof_enum(sender) + MSG_LEN_SIZE)
-
-#define SEND_LEN (sizeof(uint8_t) * 2 + MAX_APP_LEN)
-
-#define BROADCAST_LEN (sizeof(uint8_t) * 3 + MAX_APP_LEN)
+#define MSG_BASE_LEN (sizeof_enum(request) + sizeof_enum(sender) + sizeof(msg_len_type))
 
 enum __attribute__((packed, aligned(1))) request_result {
 	REQUEST_OK,
@@ -36,13 +30,13 @@ enum __attribute__((packed, aligned(1))) request {
 	REQUEST_NOTIFY,
 	REQUEST_ROUTE_DIRECT,
 	REQUEST_ROUTE_INVERSE,
-	REQUEST_STOP_BROADCAST,
-	REQUEST_RESET_BROADCAST,
 	REQUEST_KILL_NODE,
 	REQUEST_REVIVE_NODE,
 	REQUEST_RESET,
 	REQUEST_BROADCAST,
 	REQUEST_UNICAST,
+	REQUEST_UNICAST_CONTEST,
+	REQUEST_UNICAST_FIRST,
 	REQUEST_UNDEFINED
 };
 
@@ -55,9 +49,40 @@ typedef struct __attribute__((__packed__)) send_payload {
 typedef struct __attribute__((__packed__)) broadcast_payload {
 	uint8_t addr_from;
 	uint8_t time_to_live;
-	uint8_t local_from;
 	struct app_payload app_payload;
 } broadcast_t;
+
+typedef struct __attribute__((__packed__)) route_payload {
+	uint8_t sender_addr;
+	uint8_t receiver_addr;
+	uint8_t local_sender_addr; // from which node request retransmitted
+	int8_t time_to_live;
+	uint16_t id;
+	struct app_payload app_payload;
+} route_payload_t;
+
+typedef struct node_update_payload {
+	int32_t pid;
+	uint16_t port;
+	uint8_t addr;
+} node_update_t;
+
+enum __attribute__((packed, aligned(1))) notify_type {
+	NOTIFY_GOT_MESSAGE,
+	NOTIFY_FAIL,
+	NOTIFY_UNICAST_HANDLED
+};
+
+typedef struct __attribute__((__packed__)) notify {
+	enum notify_type type;
+	uint16_t app_msg_id;
+} notify_t;
+
+typedef struct __attribute__((__packed__)) unicast_contest {
+	enum request req; // either REQUEST_UNICAST_FIRST or REQUEST_UNICAST_CONTEST
+	uint8_t node_addr;
+	struct app_payload app_payload;
+} unicast_contest_t;
 
 __attribute__((nonnull(2)))
 void format_sprint_result(enum request_result res, char buf[], size_t len);
@@ -65,23 +90,10 @@ void format_sprint_result(enum request_result res, char buf[], size_t len);
 __attribute__((warn_unused_result))
 enum request_sender format_define_sender(const uint8_t* buf);
 
-__attribute__((nonnull(1), warn_unused_result))
-uint8_t* format_create_base(uint8_t* message, msg_len_type msg_len, enum request cmd, enum request_sender sender);
-
-__attribute__((nonnull(1), warn_unused_result))
-uint8_t* format_skip_base(const uint8_t* message);
 
 __attribute__((warn_unused_result))
 bool format_is_message_correct(size_t buf_len, msg_len_type msg_len);
 
-__attribute__((nonnull(2, 3, 4)))
-void format_create_send(uint8_t* p, const void* payload, uint8_t* message, msg_len_type* msg_len, enum request_sender sender);
+void format_parse(enum request* req, void** payload, const void* buf);
 
-__attribute__((nonnull(1, 2)))
-void format_parse_send(const uint8_t* buf, send_t* payload);
-
-__attribute__((nonnull(2, 3, 4)))
-void format_create_broadcast(uint8_t* p, const void* payload, uint8_t* message, msg_len_type* msg_len, enum request_sender sender, enum request cmd);
-
-__attribute__((nonnull(1, 2)))
-void format_parse_broadcast(const uint8_t* buf, broadcast_t* payload);
+void format_create(enum request req, const void* payload, uint8_t* buf, msg_len_type* len, enum request_sender sender);

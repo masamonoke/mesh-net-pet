@@ -1,10 +1,10 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdbool.h>
+#include <format.h>
 
-#include "format_node_node.h"
 #include "custom_logger.h"
-#include "format_server_node.h"
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -20,18 +20,24 @@
 #pragma clang diagnostic pop
 #endif
 
-__attribute__((warn_unused_result))
-int32_t node_essentials_get_conn(uint16_t port);
+bool node_essentials_get_conn_and_send(uint16_t port, uint8_t* buf, msg_len_type buf_len);
 
 __attribute__((warn_unused_result))
 bool node_essentials_notify_server(notify_t* notify);
 
 __attribute__((nonnull(1)))
-void node_essentials_broadcast_route(struct node_route_direct_payload* route_payload, bool stop_broadcast);
+void node_essentials_broadcast_route(route_payload_t* route_payload, bool stop_broadcast);
 
 __attribute__((nonnull(1)))
 void node_essentials_broadcast(broadcast_t* broadcast_payload);
 
+__attribute__((nonnull(1)))
+void node_essentials_unicast(broadcast_t* broadcast_payload);
+
 void node_essentials_reset_connections(void);
 
 void node_essentials_fill_neighbors_port(uint8_t addr);
+
+void node_essentials_send_unicast_contest(unicast_contest_t* unicast);
+
+void node_essentials_send_unicast_first(unicast_contest_t* unicast, uint8_t addr);

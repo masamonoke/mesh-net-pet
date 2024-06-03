@@ -6,7 +6,6 @@
 
 #include "settings.h"
 #include "custom_logger.h"
-#include "format_server_node.h"
 #include "io.h"
 #include "server_essentials.h"
 #include "connection.h"
@@ -31,7 +30,7 @@ bool handle_ping(const struct node* children, int32_t client_fd, const void* pay
 				return send_res_to_client(client_fd, REQUEST_ERR);
 			}
 
-			format_server_node_create_message(REQUEST_PING, NULL, b, &buf_len);
+			format_create(REQUEST_PING, NULL, b, &buf_len, REQUEST_SENDER_SERVER);
 
 			if (!io_write_all(children[i].write_fd, b, buf_len)) {
 				custom_log_error("Failed to send request to node");
@@ -80,10 +79,8 @@ bool handle_kill(struct node* children, uint8_t addr, int32_t client_fd) { // NO
 	return send_res_to_client(client_fd, req_res);
 }
 
-bool handle_notify(const struct node* children, int32_t client_fd, notify_t* notify) {
+bool handle_notify(int32_t client_fd, notify_t* notify) {
 	enum request_result req_res;
-	uint8_t b[NOTIFY_LEN + MSG_LEN];
-	msg_len_type buf_len;
 	bool res;
 
 	req_res = REQUEST_OK;
@@ -96,25 +93,15 @@ bool handle_notify(const struct node* children, int32_t client_fd, notify_t* not
 				res = false;
 			}
 			break;
-		case NOTIFY_INVERES_COMPLETED:
-		case NOTIFY_UNICAST_HANDLED:
-			format_server_node_create_message(REQUEST_STOP_BROADCAST, NULL, b, &buf_len);
-
-			for (size_t i = 0; i < (size_t) NODE_COUNT; i++) {
-				if (children[i].write_fd != -1) {
-					if (!io_write_all(children[i].write_fd, b, buf_len)) {
-						custom_log_error("Failed to send stop broadcast");
-						res = false;
-					}
-				}
-			}
-			break;
 		case NOTIFY_FAIL:
 			req_res = REQUEST_ERR;
 			if (client_fd > 0 && !io_write_all(client_fd, (uint8_t*) &req_res, sizeof_enum(req_res))) {
 				custom_log_error("Failed to response to notify");
 				res = false;
 			}
+			break;
+		case NOTIFY_UNICAST_HANDLED:
+			custom_log_debug("Handled unicast");
 			break;
 	}
 
@@ -124,12 +111,12 @@ bool handle_notify(const struct node* children, int32_t client_fd, notify_t* not
 static void revivie_node(struct node* node);
 
 bool handle_reset(struct node* children, int32_t client_fd) {
-	uint8_t b[NOTIFY_LEN + MSG_LEN];
+	uint8_t b[sizeof(notify_t) + MSG_BASE_LEN];
 	msg_len_type buf_len;
 	size_t i;
 	bool res;
 
-	format_server_node_create_message(REQUEST_RESET, NULL, b, &buf_len);
+	format_create(REQUEST_RESET, NULL, b, &buf_len, REQUEST_SENDER_SERVER);
 
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		if (children[i].write_fd != -1) {
@@ -152,22 +139,7 @@ __attribute__((warn_unused_result))
 static bool make_send_to_node(const struct node* children, const void* payload);
 
 bool handle_client_send(struct node* children, const void* payload) {
-	uint8_t b[NOTIFY_LEN + MSG_LEN];
-	msg_len_type buf_len;
-	size_t i;
-
 	custom_log_debug("Send command from client");
-
-	format_server_node_create_message(REQUEST_RESET_BROADCAST, NULL, b, &buf_len);
-
-	for (i = 0; i < (size_t) NODE_COUNT; i++) {
-		if (children[i].write_fd != -1) {
-			if (!io_write_all(children[i].write_fd, b, buf_len)) {
-				custom_log_error("Failed to send reset broadcast request");
-			}
-		}
-	}
-
 	return make_send_to_node(children, payload);
 }
 
@@ -176,19 +148,7 @@ bool handle_broadcast(struct node* children, const void* payload, enum request c
 	msg_len_type buf_len;
 	size_t i;
 
-	if (cmd == REQUEST_UNICAST) {
-		format_server_node_create_message(REQUEST_RESET_BROADCAST, NULL, b, &buf_len);
-
-		for (i = 0; i < (size_t) NODE_COUNT; i++) {
-			if (children[i].write_fd != -1) {
-				if (!io_write_all(children[i].write_fd, b, buf_len)) {
-					custom_log_error("Failed to send reset broadcast request");
-				}
-			}
-		}
-	}
-
-	format_server_node_create_message(cmd, payload, (uint8_t*) b, &buf_len);
+	format_create(cmd, payload, (uint8_t*) b, &buf_len, REQUEST_SENDER_SERVER);
 
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		if (children[i].addr == ((broadcast_t*) payload)->addr_from) {
@@ -274,8 +234,7 @@ static bool make_send_to_node(const struct node* children, const void* payload) 
 	msg_len_type buf_len;
 	size_t i;
 
-	/* ((send_t*) payload)->app_payload.id = app_msg_id++; */
-	format_server_node_create_message(REQUEST_SEND, payload, (uint8_t*) b, &buf_len);
+	format_create(REQUEST_SEND, payload, (uint8_t*) b, &buf_len, REQUEST_SENDER_SERVER);
 
 	for (i = 0; i < (size_t) NODE_COUNT; i++) {
 		if (children[i].addr == ((send_t*) payload)->addr_from) {

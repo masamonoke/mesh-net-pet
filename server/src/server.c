@@ -12,7 +12,7 @@
 #include "connection.h"
 #include "control_utils.h"
 #include "custom_logger.h"
-#include "server_server.h"
+#include "server_listener.h"
 #include "serving.h"
 #include "settings.h"
 #include "io.h"
@@ -119,7 +119,7 @@ static bool handle_request(int32_t conn_fd, void* data) {
 	if (received_bytes > 0) {
 		bool processed;
 
-		processed = server_server_handle(&server_data, (uint8_t*) buf, conn_fd, data);
+		processed = server_listener_handle(&server_data, (uint8_t*) buf, conn_fd, data);
 
 		if (processed) {
 			return true;
