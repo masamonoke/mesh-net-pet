@@ -61,7 +61,7 @@ typedef struct __attribute__((__packed__)) route_payload {
 	struct app_payload app_payload;
 } route_payload_t;
 
-typedef struct node_update_payload {
+typedef struct __attribute__((__packed__)) node_update_payload {
 	int32_t pid;
 	uint16_t port;
 	uint8_t addr;

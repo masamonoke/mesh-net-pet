@@ -95,7 +95,7 @@ There is limitation in 150 symbols. Otherwise your message will be clipped.
  make client TARGET_ARGS="unicast -s <sender node addr> -a '<message>'"
 ```
 
-Unicast works similiar to broadcast but request is handled by one node only (may be more if handle happend in the same time)
+Unicast works similiar to broadcast but request is handled by one node only.
 
 ## Tests
 
@@ -106,4 +106,5 @@ make test
 ```
 
 # Bugs
-* <del>After killing node (nodes) there can be error 141 (broken pipe) when sending message to other nodes probably because of write to already closed fd
+* <del>After killing node (nodes) there can be error 141 (broken pipe) when sending message to other nodes probably because of write to already closed fd</del>
+* Server can fail to send request result to client but the network handled request successfully when running parallel clients
