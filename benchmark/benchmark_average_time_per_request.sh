@@ -22,6 +22,8 @@ benchmark() {
 	echo Average in miliseconds: $((sum / n))
 }
 
+echo "Average time per request benchmark"
+
 make client TARGET_ARGS="reset" > /dev/null 2>&1
 
 echo "Benchmarking sending in reset network"

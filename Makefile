@@ -71,7 +71,10 @@ clean:
 test:
 	@cd test && \
 		sh test_healthy_mesh.sh && \
-		sh test_partially_broken.sh
+		sh test_partially_broken.sh \
+		sh test_parallel.sh
 
 benchmark:
-	@cd scripts && sh benchmark.sh
+	@cd benchmark && \
+	sh benchmark_average_time_per_request.sh && \
+	sh benchmark_throughput.sh
