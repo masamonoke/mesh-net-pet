@@ -35,7 +35,7 @@ export DEFINES
 
 $(TARGETS): build
 
-.PHONY: build clean test
+.PHONY: build clean test benchmark
 
 build: build_node build_server build_client
 	@echo Build done
@@ -72,3 +72,6 @@ test:
 	@cd test && \
 		sh test_healthy_mesh.sh && \
 		sh test_partially_broken.sh
+
+benchmark:
+	@cd scripts && sh benchmark.sh

@@ -105,6 +105,14 @@ Run server before testing
 make test
 ```
 
+## Benchmark
+
+Run server before benchmarking
+
+```console
+make benchmark
+```
+
 # Bugs
 * <del>After killing node (nodes) there can be error 141 (broken pipe) when sending message to other nodes probably because of write to already closed fd</del>
 * Server can fail to send request result to client but the network handled request successfully when running parallel clients

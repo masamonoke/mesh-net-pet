@@ -10,7 +10,7 @@ count_time() {
 
 benchmark() {
 	sum=0
-	n=30
+	n=70
 	for i in $(seq 1 $n);
 	do
 		addr_s=$((0 + $RANDOM % 99))
