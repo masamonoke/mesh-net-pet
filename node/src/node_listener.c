@@ -56,9 +56,7 @@ static bool handle_server(node_server_t* server, int32_t conn_fd, enum request* 
 			res = handle_server_send(*cmd_type, server->addr, *payload, &server->routing, server->apps);
 			break;
 		case REQUEST_RESET:
-			routing_table_fill_default(&server->routing);
-			node_essentials_reset_connections();
-			node_app_fill_default(server->apps, server->addr);
+			handle_reset(&server->routing, server->apps, server->addr);
 			break;
 		case REQUEST_UNICAST:
 			handle_server_unicast(*payload, server->addr);

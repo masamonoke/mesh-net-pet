@@ -9,8 +9,8 @@ kill_node() {
 test_send() {
 	make client TARGET_ARGS="send -s $1 -r $2" > /dev/null 2>&1
 	if [ $? != $3 ]; then
-		echo "Failed: send from $1 to $2 but returned $?"
+		echo "Failed: send from $1 to $2"
 	else
-		echo "Passed: send from $1 to $2 returned $3"
+		echo "Passed: send from $1 to $2"
 	fi
 }

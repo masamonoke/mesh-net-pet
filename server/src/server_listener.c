@@ -83,6 +83,7 @@ static bool handle_client_request(server_t* server_data, void** payload, const u
 			res = handle_kill(server_data->children, *((uint8_t*) *payload), server_data->client_fd);
 			break;
 		case REQUEST_RESET:
+			app_msg_id = 0;
 			res = handle_reset(server_data->children, server_data->client_fd);
 			break;
 		case REQUEST_REVIVE_NODE:

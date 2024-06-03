@@ -39,6 +39,8 @@ static bool get_unicast_status_by_id(uint16_t id, bool* unicast_first);
 
 static void set_unicast_status_by_id(uint16_t id, bool unicast_first);
 
+static void fill_messages_default(void);
+
 bool handle_ping(int32_t conn_fd) {
 	enum request_result req_res;
 
@@ -207,7 +209,7 @@ bool handle_node_route_direct(routing_table_t* routing, uint8_t server_addr, voi
 			old_metric = routing_get(routing, route_payload->sender_addr).metric;
 			if (old_metric > new_metric) {
 				routing_set_addr(routing, route_payload->sender_addr, route_payload->local_sender_addr, new_metric);
-				node_log_debug("Replaced old path with metric %d to new path with metric %d", old_metric, new_metric);
+				/* node_log_debug("Replaced old path with metric %d to new path with metric %d", old_metric, new_metric); */
 			}
 		}
 	}
@@ -428,6 +430,13 @@ bool route_direct_handle_delivered(routing_table_t* routing, node_packet_t* rout
 	return true;
 }
 
+void handle_reset(routing_table_t* table, app_t apps[APPS_COUNT], uint8_t addr) {
+	routing_table_fill_default(table);
+	node_essentials_reset_connections();
+	node_app_fill_default(apps, addr);
+	fill_messages_default();
+}
+
 static bool is_id_set(uint16_t id) {
 	uint8_t i;
 
@@ -453,16 +462,20 @@ static void set_new_id(uint16_t id) {
 	}
 }
 
-static void init_messages_data(void) {
-	uint8_t i;
+static void fill_messages_default(void) {
+	size_t i;
 
+	for (i = 0; i < MAX_MESSAGE_DATA; i++) {
+		messages[i].id = 0;
+		messages[i].was_message = false;
+		messages[i].stop_inverse = false;
+		messages[i].unicast_first = false;
+	}
+}
+
+static void init_messages_data(void) {
 	if (!init) {
-		for (i = 0; i < MAX_MESSAGE_DATA; i++) {
-			messages[i].id = 0;
-			messages[i].was_message = false;
-			messages[i].stop_inverse = false;
-			messages[i].unicast_first = false;
-		}
+		fill_messages_default();
 		init = true;
 	}
 }

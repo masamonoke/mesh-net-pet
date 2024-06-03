@@ -71,7 +71,7 @@ clean:
 test:
 	@cd test && \
 		sh test_healthy_mesh.sh && \
-		sh test_partially_broken.sh \
+		sh test_partially_broken.sh && \
 		sh test_parallel.sh
 
 benchmark:
