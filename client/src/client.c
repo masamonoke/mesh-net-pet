@@ -138,7 +138,7 @@ static bool parse_send_cmd(int32_t argc, char** argv, enum request* cmd, void** 
 	uint8_t app_addr_from;
 	char* endptr;
 	char message[APP_MESSAGE_LEN];
-	send_t* send_payload;
+	node_packet_t* send_payload;
 	int32_t i;
 
 	*cmd = REQUEST_SEND;
@@ -166,11 +166,11 @@ static bool parse_send_cmd(int32_t argc, char** argv, enum request* cmd, void** 
 		return false;
 	}
 
-	*payload = malloc(sizeof(send_t));
-	send_payload = (send_t*) *payload;
+	*payload = malloc(sizeof(node_packet_t));
+	send_payload = (node_packet_t*) *payload;
 
-	send_payload->addr_from = addr_from;
-	send_payload->addr_to = addr_to;
+	send_payload->sender_addr = addr_from;
+	send_payload->receiver_addr = addr_to;
 
 	if (argc > 6) {
 		for (i = 0; i < argc; i++) {
@@ -218,7 +218,7 @@ static bool parse_broadcast_cmd(int32_t argc, char** argv, void** payload, enum 
 	uint8_t addr_from;
 	char* endptr;
 	char message[APP_MESSAGE_LEN];
-	broadcast_t* broadcast_payload;
+	node_packet_t* broadcast_payload;
 	int32_t i;
 
 	addr_from = UINT8_MAX;
@@ -237,10 +237,10 @@ static bool parse_broadcast_cmd(int32_t argc, char** argv, void** payload, enum 
 		return false;
 	}
 
-	*payload = malloc(sizeof(broadcast_t));
-	broadcast_payload = (broadcast_t*) *payload;
+	*payload = malloc(sizeof(node_packet_t));
+	broadcast_payload = (node_packet_t*) *payload;
 
-	broadcast_payload->addr_from = addr_from;
+	broadcast_payload->sender_addr = addr_from;
 
 	if (argc >= 6) {
 		for (i = 0; i < argc; i++) {

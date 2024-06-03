@@ -26,13 +26,13 @@ __attribute__((warn_unused_result))
 bool node_essentials_notify_server(notify_t* notify);
 
 __attribute__((nonnull(1)))
-void node_essentials_broadcast_route(route_payload_t* route_payload, bool stop_broadcast);
+void node_essentials_broadcast_route(node_packet_t* route_payload, bool stop_broadcast);
 
 __attribute__((nonnull(1)))
-void node_essentials_broadcast(broadcast_t* broadcast_payload);
+void node_essentials_broadcast(node_packet_t* broadcast_payload);
 
 __attribute__((nonnull(1)))
-void node_essentials_unicast(broadcast_t* broadcast_payload);
+void node_essentials_unicast(node_packet_t* broadcast_payload);
 
 void node_essentials_reset_connections(void);
 

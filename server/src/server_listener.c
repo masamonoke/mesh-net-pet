@@ -61,8 +61,8 @@ static bool handle_client_request(server_t* server_data, void** payload, const u
 	res = true;
 	switch (cmd_type) {
 		case REQUEST_SEND:
-			((send_t*) *payload)->app_payload.id = app_msg_id++;
-			set_client(server_data, ((send_t*) *payload)->app_payload.id, server_data->client_fd);
+			((node_packet_t*) *payload)->app_payload.id = app_msg_id++;
+			set_client(server_data, ((node_packet_t*) *payload)->app_payload.id, server_data->client_fd);
 			res = handle_client_send(server_data->children, *payload);
 			break;
 		case REQUEST_PING:
@@ -80,8 +80,8 @@ static bool handle_client_request(server_t* server_data, void** payload, const u
 			break;
 		case REQUEST_BROADCAST:
 		case REQUEST_UNICAST:
-			((broadcast_t*) *payload)->app_payload.id = app_msg_id++;
-			set_client(server_data, ((broadcast_t*) *payload)->app_payload.id, server_data->client_fd);
+			((node_packet_t*) *payload)->app_payload.id = app_msg_id++;
+			set_client(server_data, ((node_packet_t*) *payload)->app_payload.id, server_data->client_fd);
 			res = handle_broadcast(server_data->children, *payload, cmd_type);
 			break;
 		default:

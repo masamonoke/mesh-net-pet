@@ -81,7 +81,7 @@ bool node_essentials_notify_server(notify_t* notify) {
 	return true;
 }
 
-void node_essentials_broadcast_route(route_payload_t* route_payload, bool stop_broadcast) {
+void node_essentials_broadcast_route(node_packet_t* route_payload, bool stop_broadcast) {
 	uint8_t b[MAX_MSG_LEN];
 	msg_len_type buf_len;
 	size_t i;
@@ -98,19 +98,15 @@ void node_essentials_broadcast_route(route_payload_t* route_payload, bool stop_b
 	}
 }
 
-void node_essentials_broadcast(broadcast_t* broadcast_payload) {
+void node_essentials_broadcast(node_packet_t* broadcast_payload) {
 	uint8_t b[MAX_MSG_LEN];
 	msg_len_type buf_len;
 	size_t i;
 
 	for (i = 0; i < neighbor_num; i++) {
-		send_t send_payload = {
-			.app_payload = broadcast_payload->app_payload,
-			.addr_from = broadcast_payload->addr_from,
-			.addr_to = (uint8_t) node_addr(broadcast_neighbors[i]),
-		};
+		broadcast_payload->receiver_addr = (uint8_t) node_addr(broadcast_neighbors[i]);
 
-		format_create(REQUEST_SEND, &send_payload, b, &buf_len, REQUEST_SENDER_NODE);
+		format_create(REQUEST_SEND, broadcast_payload, b, &buf_len, REQUEST_SENDER_NODE);
 
 		node_essentials_get_conn_and_send(broadcast_neighbors[i], b, buf_len);
 	}

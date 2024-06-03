@@ -58,16 +58,7 @@ static uint8_t* create_base(uint8_t* message, msg_len_type msg_len, enum request
 
 static uint8_t* skip_base(const uint8_t* message);
 
-static void create_send(uint8_t* p, const void* payload, uint8_t* message, msg_len_type* msg_len, enum request_sender sender);
-
-static void parse_send(const uint8_t* buf, send_t* payload);
-
-static void create_broadcast(uint8_t* p, const void* payload, uint8_t* message, msg_len_type* msg_len, enum request_sender sender, enum request cmd);
-
-static void parse_broadcast(const uint8_t* buf, broadcast_t* payload);
-
 void format_create(enum request req, const void* payload, uint8_t* buf, msg_len_type* len, enum request_sender sender) {
-	uint8_t payload_len;
 	uint8_t* p;
 
 	p = NULL;
@@ -77,27 +68,14 @@ void format_create(enum request req, const void* payload, uint8_t* buf, msg_len_
 		case REQUEST_REVIVE_NODE:
 		case REQUEST_RESET:
 			if (payload) {
-				uint8_t* ret_payload;
-
-				ret_payload = (uint8_t*) payload;
-				payload_len = sizeof(*ret_payload);
-
-				*len = payload_len + sizeof_enum(request) + sizeof(*len) + sizeof_enum(sender);
+				// this requests carry only uint8_t number
+				*len = sizeof(uint8_t) + MSG_BASE_LEN;
 				p = create_base(buf, *len, req, sender);
 
-				memcpy(p, ret_payload, sizeof(*ret_payload));
+				memcpy(p, payload, sizeof(uint8_t));
 			} else {
 				*len = sizeof_enum(sender) + sizeof_enum(request) + sizeof(*len);
 				p = create_base(buf, *len, req, sender);
-			}
-			break;
-		case REQUEST_SEND:
-				create_send(p, payload, buf, len, sender);
-			break;
-		case REQUEST_BROADCAST:
-		case REQUEST_UNICAST:
-			if (payload) {
-				create_broadcast(p, payload, buf, len, sender, req);
 			}
 			break;
 		case REQUEST_UPDATE:
@@ -140,13 +118,17 @@ void format_create(enum request req, const void* payload, uint8_t* buf, msg_len_
 			break;
 		case REQUEST_ROUTE_DIRECT:
 		case REQUEST_ROUTE_INVERSE:
+		case REQUEST_SEND:
+		case REQUEST_BROADCAST:
+		case REQUEST_UNICAST:
 			{
-				route_payload_t* route_payload;
+				node_packet_t* route_payload;
+				uint8_t payload_len;
 
-				route_payload = (route_payload_t*) payload;
+				route_payload = (node_packet_t*) payload;
 
 				payload_len = sizeof(route_payload->local_sender_addr) + sizeof(route_payload->sender_addr) + sizeof(route_payload->receiver_addr) +
-				sizeof(route_payload->time_to_live) + sizeof(route_payload->id) + format_app_message_len(&route_payload->app_payload);
+				sizeof(route_payload->time_to_live) + format_app_message_len(&route_payload->app_payload);
 				*len = payload_len + sizeof_enum(request) + sizeof(*len) + sizeof_enum(sender);
 
 				p = create_base(buf, *len, req, sender);
@@ -159,8 +141,6 @@ void format_create(enum request req, const void* payload, uint8_t* buf, msg_len_
 				p += sizeof(route_payload->local_sender_addr);
 				memcpy(p, &route_payload->time_to_live, sizeof(route_payload->time_to_live));
 				p += sizeof(route_payload->time_to_live);
-				memcpy(p, &route_payload->id, sizeof(route_payload->id));
-				p += sizeof(route_payload->id);
 
 				format_app_create_message(&route_payload->app_payload, p);
 			}
@@ -191,7 +171,7 @@ void format_create(enum request req, const void* payload, uint8_t* buf, msg_len_
 
 static void parse_addr_payload(const uint8_t* buf, void* ret_payload);
 
-static void parse_route_payload(const uint8_t* buf, route_payload_t* payload);
+static void parse_route_payload(const uint8_t* buf, node_packet_t* payload);
 
 static void parse_node_update_payload(const uint8_t* buf, node_update_t* payload);
 
@@ -211,11 +191,6 @@ void format_parse(enum request* req, void** payload, const void* buf) {
 	cmd = (enum request) tmp;
 
 	switch (cmd) {
-		case REQUEST_SEND:
-			*req = cmd;
-			*payload = malloc(sizeof(send_t));
-			parse_send(buf, (send_t*) *payload);
-			break;
 		case REQUEST_PING:
 		case REQUEST_REVIVE_NODE:
 		case REQUEST_KILL_NODE:
@@ -229,17 +204,14 @@ void format_parse(enum request* req, void** payload, const void* buf) {
 		case REQUEST_UNDEFINED:
 			custom_log_error("Unknown client-server request");
 			break;
+		case REQUEST_SEND:
+		case REQUEST_ROUTE_DIRECT:
+		case REQUEST_ROUTE_INVERSE:
 		case REQUEST_BROADCAST:
 		case REQUEST_UNICAST:
 			*req = cmd;
-			*payload = malloc(sizeof(broadcast_t));
-			parse_broadcast(buf, (broadcast_t*) *payload);
-			break;
-		case REQUEST_ROUTE_DIRECT:
-		case REQUEST_ROUTE_INVERSE:
-			*req = cmd;
-			*payload = malloc(sizeof(route_payload_t));
-			parse_route_payload(buf, (route_payload_t*) *payload);
+			*payload = malloc(sizeof(node_packet_t));
+			parse_route_payload(buf, (node_packet_t*) *payload);
 			break;
 		case REQUEST_UPDATE:
 			*req = cmd;
@@ -275,7 +247,7 @@ static void parse_addr_payload(const uint8_t* buf, void* ret_payload) {
 	p += sizeof(payload);
 }
 
-static void parse_route_payload(const uint8_t* buf, route_payload_t* payload) {
+static void parse_route_payload(const uint8_t* buf, node_packet_t* payload) {
 	const uint8_t* p;
 
 	p = skip_base(buf);
@@ -289,8 +261,6 @@ static void parse_route_payload(const uint8_t* buf, route_payload_t* payload) {
 	p += sizeof(payload->local_sender_addr);
 	memcpy(&payload->time_to_live, p, sizeof(payload->time_to_live));
 	p += sizeof(payload->time_to_live);
-	memcpy(&payload->id, p, sizeof(payload->id));
-	p += sizeof(payload->id);
 
 	format_app_parse_message(&payload->app_payload, p);
 }
@@ -357,70 +327,4 @@ static uint8_t* skip_base(const uint8_t* message) {
 	p += sizeof_enum(enum request_sender); // skip sender
 
 	return p;
-}
-
-static void create_broadcast(uint8_t* p, const void* payload, uint8_t* message, msg_len_type* msg_len, enum request_sender sender, enum request cmd) {
-	broadcast_t* ret_payload;
-	uint8_t payload_len;
-
-	ret_payload = (broadcast_t*) payload;
-
-	payload_len = sizeof(ret_payload->addr_from) + sizeof(ret_payload->time_to_live) + format_app_message_len(&ret_payload->app_payload);
-	*msg_len = payload_len + sizeof_enum(cmd) + sizeof(*msg_len) + sizeof_enum(sender);
-
-	p = create_base(message, *msg_len, cmd, sender);
-
-	memcpy(p, &ret_payload->addr_from, sizeof(ret_payload->addr_from));
-	p += sizeof(ret_payload->addr_from);
-	memcpy(p, &ret_payload->time_to_live, sizeof(ret_payload->time_to_live));
-	p += sizeof(ret_payload->time_to_live);
-
-	format_app_create_message(&ret_payload->app_payload, p);
-}
-
-static void parse_broadcast(const uint8_t* buf, broadcast_t* payload) {
-	const uint8_t* p;
-
-	p = skip_base(buf);
-
-	memcpy(&payload->addr_from, p, sizeof(payload->addr_from));
-	p += sizeof(payload->addr_from);
-	memcpy(&payload->time_to_live, p, sizeof(payload->time_to_live));
-	p += sizeof(payload->time_to_live);
-
-	format_app_parse_message(&payload->app_payload, p);
-}
-
-static void create_send(uint8_t* p, const void* payload, uint8_t* message, msg_len_type* msg_len, enum request_sender sender) {
-	send_t* ret_payload;
-	uint8_t payload_len;
-
-	ret_payload = (send_t*) payload;
-
-	payload_len = sizeof(ret_payload->addr_to) + sizeof(ret_payload->addr_from) + format_app_message_len(&ret_payload->app_payload);
-	*msg_len = payload_len + sizeof_enum(REQUEST_SEND) + sizeof(*msg_len) + sizeof_enum(sender);
-
-	p = create_base(message, *msg_len, REQUEST_SEND, sender);
-
-	memcpy(p, &ret_payload->addr_from, sizeof(ret_payload->addr_from));
-	p += sizeof(ret_payload->addr_from);
-	memcpy(p, &ret_payload->addr_to, sizeof(ret_payload->addr_to));
-	p += sizeof(ret_payload->addr_to);
-
-	format_app_create_message(&ret_payload->app_payload, p);
-	p += format_app_message_len(&ret_payload->app_payload);
-}
-
-static void parse_send(const uint8_t* buf, send_t* payload) {
-	const uint8_t* p;
-
-	p = skip_base(buf);
-
-	memcpy(&payload->addr_from, p, sizeof(payload->addr_from));
-	p += sizeof(payload->addr_from);
-	memcpy(&payload->addr_to, p, sizeof(payload->addr_to));
-	p += sizeof(payload->addr_to);
-
-	format_app_parse_message(&payload->app_payload, p);
-	p += format_app_message_len(&payload->app_payload);
 }

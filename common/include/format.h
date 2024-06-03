@@ -40,26 +40,13 @@ enum __attribute__((packed, aligned(1))) request {
 	REQUEST_UNDEFINED
 };
 
-typedef struct __attribute__((__packed__)) send_payload {
-	uint8_t addr_to;
-	uint8_t addr_from;
-	struct app_payload app_payload;
-} send_t;
-
-typedef struct __attribute__((__packed__)) broadcast_payload {
-	uint8_t addr_from;
-	uint8_t time_to_live;
-	struct app_payload app_payload;
-} broadcast_t;
-
-typedef struct __attribute__((__packed__)) route_payload {
+typedef struct __attribute__((__packed__)) node_packet {
 	uint8_t sender_addr;
 	uint8_t receiver_addr;
 	uint8_t local_sender_addr; // from which node request retransmitted
 	int8_t time_to_live;
-	uint16_t id;
 	struct app_payload app_payload;
-} route_payload_t;
+} node_packet_t;
 
 typedef struct __attribute__((__packed__)) node_update_payload {
 	int32_t pid;

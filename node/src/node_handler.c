@@ -53,7 +53,7 @@ bool handle_ping(int32_t conn_fd) {
 }
 
 bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload, const routing_table_t* routing, app_t apps[APPS_COUNT]) { // NOLINT
-	send_t* ret_payload;
+	node_packet_t* ret_payload;
 	uint8_t b[MAX_MSG_LEN];
 	msg_len_type buf_len;
 	uint8_t next_addr;
@@ -61,12 +61,12 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 	notify_t notify;
 
 	res = true;
-	ret_payload = (send_t*) payload;
+	ret_payload = (node_packet_t*) payload;
 	notify.app_msg_id = ret_payload->app_payload.id;
 
 	node_app_setup_delivery(&ret_payload->app_payload);
 
-	if (ret_payload->addr_to == addr) {
+	if (ret_payload->receiver_addr == addr) {
 		node_log_warn("Message for node itself");
 
 		if (node_app_handle_request(apps, &ret_payload->app_payload, addr)) {
@@ -85,15 +85,15 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 		return res;
 	}
 
-	node_log_debug("Finding route to %d", ret_payload->addr_to);
-	next_addr = routing_next_addr(routing, ret_payload->addr_to);
+	node_log_debug("Finding route to %d", ret_payload->receiver_addr);
+	next_addr = routing_next_addr(routing, ret_payload->receiver_addr);
 	if (next_addr == UINT8_MAX) {
 		node_log_warn("Failed to find route");
 
-		route_payload_t route_payload = {
+		node_packet_t route_payload = {
 			.local_sender_addr = addr,
-			.sender_addr = ret_payload->addr_from,
-			.receiver_addr = ret_payload->addr_to,
+			.sender_addr = ret_payload->sender_addr,
+			.receiver_addr = ret_payload->receiver_addr,
 			.time_to_live = TTL,
 			.app_payload = ret_payload->app_payload
 		};
@@ -107,18 +107,18 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 
 	if (node_essentials_get_conn_and_send(node_port(next_addr), b, buf_len)) {
 		node_log_info("Sent message (length %d) from %d:%d to %d:%d",
-			ret_payload->app_payload.message_len, ret_payload->addr_from, ret_payload->app_payload.addr_from, ret_payload->addr_to, ret_payload->app_payload.addr_to);
+			ret_payload->app_payload.message_len, ret_payload->sender_addr, ret_payload->app_payload.addr_from, ret_payload->receiver_addr, ret_payload->app_payload.addr_to);
 	}
 
 	return res;
 }
 
-void handle_broadcast(broadcast_t* broadcast_payload) {
+void handle_broadcast(node_packet_t* broadcast_payload) {
 	node_app_setup_delivery(&broadcast_payload->app_payload);
 	node_essentials_broadcast(broadcast_payload);
 }
 
-void handle_server_unicast(broadcast_t* broadcast_payload, uint8_t cur_node_addr) {
+void handle_server_unicast(node_packet_t* broadcast_payload, uint8_t cur_node_addr) {
 	node_app_setup_delivery(&broadcast_payload->app_payload);
 	unicast_contest_t unicast = {
 		.node_addr = cur_node_addr,
@@ -130,10 +130,10 @@ void handle_server_unicast(broadcast_t* broadcast_payload, uint8_t cur_node_addr
 }
 
 __attribute__((warn_unused_result))
-static bool node_handle_app_request(app_t apps[APPS_COUNT], send_t* send_payload, uint8_t addr);
+static bool node_handle_app_request(app_t apps[APPS_COUNT], node_packet_t* send_payload, uint8_t addr);
 
 __attribute__((warn_unused_result))
-static bool send_next(const routing_table_t* routing, send_t* ret_payload);
+static bool send_next(const routing_table_t* routing, node_packet_t* ret_payload);
 
 bool handle_node_send(uint8_t addr, const void* payload, const routing_table_t* routing, app_t apps[APPS_COUNT]) {
 	uint8_t addr_to;
@@ -142,14 +142,14 @@ bool handle_node_send(uint8_t addr, const void* payload, const routing_table_t* 
 	node_log_warn("Send node %d", addr);
 
 	res = true;
-	addr_to = ((send_t*) payload)->addr_to;
+	addr_to = ((node_packet_t*) payload)->receiver_addr;
 	if (addr_to == addr) {
-		if (!node_handle_app_request(apps, (send_t*) payload, addr)) {
+		if (!node_handle_app_request(apps, (node_packet_t*) payload, addr)) {
 			node_log_error("Failed to handle app request");
 			res = false;
 		}
 	} else {
-		if (!send_next(routing, (send_t*) payload)) {
+		if (!send_next(routing, (node_packet_t*) payload)) {
 			node_log_error("Failed to send app request next");
 			res = false;
 		}
@@ -158,14 +158,14 @@ bool handle_node_send(uint8_t addr, const void* payload, const routing_table_t* 
 	return res;
 }
 
-bool route_direct_handle_delivered(routing_table_t* routing, route_payload_t* route_payload, uint8_t server_addr, app_t apps[APPS_COUNT]);
+bool route_direct_handle_delivered(routing_table_t* routing, node_packet_t* route_payload, uint8_t server_addr, app_t apps[APPS_COUNT]);
 
 bool handle_node_route_direct(routing_table_t* routing, uint8_t server_addr, void* payload, app_t apps[APPS_COUNT]) {
-	route_payload_t* route_payload;
+	node_packet_t* route_payload;
 	bool was_message;
 	int8_t new_metric;
 
-	route_payload = (route_payload_t*) payload;
+	route_payload = (node_packet_t*) payload;
 
 	if (route_payload->time_to_live <= 0) {
 		return true;
@@ -229,10 +229,10 @@ void handle_unicast_first(unicast_contest_t* unicast, uint8_t cur_node_addr) {
 		set_unicast_status_by_id(unicast->app_payload.id, true);
 		node_log_warn("Node %d won unicast contest", unicast->node_addr);
 
-		send_t send_payload = {
+		node_packet_t send_payload = {
 			.app_payload = unicast->app_payload,
-			.addr_from = cur_node_addr,
-			.addr_to = unicast->node_addr
+			.sender_addr = cur_node_addr,
+			.receiver_addr = unicast->node_addr
 		};
 		format_create(REQUEST_SEND, &send_payload, b, &buf_len, REQUEST_SENDER_NODE);
 
@@ -243,13 +243,13 @@ void handle_unicast_first(unicast_contest_t* unicast, uint8_t cur_node_addr) {
 }
 
 bool handle_node_route_inverse(routing_table_t* routing, void* payload, uint8_t server_addr) {
-	route_payload_t* route_payload;
+	node_packet_t* route_payload;
 	uint8_t next_addr;
-	uint8_t b[sizeof(route_payload_t)];
+	uint8_t b[sizeof(node_packet_t)];
 	msg_len_type buf_len;
 	int8_t new_metric;
 
-	route_payload = (route_payload_t*) payload;
+	route_payload = (node_packet_t*) payload;
 
 	node_log_warn("Inverse node %d", server_addr);
 
@@ -286,7 +286,7 @@ bool handle_node_route_inverse(routing_table_t* routing, void* payload, uint8_t 
 }
 
 __attribute__((warn_unused_result))
-static bool node_handle_app_request(app_t apps[APPS_COUNT], send_t* send_payload, uint8_t addr) {
+static bool node_handle_app_request(app_t apps[APPS_COUNT], node_packet_t* send_payload, uint8_t addr) {
 	enum app_request app_req;
 	bool res;
 	notify_t notify;
@@ -323,12 +323,12 @@ static bool node_handle_app_request(app_t apps[APPS_COUNT], send_t* send_payload
 }
 
 __attribute__((warn_unused_result))
-static bool send_next(const routing_table_t* routing, send_t* ret_payload) {
+static bool send_next(const routing_table_t* routing, node_packet_t* ret_payload) {
 	uint8_t next_addr;
 	uint8_t b[MAX_MSG_LEN];
 	msg_len_type buf_len;
 
-	next_addr = routing_next_addr(routing, ret_payload->addr_to);
+	next_addr = routing_next_addr(routing, ret_payload->receiver_addr);
 	if (next_addr == UINT8_MAX) {
 		node_log_error("Failed to find path in table");
 		// TODO: this may happen if node died after path was found
@@ -345,7 +345,7 @@ static bool send_next(const routing_table_t* routing, send_t* ret_payload) {
 	return true;
 }
 
-bool route_direct_handle_delivered(routing_table_t* routing, route_payload_t* route_payload, uint8_t server_addr, app_t apps[APPS_COUNT]) {
+bool route_direct_handle_delivered(routing_table_t* routing, node_packet_t* route_payload, uint8_t server_addr, app_t apps[APPS_COUNT]) {
 	uint8_t b[MAX_MSG_LEN];
 	msg_len_type buf_len;
 	uint8_t next_addr_to_back;
