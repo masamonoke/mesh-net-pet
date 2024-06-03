@@ -41,8 +41,7 @@ bool node_app_handle_request(app_t* apps, struct app_payload* app_payload, uint8
 
 						if (app_payload->message_len != 0) {
 							decompress_message(app_payload->message, &app_payload->message_len);
-
-							calc_crc = crc16(app_payload->message, app_payload->message_len);
+							calc_crc = app_crc(app_payload);
 							if (calc_crc != app_payload->crc) {
 								node_log_error("App message damaged: got CRC %d, calculated %d. Message: %.*s",
 									app_payload->crc, calc_crc, app_payload->message_len, app_payload->message);
@@ -64,7 +63,7 @@ bool node_app_handle_request(app_t* apps, struct app_payload* app_payload, uint8
 				uint16_t calc_crc;
 
 				decompress_message(app_payload->message, &app_payload->message_len);
-				calc_crc = crc16(app_payload->message, app_payload->message_len);
+				calc_crc = app_crc(app_payload);
 				if (calc_crc != app_payload->crc) {
 					node_log_error("App message damaged: got CRC %d, calculated %d", app_payload->crc, calc_crc);
 					return false;

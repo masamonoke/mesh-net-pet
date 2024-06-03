@@ -2,7 +2,7 @@
 
 #include <stdbool.h>
 
-uint16_t crc16_table[256];
+uint16_t crc16_table[UINT8_MAX + 1];
 
 static void init_crc16_table(void) {
     uint16_t crc;
@@ -22,7 +22,7 @@ static void init_crc16_table(void) {
     }
 }
 
-uint16_t crc16(const unsigned char *data, size_t length) {
+uint16_t crc16(const uint8_t *data, size_t length) {
     uint16_t crc;
 	size_t i;
 	static bool init = false;

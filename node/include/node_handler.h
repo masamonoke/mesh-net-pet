@@ -25,7 +25,7 @@ __attribute__((nonnull(1)))
 void handle_broadcast(node_packet_t* broadcast_payload);
 
 __attribute__((nonnull(1)))
-void handle_server_unicast(node_packet_t* broadcast_payload, uint8_t cur_node_addr);
+void handle_server_unicast(node_packet_t* unicast_payload, uint8_t cur_node_addr);
 
 void handle_unicast_contest(unicast_contest_t* unicast, uint8_t cur_node_addr);
 

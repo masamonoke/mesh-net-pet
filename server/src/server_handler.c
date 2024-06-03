@@ -9,6 +9,7 @@
 #include "io.h"
 #include "server_essentials.h"
 #include "connection.h"
+#include "crc.h"
 
 __attribute__((warn_unused_result))
 static bool send_res_to_client(int32_t client_fd, enum request_result res);
@@ -233,6 +234,8 @@ static bool make_send_to_node(const struct node* children, const void* payload) 
 	uint8_t b[MAX_MSG_LEN];
 	msg_len_type buf_len;
 	size_t i;
+
+	((node_packet_t*) payload)->crc = packet_crc(((node_packet_t*) payload));
 
 	format_create(REQUEST_SEND, payload, (uint8_t*) b, &buf_len, REQUEST_SENDER_SERVER);
 

@@ -4,6 +4,7 @@
 
 #include "connection.h"
 #include "io.h"
+#include "crc.h"
 
 struct conn {
 	int32_t fd;
@@ -90,6 +91,7 @@ void node_essentials_broadcast_route(node_packet_t* route_payload, bool stop_bro
 
 		route_payload->time_to_live--;
 
+		route_payload->crc = packet_crc(route_payload);
 		format_create(REQUEST_ROUTE_DIRECT, route_payload, b, &buf_len, REQUEST_SENDER_NODE);
 
 		for (i = 0; i < neighbor_num; i++) {
@@ -105,6 +107,7 @@ void node_essentials_broadcast(node_packet_t* broadcast_payload) {
 
 	for (i = 0; i < neighbor_num; i++) {
 		broadcast_payload->receiver_addr = (uint8_t) node_addr(broadcast_neighbors[i]);
+		broadcast_payload->crc = packet_crc(broadcast_payload);
 
 		format_create(REQUEST_SEND, broadcast_payload, b, &buf_len, REQUEST_SENDER_NODE);
 

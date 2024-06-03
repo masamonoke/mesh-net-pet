@@ -10,6 +10,8 @@
 #include "format.h"
 #include "format.h"
 #include "server_handler.h"
+#include "crc.h"
+#include "format_app.h"
 
 static uint16_t app_msg_id = 0;
 
@@ -61,9 +63,17 @@ static bool handle_client_request(server_t* server_data, void** payload, const u
 	res = true;
 	switch (cmd_type) {
 		case REQUEST_SEND:
-			((node_packet_t*) *payload)->app_payload.id = app_msg_id++;
-			set_client(server_data, ((node_packet_t*) *payload)->app_payload.id, server_data->client_fd);
-			res = handle_client_send(server_data->children, *payload);
+			{
+				node_packet_t* packet;
+				struct app_payload* app_ptr;
+
+				packet = (node_packet_t*) *payload;
+				packet->app_payload.id = app_msg_id++;
+				app_ptr = &packet->app_payload;
+				packet->app_payload.crc = app_crc(app_ptr);
+				set_client(server_data, ((node_packet_t*) *payload)->app_payload.id, server_data->client_fd);
+				res = handle_client_send(server_data->children, *payload);
+			}
 			break;
 		case REQUEST_PING:
 			custom_log_debug("Ping command from client");
@@ -80,9 +90,17 @@ static bool handle_client_request(server_t* server_data, void** payload, const u
 			break;
 		case REQUEST_BROADCAST:
 		case REQUEST_UNICAST:
-			((node_packet_t*) *payload)->app_payload.id = app_msg_id++;
-			set_client(server_data, ((node_packet_t*) *payload)->app_payload.id, server_data->client_fd);
-			res = handle_broadcast(server_data->children, *payload, cmd_type);
+			{
+				node_packet_t* packet;
+				struct app_payload* app_ptr;
+
+				packet = (node_packet_t*) *payload;
+				packet->app_payload.id = app_msg_id++;
+				app_ptr = &packet->app_payload;
+				packet->app_payload.crc = app_crc(app_ptr);
+				set_client(server_data, ((node_packet_t*) *payload)->app_payload.id, server_data->client_fd);
+				res = handle_broadcast(server_data->children, *payload, cmd_type);
+			}
 			break;
 		default:
 			custom_log_error("Unknown client request: %d", cmd_type);

@@ -123,13 +123,10 @@ void format_create(enum request req, const void* payload, uint8_t* buf, msg_len_
 		case REQUEST_UNICAST:
 			{
 				node_packet_t* route_payload;
-				uint8_t payload_len;
 
 				route_payload = (node_packet_t*) payload;
 
-				payload_len = sizeof(route_payload->local_sender_addr) + sizeof(route_payload->sender_addr) + sizeof(route_payload->receiver_addr) +
-				sizeof(route_payload->time_to_live) + format_app_message_len(&route_payload->app_payload);
-				*len = payload_len + sizeof_enum(request) + sizeof(*len) + sizeof_enum(sender);
+				*len = (uint8_t) (sizeof_packet(route_payload) + MSG_BASE_LEN);
 
 				p = create_base(buf, *len, req, sender);
 
@@ -141,8 +138,9 @@ void format_create(enum request req, const void* payload, uint8_t* buf, msg_len_
 				p += sizeof(route_payload->local_sender_addr);
 				memcpy(p, &route_payload->time_to_live, sizeof(route_payload->time_to_live));
 				p += sizeof(route_payload->time_to_live);
-
 				format_app_create_message(&route_payload->app_payload, p);
+				p += format_app_message_len(&route_payload->app_payload);
+				memcpy(p, &route_payload->crc, sizeof(route_payload->crc));
 			}
 			break;
 		case REQUEST_UNICAST_CONTEST:
@@ -263,6 +261,8 @@ static void parse_route_payload(const uint8_t* buf, node_packet_t* payload) {
 	p += sizeof(payload->time_to_live);
 
 	format_app_parse_message(&payload->app_payload, p);
+	p += format_app_message_len(&payload->app_payload);
+	memcpy(&payload->crc, p, sizeof(payload->crc));
 }
 
 static void parse_node_update_payload(const uint8_t* buf, node_update_t* payload) {

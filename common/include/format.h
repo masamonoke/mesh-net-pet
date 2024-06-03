@@ -10,6 +10,10 @@
 
 #define MSG_BASE_LEN (sizeof_enum(request) + sizeof_enum(sender) + sizeof(msg_len_type))
 
+#define sizeof_packet(packet_ptr) (sizeof(*packet_ptr) - sizeof(packet_ptr->app_payload) + format_app_message_len(&packet_ptr->app_payload))
+
+#define packet_crc(packet_ptr) crc16((uint8_t*) (packet_ptr), sizeof_packet((packet_ptr)) - sizeof((packet_ptr)->crc) - sizeof((packet_ptr)->app_payload.crc))
+
 enum __attribute__((packed, aligned(1))) request_result {
 	REQUEST_OK,
 	REQUEST_ERR,
@@ -46,6 +50,7 @@ typedef struct __attribute__((__packed__)) node_packet {
 	uint8_t local_sender_addr; // from which node request retransmitted
 	int8_t time_to_live;
 	struct app_payload app_payload;
+	uint16_t crc;
 } node_packet_t;
 
 typedef struct __attribute__((__packed__)) node_update_payload {

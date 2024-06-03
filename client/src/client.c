@@ -209,8 +209,7 @@ static bool parse_send_cmd(int32_t argc, char** argv, enum request* cmd, void** 
 		send_payload->app_payload.message_len = 0;
 	}
 	send_payload->app_payload.req_type = APP_REQUEST_DELIVERY;
-	send_payload->app_payload.crc = crc16(send_payload->app_payload.message, send_payload->app_payload.message_len);
-
+	send_payload->crc = packet_crc(send_payload);
 	return true;
 }
 

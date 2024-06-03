@@ -5,8 +5,7 @@
 #include "node_essentials.h"
 #include "io.h"
 #include "node_app.h"
-
-#include <assert.h>
+#include "crc.h"
 
 #define MAX_MESSAGE_DATA 100
 
@@ -52,8 +51,11 @@ bool handle_ping(int32_t conn_fd) {
 	return true;
 }
 
+__attribute__((warn_unused_result))
+static bool is_valid_crc(node_packet_t* packet);
+
 bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload, const routing_table_t* routing, app_t apps[APPS_COUNT]) { // NOLINT
-	node_packet_t* ret_payload;
+	node_packet_t* packet;
 	uint8_t b[MAX_MSG_LEN];
 	msg_len_type buf_len;
 	uint8_t next_addr;
@@ -61,15 +63,20 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 	notify_t notify;
 
 	res = true;
-	ret_payload = (node_packet_t*) payload;
-	notify.app_msg_id = ret_payload->app_payload.id;
+	packet = (node_packet_t*) payload;
+	notify.app_msg_id = packet->app_payload.id;
 
-	node_app_setup_delivery(&ret_payload->app_payload);
+	if (!is_valid_crc(packet)) {
+		node_log_warn("Message damaged and won't be answered");
+		return false;
+	}
 
-	if (ret_payload->receiver_addr == addr) {
+	node_app_setup_delivery(&packet->app_payload);
+
+	if (packet->receiver_addr == addr) {
 		node_log_warn("Message for node itself");
 
-		if (node_app_handle_request(apps, &ret_payload->app_payload, addr)) {
+		if (node_app_handle_request(apps, &packet->app_payload, addr)) {
 			notify.type = NOTIFY_GOT_MESSAGE;
 			if (!node_essentials_notify_server(&notify)) {
 				node_log_error("Failed to notify server");
@@ -85,29 +92,25 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 		return res;
 	}
 
-	node_log_debug("Finding route to %d", ret_payload->receiver_addr);
-	next_addr = routing_next_addr(routing, ret_payload->receiver_addr);
+	node_log_debug("Finding route to %d", packet->receiver_addr);
+	next_addr = routing_next_addr(routing, packet->receiver_addr);
 	if (next_addr == UINT8_MAX) {
 		node_log_warn("Failed to find route");
 
-		node_packet_t route_payload = {
-			.local_sender_addr = addr,
-			.sender_addr = ret_payload->sender_addr,
-			.receiver_addr = ret_payload->receiver_addr,
-			.time_to_live = TTL,
-			.app_payload = ret_payload->app_payload
-		};
-
-		node_essentials_broadcast_route(&route_payload, false);
+		packet->local_sender_addr = addr;
+		packet->time_to_live = TTL;
+		node_essentials_broadcast_route(packet, false);
 
 		return false;
 	}
 
-	format_create(cmd_type, ret_payload, b, &buf_len, REQUEST_SENDER_NODE);
+	packet->crc = packet_crc(packet);
+	format_create(cmd_type, packet, b, &buf_len, REQUEST_SENDER_NODE);
 
 	if (node_essentials_get_conn_and_send(node_port(next_addr), b, buf_len)) {
 		node_log_info("Sent message (length %d) from %d:%d to %d:%d",
-			ret_payload->app_payload.message_len, ret_payload->sender_addr, ret_payload->app_payload.addr_from, ret_payload->receiver_addr, ret_payload->app_payload.addr_to);
+			packet->app_payload.message_len, packet->sender_addr, packet->app_payload.addr_from,
+			packet->receiver_addr, packet->app_payload.addr_to);
 	}
 
 	return res;
@@ -118,11 +121,11 @@ void handle_broadcast(node_packet_t* broadcast_payload) {
 	node_essentials_broadcast(broadcast_payload);
 }
 
-void handle_server_unicast(node_packet_t* broadcast_payload, uint8_t cur_node_addr) {
-	node_app_setup_delivery(&broadcast_payload->app_payload);
+void handle_server_unicast(node_packet_t* unicast_payload, uint8_t cur_node_addr) {
+	node_app_setup_delivery(&unicast_payload->app_payload);
 	unicast_contest_t unicast = {
 		.node_addr = cur_node_addr,
-		.app_payload = broadcast_payload->app_payload,
+		.app_payload = unicast_payload->app_payload,
 		.req = REQUEST_UNICAST_CONTEST
 	};
 
@@ -138,18 +141,26 @@ static bool send_next(const routing_table_t* routing, node_packet_t* ret_payload
 bool handle_node_send(uint8_t addr, const void* payload, const routing_table_t* routing, app_t apps[APPS_COUNT]) {
 	uint8_t addr_to;
 	bool res;
+	node_packet_t* packet;
 
 	node_log_warn("Send node %d", addr);
 
+	packet = (node_packet_t*) payload;
+
+	if (!is_valid_crc(packet)) {
+		node_log_warn("Message damaged and won't be answered");
+		return false;
+	}
+
 	res = true;
-	addr_to = ((node_packet_t*) payload)->receiver_addr;
+	addr_to = packet->receiver_addr;
 	if (addr_to == addr) {
-		if (!node_handle_app_request(apps, (node_packet_t*) payload, addr)) {
+		if (!node_handle_app_request(apps, packet, addr)) {
 			node_log_error("Failed to handle app request");
 			res = false;
 		}
 	} else {
-		if (!send_next(routing, (node_packet_t*) payload)) {
+		if (!send_next(routing, packet)) {
 			node_log_error("Failed to send app request next");
 			res = false;
 		}
@@ -169,6 +180,11 @@ bool handle_node_route_direct(routing_table_t* routing, uint8_t server_addr, voi
 
 	if (route_payload->time_to_live <= 0) {
 		return true;
+	}
+
+	if (!is_valid_crc(route_payload)) {
+		node_log_warn("Message damaged and won't be answered");
+		return false;
 	}
 
 	if (get_was_message_by_id(route_payload->app_payload.id, &was_message)) {
@@ -234,6 +250,7 @@ void handle_unicast_first(unicast_contest_t* unicast, uint8_t cur_node_addr) {
 			.sender_addr = cur_node_addr,
 			.receiver_addr = unicast->node_addr
 		};
+		send_payload.crc = packet_crc(&send_payload);
 		format_create(REQUEST_SEND, &send_payload, b, &buf_len, REQUEST_SENDER_NODE);
 
 		if (!node_essentials_get_conn_and_send(node_port(unicast->node_addr), b, buf_len)) {
@@ -250,6 +267,11 @@ bool handle_node_route_inverse(routing_table_t* routing, void* payload, uint8_t 
 	int8_t new_metric;
 
 	route_payload = (node_packet_t*) payload;
+
+	if (!is_valid_crc(route_payload)) {
+		node_log_warn("Message damaged and won't be answered");
+		return false;
+	}
 
 	node_log_warn("Inverse node %d", server_addr);
 
@@ -273,6 +295,7 @@ bool handle_node_route_inverse(routing_table_t* routing, void* payload, uint8_t 
 
 	route_payload->local_sender_addr = server_addr;
 	route_payload->time_to_live--;
+	route_payload->crc = packet_crc(route_payload);
 
 	format_create(REQUEST_ROUTE_INVERSE, route_payload, b, &buf_len, REQUEST_SENDER_NODE);
 
@@ -305,6 +328,7 @@ static bool node_handle_app_request(app_t apps[APPS_COUNT], node_packet_t* send_
 			node_log_error("Failed to notify server");
 		}
 	}
+
 	if (node_app_handle_request(apps, &send_payload->app_payload, addr)) {
 		notify.type = NOTIFY_GOT_MESSAGE;
 		if (!node_essentials_notify_server(&notify)) {
@@ -354,6 +378,11 @@ bool route_direct_handle_delivered(routing_table_t* routing, node_packet_t* rout
 
 	notify.app_msg_id = route_payload->app_payload.id;
 
+	if (!is_valid_crc(route_payload)) {
+		node_log_warn("Message damaged and won't be answered");
+		return false;
+	}
+
 	node_log_debug("Reached the recevier addr %d", route_payload->receiver_addr);
 
 	if (get_inverse_by_id(route_payload->app_payload.id, &stop_inverse)) {
@@ -368,6 +397,7 @@ bool route_direct_handle_delivered(routing_table_t* routing, node_packet_t* rout
 
 	route_payload->time_to_live = TTL;
 	route_payload->local_sender_addr = server_addr;
+	route_payload->crc = packet_crc(route_payload);
 
 	format_create(REQUEST_ROUTE_INVERSE, route_payload, b, &buf_len, REQUEST_SENDER_NODE);
 
@@ -555,4 +585,16 @@ static void set_unicast_status_by_id(uint16_t id, bool unicast_first) {
 			}
 		}
 	}
+}
+
+static bool is_valid_crc(node_packet_t* packet) {
+	uint16_t crc;
+
+	crc = packet_crc(packet);
+	if (crc != packet->crc) {
+		node_log_warn("Message damaged: declared CRC %d, real %d", packet->crc, crc);
+		return false;
+	}
+
+	return true;
 }
