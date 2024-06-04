@@ -1,5 +1,5 @@
 # About
-An implementation of mesh network. Note that project is actively developing and some features are not present
+An implementation of mesh network. Average throughput is 20 requests per second.
 
 # Build
 
@@ -115,4 +115,4 @@ make benchmark
 
 # Bugs
 * <del>After killing node (nodes) there can be error 141 (broken pipe) when sending message to other nodes probably because of write to already closed fd</del>
-* Server can fail to send request result to client but the network handled request successfully when running parallel clients
+* <del>Server can fail to send request result to client but the network handled request successfully when running parallel clients</del>

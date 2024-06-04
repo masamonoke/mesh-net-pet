@@ -60,11 +60,11 @@ int32_t main(void) {
 	}
 	server_data.client_fd = -1;
 
-
 	custom_log_debug("Started server on port %d (process %d)", SERVER_PORT, getpid());
 	custom_log_info("-------------------------------New session-------------------------------");
 
 	serving_init(&serving, server_fd, handle_request);
+	server_listener_init();
 
 	while (keeprunning) {
 		serving_poll(&serving, server_data.children);

@@ -97,7 +97,7 @@ bool handle_server_send(enum request cmd_type, uint8_t addr, const void* payload
 	node_log_debug("Finding route to %d", packet->receiver_addr);
 	next_addr = routing_next_addr(routing, packet->receiver_addr);
 	if (next_addr == UINT8_MAX) {
-		node_log_warn("Failed to find route");
+		node_log_debug("Failed to find route");
 
 		packet->local_sender_addr = addr;
 		packet->time_to_live = TTL;
@@ -145,7 +145,7 @@ bool handle_node_send(uint8_t addr, const void* payload, const routing_table_t* 
 	bool res;
 	node_packet_t* packet;
 
-	node_log_warn("Send node %d", addr);
+	node_log_debug("Send node %d", addr);
 
 	packet = (node_packet_t*) payload;
 
@@ -275,7 +275,7 @@ bool handle_node_route_inverse(routing_table_t* routing, void* payload, uint8_t 
 		return false;
 	}
 
-	node_log_warn("Inverse node %d", server_addr);
+	node_log_debug("Inverse node %d", server_addr);
 
 	new_metric = TTL - route_payload->time_to_live + 1;
 	if (new_metric > 0) {
@@ -325,10 +325,6 @@ static bool node_handle_app_request(app_t apps[APPS_COUNT], node_packet_t* send_
 		if (!node_essentials_notify_server(&notify)) {
 			node_log_error("Failed to notify server");
 		}
-		notify.type = NOTIFY_UNICAST_HANDLED;
-		if (!node_essentials_notify_server(&notify)) {
-			node_log_error("Failed to notify server");
-		}
 	}
 
 	if (node_app_handle_request(apps, &send_payload->app_payload, addr)) {
@@ -339,6 +335,7 @@ static bool node_handle_app_request(app_t apps[APPS_COUNT], node_packet_t* send_
 		}
 	} else {
 		notify.type = NOTIFY_FAIL;
+		node_log_error("Failed to handle request");
 		if (!node_essentials_notify_server(&notify)) {
 			node_log_error("Failed to notify fail");
 		}

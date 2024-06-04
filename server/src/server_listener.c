@@ -13,20 +13,34 @@
 #include "crc.h"
 #include "format_app.h"
 
+#define MAX_CLIENT 4
+
 static uint16_t app_msg_id = 0;
 
-static void init_clients(server_t* server_data);
+typedef struct client {
+	int32_t fd;
+	uint16_t app_id;
+} client_t;
 
-static void set_client(server_t* server_data, uint16_t id, int32_t fd);
+client_t clients[MAX_CLIENT];
+uint8_t client_num;
 
-__attribute__((nonnull(1), warn_unused_result))
-static int32_t get_client_fd_by_id(server_t* server_data, uint16_t id);
+static void init_clients(void);
+
+static void set_client(uint16_t id, int32_t fd);
+
+__attribute__((warn_unused_result))
+static int32_t get_client_fd_by_id(uint16_t id);
 
 __attribute__((warn_unused_result))
 static bool handle_client_request(server_t* server_data, void** payload, const uint8_t* buf, void* data);
 
 __attribute__((warn_unused_result))
-static bool handle_node_request(server_t* server_data, void** payload, const uint8_t* buf, void* data);
+static bool handle_node_request(void** payload, const uint8_t* buf, void* data);
+
+void server_listener_init(void) {
+	init_clients();
+}
 
 bool server_listener_handle(server_t* server, const uint8_t* buf, int32_t conn_fd, void* data) {
 	bool processed;
@@ -41,7 +55,7 @@ bool server_listener_handle(server_t* server, const uint8_t* buf, int32_t conn_f
 			processed = handle_client_request(server, &payload, buf, data);
 			break;
 		case REQUEST_SENDER_NODE:
-			processed = handle_node_request(server, &payload, buf, data);
+			processed = handle_node_request(&payload, buf, data);
 			break;
 		default:
 			processed = false;
@@ -71,7 +85,7 @@ static bool handle_client_request(server_t* server_data, void** payload, const u
 				packet->app_payload.id = app_msg_id++;
 				app_ptr = &packet->app_payload;
 				packet->app_payload.crc = app_crc(app_ptr);
-				set_client(server_data, ((node_packet_t*) *payload)->app_payload.id, server_data->client_fd);
+				set_client(((node_packet_t*) *payload)->app_payload.id, server_data->client_fd);
 				res = handle_client_send(server_data->children, *payload);
 			}
 			break;
@@ -99,7 +113,7 @@ static bool handle_client_request(server_t* server_data, void** payload, const u
 				packet->app_payload.id = app_msg_id++;
 				app_ptr = &packet->app_payload;
 				packet->app_payload.crc = app_crc(app_ptr);
-				set_client(server_data, ((node_packet_t*) *payload)->app_payload.id, server_data->client_fd);
+				set_client(((node_packet_t*) *payload)->app_payload.id, server_data->client_fd);
 				res = handle_broadcast(server_data->children, *payload, cmd_type);
 			}
 			break;
@@ -114,7 +128,7 @@ static bool handle_client_request(server_t* server_data, void** payload, const u
 	return res;
 }
 
-static bool handle_node_request(server_t* server_data, void** payload, const uint8_t* buf, void* data) {
+static bool handle_node_request(void** payload, const uint8_t* buf, void* data) {
 	enum request cmd_type;
 	bool res;
 	int32_t client_fd;
@@ -128,9 +142,11 @@ static bool handle_node_request(server_t* server_data, void** payload, const uin
 			handle_update_child(*payload, data);
 			break;
 		case REQUEST_NOTIFY:
-			client_fd = get_client_fd_by_id(server_data, ((notify_t*) *payload)->app_msg_id);
+			client_fd = get_client_fd_by_id(((notify_t*) *payload)->app_msg_id);
+			if (client_fd < 0) {
+				custom_log_warn("Client fd is %d when sending return notify (id %d)", client_fd, ((notify_t*) *payload)->app_msg_id);
+			}
 			res = handle_notify(client_fd,  *payload);
-			set_client(server_data, ((notify_t*) *payload)->app_msg_id, -1);
 			break;
 		default:
 			custom_log_error("Unsupported request");
@@ -143,42 +159,33 @@ static bool handle_node_request(server_t* server_data, void** payload, const uin
 	return res;
 }
 
-static void init_clients(server_t* server_data) {
-	static bool init = false;
-
-	if (!init) {
+static void init_clients(void) {
 		uint8_t i;
 
 		for (i = 0; i < MAX_CLIENT; i++) {
-			server_data->clients[i].fd = -1;
+			clients[i].fd = -1;
 		}
-		server_data->client_num = 0;
-		init = true;
-	}
+		client_num = 0;
 }
 
-static void set_client(server_t* server_data, uint16_t id, int32_t fd) {
-	init_clients(server_data);
-
-	if (server_data->client_num == MAX_CLIENT) {
-		server_data->client_num = 0;
+static void set_client(uint16_t id, int32_t fd) {
+	if (client_num == MAX_CLIENT) {
+		client_num = 0;
 	}
 
-	server_data->clients[server_data->client_num].app_id = id;
-	server_data->clients[server_data->client_num].fd = fd;
-	server_data->client_num++;
+	clients[client_num].app_id = id;
+	clients[client_num].fd = fd;
+	client_num++;
 }
 
-static int32_t get_client_fd_by_id(server_t* server_data, uint16_t id) {
+static int32_t get_client_fd_by_id(uint16_t id) {
 	uint8_t i;
 	int32_t fd;
 
-	init_clients(server_data);
-
-	for (i = 0; i < server_data->client_num; i++) {
-		if (server_data->clients[i].app_id == id) {
-			fd = server_data->clients[i].fd;
-			server_data->clients[i].fd = -1;
+	for (i = 0; i < MAX_CLIENT; i++) {
+		if (clients[i].app_id == id) {
+			fd = clients[i].fd;
+			clients[i].fd = -1;
 			return fd;
 		}
 	}

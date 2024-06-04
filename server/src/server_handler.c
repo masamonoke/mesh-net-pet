@@ -101,9 +101,6 @@ bool handle_notify(int32_t client_fd, notify_t* notify) {
 				res = false;
 			}
 			break;
-		case NOTIFY_UNICAST_HANDLED:
-			custom_log_debug("Handled unicast");
-			break;
 	}
 
 	return res;

@@ -61,8 +61,7 @@ typedef struct __attribute__((__packed__)) node_update_payload {
 
 enum __attribute__((packed, aligned(1))) notify_type {
 	NOTIFY_GOT_MESSAGE,
-	NOTIFY_FAIL,
-	NOTIFY_UNICAST_HANDLED
+	NOTIFY_FAIL
 };
 
 typedef struct __attribute__((__packed__)) notify {
