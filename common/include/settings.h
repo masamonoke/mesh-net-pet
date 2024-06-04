@@ -35,11 +35,6 @@
 #define BROADCAST_RADIUS 3
 #endif
 
-#define enum_ir uint8_t
-
-// argument needs for readability only
-#define sizeof_enum(enum_name_or_var) sizeof(enum_ir)
-
 #define node_port(addr) (uint16_t) (SERVER_PORT + (addr) + 1)
 
 #define node_addr(port) (port - SERVER_PORT - 1)

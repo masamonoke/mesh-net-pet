@@ -29,12 +29,10 @@ void format_sprint_result(enum request_result res, char buf[], size_t len) {
 enum request_sender format_define_sender(const uint8_t* buf) {
 	const uint8_t* p;
 	enum request_sender sender;
-	enum_ir tmp;
 
 	p = buf;
-	p += sizeof_enum(enum request); // skip cmd
-	memcpy(&tmp, p, sizeof_enum(sender));
-	sender = (enum request_sender) tmp;
+	p += sizeof(enum request); // skip cmd
+	memcpy(&sender, p, sizeof(sender));
 
 	return sender;
 }
@@ -74,7 +72,7 @@ void format_create(enum request req, const void* payload, uint8_t* buf, msg_len_
 
 				memcpy(p, payload, sizeof(uint8_t));
 			} else {
-				*len = sizeof_enum(sender) + sizeof_enum(request) + sizeof(*len);
+				*len = sizeof(sender) + sizeof(req) + sizeof(*len);
 				p = create_base(buf, *len, req, sender);
 			}
 			break;
@@ -180,52 +178,45 @@ static void parse_unicast_contest_payload(const uint8_t* buf, unicast_contest_t*
 void format_parse(enum request* req, void** payload, const void* buf) {
 	const uint8_t* p;
 	enum request cmd;
-	enum_ir tmp;
 
 	*req = REQUEST_UNDEFINED;
 	p = buf;
 
-	memcpy(&tmp, p, sizeof_enum(cmd));
-	cmd = (enum request) tmp;
+	memcpy(&cmd, p, sizeof(cmd));
 
+	*req = cmd;
 	switch (cmd) {
 		case REQUEST_PING:
 		case REQUEST_REVIVE_NODE:
 		case REQUEST_KILL_NODE:
-			*req = cmd;
 			*payload = malloc(sizeof(uint8_t));
 			parse_addr_payload(buf, *payload);
 			break;
 		case REQUEST_RESET:
-			*req = cmd;
-			break;
-		case REQUEST_UNDEFINED:
-			custom_log_error("Unknown client-server request");
 			break;
 		case REQUEST_SEND:
 		case REQUEST_ROUTE_DIRECT:
 		case REQUEST_ROUTE_INVERSE:
 		case REQUEST_BROADCAST:
 		case REQUEST_UNICAST:
-			*req = cmd;
 			*payload = malloc(sizeof(node_packet_t));
 			parse_route_payload(buf, (node_packet_t*) *payload);
 			break;
 		case REQUEST_UPDATE:
-			*req = cmd;
 			*payload = malloc(sizeof(node_update_t));
 			parse_node_update_payload(buf, *payload);
 			break;
 		case REQUEST_NOTIFY:
-			*req = cmd;
 			*payload = malloc(sizeof(notify_t));
 			parse_notify_payload(buf, *payload);
 			break;
 		case REQUEST_UNICAST_CONTEST:
 		case REQUEST_UNICAST_FIRST:
-			*req = cmd;
 			*payload = malloc(sizeof(unicast_contest_t));
 			parse_unicast_contest_payload(buf, *payload);
+			break;
+		case REQUEST_UNDEFINED:
+			custom_log_error("Unknown client-server request");
 			break;
 		default:
 			not_implemented();
@@ -310,10 +301,10 @@ static uint8_t* create_base(uint8_t* message, msg_len_type msg_len, enum request
 	p = message;
 	memcpy(p, &msg_len, sizeof(msg_len));
 	p += sizeof(msg_len);
-	memcpy(p, &cmd, sizeof_enum(cmd));
-	p += sizeof_enum(cmd);
-	memcpy(p, &sender, sizeof_enum(sender));
-	p += sizeof_enum(sender);
+	memcpy(p, &cmd, sizeof(cmd));
+	p += sizeof(cmd);
+	memcpy(p, &sender, sizeof(sender));
+	p += sizeof(sender);
 
 	return p;
 }
@@ -323,8 +314,8 @@ static uint8_t* skip_base(const uint8_t* message) {
 
 	p = (uint8_t*) message;
 
-	p += sizeof_enum(enum request); // skip cmd
-	p += sizeof_enum(enum request_sender); // skip sender
+	p += sizeof(enum request); // skip cmd
+	p += sizeof(enum request_sender); // skip sender
 
 	return p;
 }

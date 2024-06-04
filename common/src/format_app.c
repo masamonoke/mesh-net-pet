@@ -5,8 +5,8 @@
 #include <memory.h>
 
 void format_app_create_message(const struct app_payload* app_payload, uint8_t* p) {
-	memcpy(p, &app_payload->req_type, sizeof_enum(app_payload->req_type));
-	p += sizeof_enum(app_payload->req_type);
+	memcpy(p, &app_payload->req_type, sizeof(app_payload->req_type));
+	p += sizeof(app_payload->req_type);
 	memcpy(p, &app_payload->addr_from, sizeof(app_payload->addr_from));
 	p += sizeof(app_payload->addr_from);
 	memcpy(p, &app_payload->addr_to, sizeof(app_payload->addr_to));
@@ -25,13 +25,11 @@ void format_app_create_message(const struct app_payload* app_payload, uint8_t* p
 
 void format_app_parse_message(void* payload, const uint8_t* p) {
 	struct app_payload* app_payload;
-	enum_ir tmp;
 
 	app_payload = (struct app_payload*) payload;
 
-	memcpy(&tmp, p, sizeof_enum(app_payload->req_type));
-	app_payload->req_type = (enum app_request) tmp;
-	p += sizeof_enum(app_payload->req_type);
+	memcpy(&app_payload->req_type, p, sizeof(app_payload->req_type));
+	p += sizeof(app_payload->req_type);
 	memcpy(&app_payload->addr_from, p, sizeof(app_payload->addr_from));
 	p += sizeof(app_payload->addr_from);
 	memcpy(&app_payload->addr_to, p, sizeof(app_payload->addr_to));

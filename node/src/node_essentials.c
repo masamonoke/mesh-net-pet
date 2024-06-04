@@ -1,7 +1,6 @@
 #include "node_essentials.h"
 
 #include <unistd.h>
-
 #include "connection.h"
 #include "io.h"
 #include "crc.h"
@@ -20,7 +19,7 @@ static uint8_t neighbor_num = 0;
 
 void node_essentials_reset_connections(void) {
 	for (size_t i = 0; i < CONNECTIONS; i++) {
-		if (connections[i].port != SERVER_PORT) {
+		if (connections[i].port != SERVER_PORT && connections[i].fd > 0 && connections[i].port < UINT16_MAX) {
 			close(connections[i].fd);
 			connections[i].fd = -1;
 			connections[i].port = UINT16_MAX;
@@ -215,6 +214,8 @@ bool node_essentials_get_conn_and_send(uint16_t port, uint8_t* buf, msg_len_type
 	if (conn_fd < 0) {
 		return false;
 	}
+
+	// TODO: healthcheck connection
 
 	if (!io_write_all(conn_fd, buf, buf_len)) {
 		node_log_error("Failed to send route direct request: address %d", node_addr(port));

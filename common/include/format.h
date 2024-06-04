@@ -8,7 +8,7 @@
 
 #define msg_len_type uint8_t
 
-#define MSG_BASE_LEN (sizeof_enum(request) + sizeof_enum(sender) + sizeof(msg_len_type))
+#define MSG_BASE_LEN (sizeof(enum request) + sizeof(enum request_sender) + sizeof(msg_len_type))
 
 #define sizeof_packet(packet_ptr) (sizeof(*packet_ptr) - sizeof(packet_ptr->app_payload) + format_app_message_len(&packet_ptr->app_payload))
 
@@ -80,7 +80,6 @@ void format_sprint_result(enum request_result res, char buf[], size_t len);
 
 __attribute__((warn_unused_result))
 enum request_sender format_define_sender(const uint8_t* buf);
-
 
 __attribute__((warn_unused_result))
 bool format_is_message_correct(size_t buf_len, msg_len_type msg_len);

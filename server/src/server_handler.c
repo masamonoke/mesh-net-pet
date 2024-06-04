@@ -89,14 +89,14 @@ bool handle_notify(int32_t client_fd, notify_t* notify) {
 
 	switch(notify->type) {
 		case NOTIFY_GOT_MESSAGE:
-			if (client_fd > 0 && !io_write_all(client_fd, (uint8_t*) &req_res, sizeof_enum(req_res))) {
+			if (client_fd > 0 && !io_write_all(client_fd, (uint8_t*) &req_res, sizeof(req_res))) {
 				custom_log_error("Failed to response to notify");
 				res = false;
 			}
 			break;
 		case NOTIFY_FAIL:
 			req_res = REQUEST_ERR;
-			if (client_fd > 0 && !io_write_all(client_fd, (uint8_t*) &req_res, sizeof_enum(req_res))) {
+			if (client_fd > 0 && !io_write_all(client_fd, (uint8_t*) &req_res, sizeof(req_res))) {
 				custom_log_error("Failed to response to notify");
 				res = false;
 			}
@@ -203,7 +203,7 @@ void handle_update_child(const void* payload, struct node* children) {
 }
 
 static bool send_res_to_client(int32_t client_fd, enum request_result res) {
-	if (!io_write_all(client_fd, (uint8_t*) &res, sizeof_enum(res))) {
+	if (!io_write_all(client_fd, (uint8_t*) &res, sizeof(res))) {
 		custom_log_error("Failed to send ping result to client");
 		return false;
 	}

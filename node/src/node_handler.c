@@ -45,7 +45,7 @@ bool handle_ping(int32_t conn_fd) {
 	enum request_result req_res;
 
 	req_res = REQUEST_OK;
-	if (!io_write_all(conn_fd, (uint8_t*) &req_res, sizeof_enum(req_res))) {
+	if (!io_write_all(conn_fd, (uint8_t*) &req_res, sizeof(req_res))) {
 		node_log_error("Failed to response to ping");
 		return false;
 	}
@@ -138,7 +138,7 @@ __attribute__((warn_unused_result))
 static bool node_handle_app_request(app_t apps[APPS_COUNT], node_packet_t* send_payload, uint8_t addr);
 
 __attribute__((warn_unused_result))
-static bool send_next(const routing_table_t* routing, node_packet_t* ret_payload);
+static bool send_next(const routing_table_t* routing, node_packet_t* ret_payload, uint8_t addr);
 
 bool handle_node_send(uint8_t addr, const void* payload, const routing_table_t* routing, app_t apps[APPS_COUNT]) {
 	uint8_t addr_to;
@@ -162,7 +162,7 @@ bool handle_node_send(uint8_t addr, const void* payload, const routing_table_t* 
 			res = false;
 		}
 	} else {
-		if (!send_next(routing, packet)) {
+		if (!send_next(routing, packet, addr)) {
 			node_log_error("Failed to send app request next");
 			res = false;
 		}
@@ -346,16 +346,19 @@ static bool node_handle_app_request(app_t apps[APPS_COUNT], node_packet_t* send_
 }
 
 __attribute__((warn_unused_result))
-static bool send_next(const routing_table_t* routing, node_packet_t* ret_payload) {
+static bool send_next(const routing_table_t* routing, node_packet_t* ret_payload, uint8_t addr) {
 	uint8_t next_addr;
 	uint8_t b[MAX_MSG_LEN];
 	msg_len_type buf_len;
 
 	next_addr = routing_next_addr(routing, ret_payload->receiver_addr);
 	if (next_addr == UINT8_MAX) {
-		node_log_error("Failed to find path in table");
 		// TODO: this may happen if node died after path was found
 		// start broadcast from here
+		node_log_error("Failed to find path in table");
+		ret_payload->local_sender_addr = addr;
+		ret_payload->time_to_live = TTL;
+		node_essentials_broadcast_route(ret_payload, false);
 		return false;
 	}
 
@@ -363,6 +366,11 @@ static bool send_next(const routing_table_t* routing, node_packet_t* ret_payload
 	if (!node_essentials_get_conn_and_send(node_port(next_addr), b, buf_len)) {
 		// TODO: this may happen if next addr from routing table is died
 		// delete old addr from routing and start broadcast from here
+
+		/* ret_payload->local_sender_addr = addr; */
+		/* ret_payload->time_to_live = TTL; */
+		/* node_essentials_broadcast_route(ret_payload, false); */
+		/* return false; */
 	}
 
 	return true;

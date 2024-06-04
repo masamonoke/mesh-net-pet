@@ -54,10 +54,7 @@ int32_t main(int32_t argc, char** argv) {
 	// recv is used for timeout
 	received_bytes = recv(server_fd, buf, sizeof(buf), 0);
 	if (received_bytes > 0) {
-		enum_ir tmp;
-
-		memcpy(&tmp, buf, sizeof_enum(status));
-		status = (enum request_result) tmp;
+		memcpy(&status, buf, sizeof(status));
 	}
 
 	format_sprint_result(status, (char*) buf, sizeof(buf));
